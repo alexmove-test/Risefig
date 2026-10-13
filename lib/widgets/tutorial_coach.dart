@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../models/tutorial_step.dart';
 import 'premium_ui.dart';
 
@@ -154,6 +155,7 @@ class _TutorialBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final maxWidth = (MediaQuery.sizeOf(context).width - 36).clamp(0.0, 360.0);
 
     return Material(
@@ -177,7 +179,7 @@ class _TutorialBubble extends StatelessWidget {
                     onTap: onAcknowledge,
                     behavior: HitTestBehavior.opaque,
                     child: Text(
-                      lesson.text,
+                      l10n.tutorialText(lesson.step),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Color(0xFFF8F1DE),
@@ -198,9 +200,9 @@ class _TutorialBubble extends StatelessWidget {
                         vertical: 2,
                       ),
                     ),
-                    child: const Text(
-                      'Пропустить',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.tutorialSkip,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),

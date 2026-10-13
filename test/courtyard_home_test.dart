@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mahjong/models/pet.dart';
-import 'package:mahjong/models/pet_story.dart';
 import 'package:mahjong/services/pet_store.dart';
-import 'package:mahjong/services/pet_story_store.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_estate.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_world.dart';
 import 'package:mahjong/widgets/courtyard/plot_stage_view.dart';
@@ -44,15 +42,9 @@ void main() {
     expect(pets.yardPetKinds, [PetKind.dog]);
   });
 
-  testWidgets('the yard shows one house and the selected pet story items', (
-    tester,
-  ) async {
+  testWidgets('the yard shows one house and a pets plaque', (tester) async {
     final pets = await PetStore.open();
     await pets.adopt(PetKind.raccoon);
-    final stories = await PetStoryStore.open();
-    final story = PetStories.forPet(PetKind.raccoon).first;
-    await stories.grantChapter(story);
-    await stories.acknowledgeMoment();
     var opened = false;
 
     await tester.pumpWidget(
@@ -63,7 +55,6 @@ void main() {
           body: CourtyardWorld(
             to: CourtyardEstate.fromUnlocked(30),
             pets: pets.yardCare(),
-            petStories: stories,
             onPetTap: () => opened = true,
           ),
         ),
@@ -75,26 +66,27 @@ void main() {
     expect(find.byKey(courtyardPondKey), findsOneWidget);
     expect(find.byKey(courtyardPetAreaKey), findsOneWidget);
     expect(find.byType(PlotStageView), findsNWidgets(2));
-    expect(find.byType(PetStoryItemView), findsNWidgets(3));
+    expect(find.byType(PetStoryItemView), findsNothing);
     expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(find.byKey(courtyardPetStartAdventureKey), findsNothing);
     expect(find.byKey(courtyardPetVisitKey), findsOneWidget);
-    expect(find.text('Visit the den'), findsOneWidget);
+    expect(find.text('Pets'), findsOneWidget);
+    expect(find.text('House'), findsOneWidget);
     expect(
       tester.getBottomLeft(find.byKey(courtyardPetVisitKey)).dy,
       lessThan(tester.getTopLeft(find.byType(PetPortrait)).dy + 8),
     );
-    // Название истории живёт на странице питомца, во дворе — предметы и приглашение.
     expect(find.text('Shiny Workshop · 1/3'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('courtyard-pets')));
     expect(opened, isTrue);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the yard invites a companion to visit', (tester) async {
+  testWidgets('the yard names the pet place above the companion', (
+    tester,
+  ) async {
     final pets = await PetStore.open();
     await pets.adopt(PetKind.cat);
-    final stories = await PetStoryStore.open();
 
     await tester.pumpWidget(
       MaterialApp(
@@ -104,7 +96,6 @@ void main() {
           body: CourtyardWorld(
             to: CourtyardEstate.fromUnlocked(30),
             pets: pets.yardCare(),
-            petStories: stories,
           ),
         ),
       ),
@@ -112,7 +103,8 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(courtyardPetVisitKey), findsOneWidget);
-    expect(find.text('Visit the den'), findsOneWidget);
+    expect(find.text('Pets'), findsOneWidget);
+    expect(find.text('Visit the den'), findsNothing);
     expect(find.text('Start an adventure'), findsNothing);
     expect(find.byKey(courtyardPetStartAdventureKey), findsNothing);
     expect(find.byType(PetPortrait), findsOneWidget);

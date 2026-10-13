@@ -1,3 +1,4 @@
+import 'meta_features.dart';
 import 'plot_kind.dart';
 import 'weekly_quests.dart';
 
@@ -5,6 +6,7 @@ import 'weekly_quests.dart';
 enum HubGoalKind {
   questClaim,
   dailyReward,
+  featureUnlock,
   questRemain,
   plotUnlock,
   petUnlock,
@@ -20,6 +22,7 @@ class HubGoal {
     this.quest,
     this.pointsCost,
     this.pointsShort,
+    this.feature,
   });
 
   final HubGoalKind kind;
@@ -32,13 +35,17 @@ class HubGoal {
   final int? pointsCost;
   final int? pointsShort;
 
+  /// Какая часть мета-игры откроется через [remaining] уровней.
+  final MetaFeature? feature;
+
   int get _priority => switch (kind) {
     HubGoalKind.questClaim => 0,
     HubGoalKind.dailyReward => 1,
-    HubGoalKind.questRemain => 2,
-    HubGoalKind.plotUnlock => 3,
-    HubGoalKind.petUnlock => 4,
-    HubGoalKind.plotLook => 5,
+    HubGoalKind.featureUnlock => 2,
+    HubGoalKind.questRemain => 3,
+    HubGoalKind.plotUnlock => 4,
+    HubGoalKind.petUnlock => 5,
+    HubGoalKind.plotLook => 6,
   };
 
   bool nearerThan(HubGoal other) {
@@ -55,7 +62,8 @@ class HubGoal {
         other.levelId == levelId &&
         other.quest?.def.id == quest?.def.id &&
         other.pointsCost == pointsCost &&
-        other.pointsShort == pointsShort;
+        other.pointsShort == pointsShort &&
+        other.feature == feature;
   }
 
   @override
@@ -67,5 +75,6 @@ class HubGoal {
     quest?.def.id,
     pointsCost,
     pointsShort,
+    feature,
   );
 }

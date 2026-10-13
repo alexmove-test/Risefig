@@ -121,6 +121,26 @@
   },
   "hubQuestRewardReady": "รางวัลรายสัปดาห์พร้อมแล้ว",
   "hubThreeStarUntilReward": "ผ่านด้วย 3★ จะได้รางวัล",
+  "hubNeighborEvent": "{name}: {text}",
+  "@hubNeighborEvent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "hubHarvestReady": "{plant} สุกแล้ว — แตะเพื่อเก็บเกี่ยว",
+  "@hubHarvestReady": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "hubBedFree": "แปลงว่างอยู่ — ปลูกเมล็ดกันเถอะ",
   "today": "วันนี้",
   "@today": {
     "description": "Label of the daily table."
@@ -504,6 +524,42 @@
   "coachTapFree": "จับไพ่ที่ว่าง — เปิดด้านบนและด้านหนึ่ง",
   "coachMatchPair": "คู่ในถาดจะถูกลบ",
   "coachTrayLimit": "ถาดใส่ได้ 4 ใบ — เต็มโดยไม่มีคู่แล้วจะแพ้",
+  "tutorialCollect": "แตะไพ่ที่ว่าง — ไพ่จะเข้าไปในถาด",
+  "tutorialMatch": "เก็บไพ่ที่เหมือนกันสองใบ — คู่จะหายไป ถาดมีแค่ 4 ช่อง",
+  "tutorialLayers": "ไพ่ที่ถูกทับหยิบไม่ได้จนกว่าไพ่ด้านบนจะหายไป",
+  "tutorialBoosts": "คำใบ้แสดงตาเดิน แม่เหล็กเก็บคู่ ย้อนกลับคืนตาเดิน",
+  "tutorialSkip": "ข้าม",
+  "featureGotIt": "เข้าใจแล้ว",
+  "featureNewBadge": "ใหม่",
+  "featureNewGarden": "ใหม่: แปลงปลูกในลาน — แตะแปลงเพื่อปลูกเมล็ด",
+  "featureUnlockGoal": "{count, plural, one{อีก {count} ด่าน} other{อีก {count} ด่าน}} จะปลดล็อก: {feature}",
+  "@featureUnlockGoal": {
+    "description": "Hub goal: how many campaign levels until a meta feature appears.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "feature": {
+        "type": "String"
+      }
+    }
+  },
+  "winPointsHint": "ใช้แต้มอัปเกรดบ้านในลาน",
+  "replayTips": "แสดงคำแนะนำอีกครั้ง",
+  "replayTipsDone": "คำแนะนำจะแสดงอีกครั้ง",
+  "featureTitleHouse": "บ้าน",
+  "featureTitleGarden": "สวน",
+  "featureTitleSeeds": "เมล็ด",
+  "featureBodyHouse": "ผ่านด่านได้แต้ม ใช้แต้มที่นี่เพื่ออัปเกรดบ้าน — บ้านยังผลิตเมล็ดสำหรับสวนด้วย",
+  "featureBodyPoints": "ได้แต้มจากทุกด่านที่ผ่าน ใช้จ่ายค่าอัปเกรดบ้านและการปลูก",
+  "featureBodyGarden": "ปลูกเมล็ดในแปลง รอ แล้วเก็บเกี่ยวพืช พืชใช้เลี้ยงสัตว์และอวดเพื่อนบ้านได้",
+  "featureBodyWarehouse": "พืชที่เก็บเกี่ยวอยู่ที่นี่ ใช้เลี้ยงสัตว์ ผสมสองต้น หรือนำขึ้นตู้แสดง",
+  "featureBodySeeds": "เมล็ดที่บ้านผลิตเก็บไว้ที่นี่ นำไปปลูกในแปลงสวน",
+  "featureBodyCross": "ใช้พืชสองต้นแลกเมล็ดใหม่หนึ่งเมล็ด ผลที่แรงหรือหายากเป็นโอกาส ไม่ใช่สัญญา",
+  "featureBodyNeighbors": "ผู้เล่นที่อันดับใกล้คุณอยู่บนเนินเขา ส่งข้อความและร่วมมือกันผสมพืชและป้องกัน",
+  "featureBodyShowcase": "อวดพืชที่ดีที่สุดให้ทุกคนเห็น และดูว่าผู้เล่นอื่นปลูกอะไร",
+  "featureBodyLeaderboard": "ดาวและชัยชนะในสัปดาห์นี้ช่วยให้อันดับของคุณสูงขึ้น",
+  "featureBodyPets": "สัตว์เลี้ยงของคุณอยู่ในลาน ให้อาหารด้วยพืชจากสวน",
   "easy": "ง่าย",
   "@easy": {
     "description": "Difficulty label for the first campaign levels."
@@ -782,22 +838,13 @@
       }
     }
   },
-  "petStrengthLineText": "{stat} {total} = พื้นฐาน {base} + ของ {main} + เครื่องประดับ {accessory}",
+  "petStrengthLineText": "{stat} {total}",
   "@petStrengthLineText": {
     "placeholders": {
       "stat": {
         "type": "String"
       },
       "total": {
-        "type": "int"
-      },
-      "base": {
-        "type": "int"
-      },
-      "main": {
-        "type": "int"
-      },
-      "accessory": {
         "type": "int"
       }
     }
@@ -860,10 +907,6 @@
   },
   "petFeedFailed": "บันทึกไม่ได้ พืชไม่ได้ถูกใช้",
   "petFeedMissing": "พืชนั้นไม่อยู่ในคลังแล้ว",
-  "petSlotEmpty": "ว่าง",
-  "@petSlotEmpty": {
-    "description": "Short interface label: Empty"
-  },
   "petGuardAction": "เฝ้าสวน",
   "@petGuardAction": {
     "description": "Short interface label: Guard the garden"
@@ -882,73 +925,6 @@
     "description": "Short interface label: Chosen for raids"
   },
   "petStopRaid": "ยกเลิกการเลือกบุก",
-  "gearBonus": "+{bonus} พลัง",
-  "@gearBonus": {
-    "placeholders": {
-      "bonus": {
-        "type": "int"
-      }
-    }
-  },
-  "gearPriceText": "{price} แต้ม",
-  "@gearPriceText": {
-    "placeholders": {
-      "price": {
-        "type": "String"
-      }
-    }
-  },
-  "gearLevelRequired": "ต้องมีระดับ {level}",
-  "@gearLevelRequired": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "gearIfEquipped": "ถ้าสวม: {stat} {from} → {to}",
-  "@gearIfEquipped": {
-    "placeholders": {
-      "stat": {
-        "type": "String"
-      },
-      "from": {
-        "type": "int"
-      },
-      "to": {
-        "type": "int"
-      }
-    }
-  },
-  "gearBuy": "ซื้อ",
-  "@gearBuy": {
-    "description": "Buys a pet item."
-  },
-  "gearEquip": "สวม",
-  "@gearEquip": {
-    "description": "Equips an owned pet item."
-  },
-  "gearUnequip": "ถอด",
-  "@gearUnequip": {
-    "description": "Removes an equipped pet item."
-  },
-  "gearWornBy": "{name} สวมอยู่",
-  "@gearWornBy": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "gearShortfallText": "ต้องการอีก {shortfall} แต้ม",
-  "@gearShortfallText": {
-    "placeholders": {
-      "shortfall": {
-        "type": "String"
-      }
-    }
-  },
-  "gearBuyFailed": "บันทึกไม่ได้ แต้มไม่ได้ถูกใช้",
   "gardenGuardLabel": "{name} เฝ้าสวน ป้องกัน {power}",
   "@gardenGuardLabel": {
     "placeholders": {
@@ -1118,6 +1094,45 @@
   },
   "produceSeedForText": "ผลิตเมล็ด · {price} แต้ม",
   "@produceSeedForText": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "yardSeedOfferText": "ผลิต\nเมล็ด\n{price}",
+  "@yardSeedOfferText": {
+    "description": "Square button that starts seed production. Price is on its own line.",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "yardSeedTimerText": "เมล็ด\n{time}",
+  "@yardSeedTimerText": {
+    "description": "Square button while a seed is being produced. Time is mm:ss.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "yardGrowPlant": "ปลูกพืช",
+  "@yardGrowPlant": {
+    "description": "Square button that opens a garden bed to plant a seed."
+  },
+  "watchAdHarvest": "ดูโฆษณา · เก็บเลย",
+  "@watchAdHarvest": {
+    "description": "Optional rewarded ad that harvests one growing plant immediately. Offered once per day beside the points speed-up."
+  },
+  "plantAdUsed": "วันนี้เก็บด้วยโฆษณาไปแล้ว",
+  "@plantAdUsed": {
+    "description": "Shown if the once-a-day garden ad harvest was already used."
+  },
+  "speedUpForText": "เร่ง · {price} แต้ม",
+  "@speedUpForText": {
+    "description": "Button that finishes the remaining seed or plant timer for a point price.",
     "placeholders": {
       "price": {
         "type": "String"
@@ -1374,6 +1389,14 @@
   "languageThai": "ไทย",
   "@languageThai": {
     "description": "Language name shown in the picker. Stays Thai in every locale."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language name shown in the picker. Stays German in every locale."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language name shown in the picker. Stays Ukrainian in every locale."
   },
   "challengeCompactTower": "หอคอย: เก็บทุกชั้นให้หมด",
   "@challengeCompactTower": {
@@ -1715,14 +1738,6 @@
   "petStatDefense": "พลังป้องกัน",
   "@petStatDefense": {
     "description": "Defense stat name."
-  },
-  "gearSlotMain": "ของหลัก",
-  "@gearSlotMain": {
-    "description": "Primary gear slot."
-  },
-  "gearSlotAccessory": "เครื่องประดับ",
-  "@gearSlotAccessory": {
-    "description": "Secondary gear slot."
   },
   "growthSown": "เพาะเมล็ดแล้ว",
   "@growthSown": {
@@ -2093,18 +2108,6 @@
       }
     }
   },
-  "gearOfferText": "{role} · {slot}",
-  "@gearOfferText": {
-    "description": "Gear shop line joining the role and the slot.",
-    "placeholders": {
-      "role": {
-        "type": "String"
-      },
-      "slot": {
-        "type": "String"
-      }
-    }
-  },
   "petBadgeText": "{role}, {level}",
   "@petBadgeText": {
     "description": "Compact pet badge joining role and level.",
@@ -2364,54 +2367,6 @@
   "familyWinter": "ฤดูหนาว",
   "@familyWinter": {
     "description": "Season on a tile."
-  },
-  "gearAttackerMain1": "สายสะพายไหม",
-  "@gearAttackerMain1": {
-    "description": "Pet item name for id attacker_main_1."
-  },
-  "gearAttackerMain2": "กรงเล็บราตรี",
-  "@gearAttackerMain2": {
-    "description": "Pet item name for id attacker_main_2."
-  },
-  "gearAttackerMain3": "โคมบุก",
-  "@gearAttackerMain3": {
-    "description": "Pet item name for id attacker_main_3."
-  },
-  "gearAttackerAccessory1": "ระฆังสอดแนม",
-  "@gearAttackerAccessory1": {
-    "description": "Pet item name for id attacker_accessory_1."
-  },
-  "gearAttackerAccessory2": "ถุงย่อง",
-  "@gearAttackerAccessory2": {
-    "description": "Pet item name for id attacker_accessory_2."
-  },
-  "gearAttackerAccessory3": "เครื่องรางจันทร์",
-  "@gearAttackerAccessory3": {
-    "description": "Pet item name for id attacker_accessory_3."
-  },
-  "gearDefenderMain1": "เสื้อเกราะนวม",
-  "@gearDefenderMain1": {
-    "description": "Pet item name for id defender_main_1."
-  },
-  "gearDefenderMain2": "เสื้อยาม",
-  "@gearDefenderMain2": {
-    "description": "Pet item name for id defender_main_2."
-  },
-  "gearDefenderMain3": "แผ่นโคม",
-  "@gearDefenderMain3": {
-    "description": "Pet item name for id defender_main_3."
-  },
-  "gearDefenderAccessory1": "ปลอกคอหนัง",
-  "@gearDefenderAccessory1": {
-    "description": "Pet item name for id defender_accessory_1."
-  },
-  "gearDefenderAccessory2": "สายรัดเฝ้ายาม",
-  "@gearDefenderAccessory2": {
-    "description": "Pet item name for id defender_accessory_2."
-  },
-  "gearDefenderAccessory3": "เครื่องรางประตู",
-  "@gearDefenderAccessory3": {
-    "description": "Pet item name for id defender_accessory_3."
   },
   "storyCampaign0": "ต้นอ่อน",
   "@storyCampaign0": {
@@ -3604,5 +3559,628 @@
   "petItemCampfire": "กองไฟ",
   "@petItemCampfire": {
     "description": "Collectible name for campfire."
-  }
+  },
+  "neighborsTitle": "เพื่อนบ้าน",
+  "neighborsClose": "ปิด",
+  "neighborsTabAll": "ผู้เล่นทั้งหมด",
+  "neighborsTabSaved": "รายการโปรด",
+  "neighborsSearchHint": "ค้นจากต้นชื่อ",
+  "neighborsForYou": "สำหรับคุณ",
+  "neighborsUpdates": "อัปเดต {count} รายการ",
+  "@neighborsUpdates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsShowLess": "ย่อ",
+  "neighborsEmptySaved": "คนที่คุณบันทึกไว้จะอยู่ที่นี่",
+  "neighborsBrowsePlayers": "ดูผู้เล่นทั้งหมด",
+  "neighborsEmptySearch": "ไม่มีชื่อที่ขึ้นต้นแบบนี้",
+  "neighborsEmptyPlayers": "ไม่มีผู้เล่นคนอื่นในรายการนี้",
+  "neighborsOffline": "ไม่มีการเชื่อมต่อ รายชื่อที่โหลดไว้แล้วยังอยู่",
+  "neighborsLoadFailed": "โหลดผู้เล่นไม่สำเร็จ",
+  "neighborsRetry": "ลองอีกครั้ง",
+  "neighborsLoading": "กำลังโหลดผู้เล่น",
+  "neighborsLoadingMore": "กำลังโหลดเพิ่ม",
+  "neighborsLevel": "ระดับ {level}",
+  "@neighborsLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsAdd": "เพิ่มในรายการโปรด",
+  "neighborsRemove": "เอาออกจากรายการโปรด",
+  "neighborsSaved": "{name} อยู่ในรายการโปรดแล้ว",
+  "@neighborsSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRemoved": "เอา {name} ออกจากรายการโปรดแล้ว",
+  "@neighborsRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsFindAgain": "หาในรายการโปรด",
+  "neighborsBack": "กลับไปรายชื่อ",
+  "neighborsSavedHint": "บันทึกผู้เล่นนี้ไว้ แล้วเปิดอีกครั้งจากรายการโปรด",
+  "neighborsSignalAsksHelp": "ขอความช่วยเหลือ",
+  "neighborsSignalSeeksDefense": "หาคนปกป้อง",
+  "neighborsSignalOffersCross": "เสนอผสมพันธุ์พืช",
+  "neighborsSignalAwaitsReply": "รอคำตอบ",
+  "neighborsSignalHelpedYou": "ช่วยคุณแล้ว",
+  "neighborsUnseen": "ใหม่ {count}",
+  "@neighborsUnseen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHistory": "สิ่งที่ทำร่วมกัน",
+  "neighborsBlock": "บล็อก",
+  "neighborsBlocked": "บล็อก {name} แล้ว และซ่อนจากรายการ",
+  "@neighborsBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsWaiting": "กำลังรอคำตอบ",
+  "neighborsUnavailable": "การกระทำนี้ใช้ไม่ได้",
+  "neighborsFailed": "ยังไม่สำเร็จ ลองอีกครั้งได้",
+  "neighborsEnded": "ข้อเสนอนี้จบแล้ว",
+  "neighborsDeclined": "ข้อเสนอถูกปฏิเสธ",
+  "neighborsCancelled": "ข้อเสนอถูกยกเลิก",
+  "neighborsInProgress": "กำลังทำ",
+  "neighborsDone": "เสร็จแล้ว",
+  "neighborsReply": "ตอบ",
+  "neighborsViewOffer": "ดูข้อเสนอ",
+  "neighborsPeaceful": "การกระทำที่เป็นมิตร",
+  "neighborsAttackSection": "โจมตี",
+  "neighborsAttackExplain": "นี่จะเริ่มการโจมตีผู้เล่นนี้",
+  "neighborsConfirm": "ยืนยัน",
+  "neighborsThank": "ขอบคุณ",
+  "neighborsThankSent": "ส่งคำขอบคุณถึง {name} แล้ว",
+  "@neighborsThankSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOfferAgain": "เสนออีกครั้ง",
+  "neighborsCost": "จะใช้: {cost}",
+  "@neighborsCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOutcome": "หลังยืนยัน: {outcome}",
+  "@neighborsOutcome": {
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsHelpAction": "ช่วย",
+  "neighborsDefenseAction": "ปกป้อง",
+  "neighborsCrossDecline": "ปฏิเสธ",
+  "neighborsUsesPlant": "พืช: {plant}",
+  "@neighborsUsesPlant": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsPlantStays": "พืชนี้ยังอยู่กับเจ้าของ",
+  "neighborsPlantLeaves": "พืชนี้ถูกใช้ไป",
+  "neighborsMemoryHelped": "{name} ช่วยพืชของคุณ",
+  "@neighborsMemoryHelped": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryDefended": "สัตว์เลี้ยงของ {name} ปกป้องสวน",
+  "@neighborsMemoryDefended": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryCrossed": "คุณและ {name} ได้พืชใหม่",
+  "@neighborsMemoryCrossed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryThanked": "คุณขอบคุณ {name}",
+  "@neighborsMemoryThanked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryRaid": "รายงานการโจมตีกับ {name}",
+  "@neighborsMemoryRaid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsReasonUnsupported": "การกระทำร่วมกันยังใช้ไม่ได้",
+  "neighborsReasonNotAllowed": "การกระทำนี้ใช้กับผู้เล่นนี้ไม่ได้",
+  "neighborsReasonMissingPet": "ต้องมีสัตว์เลี้ยงที่ปกป้องได้",
+  "neighborsReasonMissingPlant": "ต้องมีพืชสำหรับการกระทำนี้",
+  "neighborsProtector": "ผู้ปกป้อง: {name}",
+  "@neighborsProtector": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsUntil": "จนถึง {time}",
+  "@neighborsUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsAttackPower": "โจมตี {value}",
+  "@neighborsAttackPower": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsDefensePower": "ป้องกัน {value}",
+  "@neighborsDefensePower": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsLoot": "เอสเซนส์ที่เป็นไปได้: {count}",
+  "@neighborsLoot": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showcaseTitle": "ตู้แสดงพืช",
+  "showcaseAll": "พืชทั้งหมด",
+  "showcaseMine": "พืชของฉัน",
+  "showcaseManage": "นำพืชของฉันมาแสดง",
+  "showcaseRefresh": "รีเฟรชตู้แสดงพืช",
+  "showcaseIntro": "ชมพืชที่ผู้เล่นคนอื่นปลูก แต่ละการ์ดจะแสดงชื่อเจ้าของ",
+  "showcaseMyIntro": "เลือกพืชที่เก็บเกี่ยวแล้วเพื่อแสดงพร้อมชื่อผู้เล่นของคุณ พืชยังอยู่ในคลัง แต่จะใช้ให้อาหารสัตว์เลี้ยงไม่ได้จนกว่าจะนำออกจากตู้แสดง",
+  "showcaseEmpty": "ยังไม่มีพืชในตู้แสดง คุณสามารถนำพืชต้นแรกมาแสดงได้",
+  "showcaseChoose": "เลือกพืช",
+  "showcaseNoPlants": "เก็บเกี่ยวพืชจากแปลงเพื่อนำมาแสดง",
+  "showcasePublish": "นำมาแสดง",
+  "showcaseWithdraw": "นำออกจากตู้แสดง",
+  "showcasePublished": "กำลังแสดงให้ทุกคนเห็น",
+  "showcasePrivate": "มีเพียงคุณที่เห็นพืชนี้",
+  "showcaseUnconfirmed": "ยังยืนยันการแสดงไม่ได้ ลองอีกครั้งหรือนำออกจากตู้แสดง",
+  "showcasePublishedNotice": "พืชของคุณอยู่ในตู้แสดงสาธารณะแล้ว",
+  "showcaseRemovedNotice": "นำพืชออกจากตู้แสดงแล้ว คุณใช้พืชนี้ได้อีกครั้ง",
+  "showcaseUnavailable": "ตู้แสดงออนไลน์ยังไม่พร้อมใช้งาน พืชของคุณยังอยู่",
+  "showcaseLoadFailed": "รีเฟรชตู้แสดงไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "showcaseOperationFailed": "ยังยืนยันการดำเนินการไม่ได้ พืชของคุณได้รับการป้องกัน ลองอีกครั้งเมื่อเชื่อมต่อ",
+  "showcaseMissingLocal": "พืชที่แสดงนี้ไม่อยู่ในคลังของอุปกรณ์นี้",
+  "showcaseMore": "โหลดพืชเพิ่มเติม",
+  "showcaseSpecimen": "พืชหมายเลข {number}",
+  "showcaseFeedLocked": "พืชที่แสดงอยู่ใช้ให้อาหารสัตว์เลี้ยงไม่ได้ กรุณานำออกจากตู้แสดงก่อน",
+  "@showcaseSpecimen": {
+    "description": "Identifies a harvested plant in the player's inventory.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "crossOpen": "ผสมพืช",
+  "@crossOpen": {
+    "description": "Short interface label: Cross plants"
+  },
+  "crossTitle": "การผสมพืช",
+  "@crossTitle": {
+    "description": "Short interface label: Cross plants"
+  },
+  "crossNeedTwo": "เลือกพืชที่เก็บเกี่ยวแล้วสองต้น",
+  "crossAimCombat": "อาหารต่อสู้",
+  "@crossAimCombat": {
+    "description": "Short interface label: Combat feed"
+  },
+  "crossAimGarden": "สวนที่งอกเร็ว",
+  "@crossAimGarden": {
+    "description": "Short interface label: Richer garden"
+  },
+  "crossAimSeeds": "เลือกเมล็ด",
+  "@crossAimSeeds": {
+    "description": "Short interface label: Choose a seed"
+  },
+  "crossOdds": "ธรรมดา {ordinary}% แข็งแรงขึ้น {raised}% หายาก {rare}%",
+  "@crossOdds": {
+    "placeholders": {
+      "ordinary": {
+        "type": "int"
+      },
+      "raised": {
+        "type": "int"
+      },
+      "rare": {
+        "type": "int"
+      }
+    }
+  },
+  "crossConfirm": "ผสม",
+  "@crossConfirm": {
+    "description": "Short interface label: Cross"
+  },
+  "crossFailed": "บันทึกการผสมไม่ได้ ลองอีกครั้ง",
+  "crossListed": "นำพืชออกจากตู้แสดงก่อน",
+  "crossWaiting": "จบการผสมที่ค้างอยู่ก่อน",
+  "crossChooseTrait": "เลือกโจมตีหรือป้องกันสำหรับอาหารนี้",
+  "crossAttack": "โจมตี",
+  "@crossAttack": {
+    "description": "Short interface label: Attack"
+  },
+  "crossDefense": "ป้องกัน",
+  "@crossDefense": {
+    "description": "Short interface label: Defense"
+  },
+  "crossChooseSpecies": "เลือกเมล็ด",
+  "crossOrdinary": "การผสมได้ผลธรรมดา เพิ่มเมล็ดธรรมดาแล้ว",
+  "crossGranted": "เมล็ดจากการผสมอยู่ในคลังเมล็ด",
+  "crossTraitAttack": "อาหารโจมตี",
+  "crossTraitDefense": "อาหารป้องกัน",
+  "crossTraitBloom": "โตเร็วขึ้น",
+  "plantOriginCross": "ที่มา: การผสม",
+  "neighborsActions": "การกระทำ",
+  "neighborsActionMessage": "ส่งข้อความ",
+  "neighborsActionDefend": "ปกป้อง",
+  "neighborsActionCross": "เสนอการผสม",
+  "neighborsActionRaid": "โจมตี",
+  "neighborsActionsOffline": "การกระทำกับผู้เล่นต้องใช้อินเทอร์เน็ต",
+  "neighborsNeedGuard": "กำหนดสัตว์เลี้ยงผู้พิทักษ์ในลานสัตว์เลี้ยงก่อน",
+  "neighborsNeedRaider": "กำหนดสัตว์เลี้ยงจู่โจมในลานสัตว์เลี้ยงก่อน",
+  "neighborsNeedPlant": "ต้องมีพืชที่เก็บเกี่ยวแล้วในคลัง",
+  "neighborsChoosePhrase": "เลือกข้อความ",
+  "neighborsChoosePlant": "เลือกพืชที่จะมอบให้",
+  "neighborsSend": "ส่ง",
+  "neighborsSent": "ส่งถึง {name} แล้ว",
+  "@neighborsSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsAlreadyOpen": "คุณมีคำขอประเภทนี้ที่ยังเปิดอยู่กับผู้เล่นนี้แล้ว",
+  "neighborsRequestClosed": "คำขอนี้ปิดไปแล้ว",
+  "neighborsSendFailed": "ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "neighborsDefendExplain": "เมื่อ {name} ตอบรับ สัตว์เลี้ยงของคุณจะช่วยเฝ้าลานของเขา 24 ชั่วโมง ป้องกัน {value}",
+  "@neighborsDefendExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidExplain": "{name} มีเวลา 24 ชั่วโมงในการส่งสัตว์เฝ้ายาม ลานจะรอดก็ต่อเมื่อผู้เฝ้ายามแรงกว่าพลังโจมตี {value} ของคุณ ไม่เช่นนั้นพืชหนึ่งต้นจะถูกเผา และคุณจะได้อีกต้นไป",
+  "@neighborsRaidExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsCrossExplain": "แต่ละคนให้พืชหนึ่งต้นและได้เมล็ดผลลัพธ์หนึ่งเมล็ด พืชของคุณจะถูกใช้เมื่อคุณรับเมล็ดเท่านั้น",
+  "neighborsMessages": "ข้อความและคำขอ",
+  "neighborsPhraseHello": "สวัสดีเพื่อนบ้าน!",
+  "neighborsPhraseGoodLuck": "โชคดีนะ!",
+  "neighborsPhraseThanks": "ขอบคุณ!",
+  "neighborsPhraseNiceGarden": "สวนสวยมาก!",
+  "neighborsPhraseLetsCross": "มาปลูกอะไรหายากด้วยกันเถอะ",
+  "neighborsPhraseIWillGuard": "ฉันจะช่วยดูลานของคุณเอง",
+  "neighborsPhraseReadyForRaid": "พร้อมไหม? ฉันจะบุกลานของคุณแล้ว!",
+  "neighborsPhraseWellPlayed": "เล่นได้ดีมาก!",
+  "neighborsInMessage": "{name} ส่งข้อความถึงคุณ",
+  "@neighborsInMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsInDefense": "{name} เสนอช่วยเฝ้าลานของคุณ 24 ชั่วโมง ป้องกัน {value}",
+  "@neighborsInDefense": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsInCross": "{name} เสนอผสม {plant} ของเขากับพืชของคุณ",
+  "@neighborsInCross": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsInRaid": "{name} กำลังจู่โจมลานของคุณ โจมตี {value}",
+  "@neighborsInRaid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsOutMessage": "คุณส่งข้อความ",
+  "neighborsOutDefense": "คุณเสนอการปกป้อง ป้องกัน {value}",
+  "@neighborsOutDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsOutCross": "คุณเสนอ {plant} สำหรับการผสม",
+  "@neighborsOutCross": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOutRaid": "คุณจู่โจมลานนี้ โจมตี {value}",
+  "@neighborsOutRaid": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsQuote": "{name}: “{text}”",
+  "@neighborsQuote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsYou": "คุณ",
+  "neighborsAcceptDefense": "รับการปกป้อง",
+  "neighborsChooseCrossPlant": "เลือกพืชของคุณ",
+  "neighborsRepel": "ป้องกันลาน",
+  "neighborsCancelRequest": "ยกเลิกคำขอ",
+  "neighborsClaimSeed": "รับเมล็ด",
+  "neighborsRaidWon": "การจู่โจมสำเร็จ: โจมตี {attack} ต่อป้องกัน {defense}",
+  "@neighborsRaidWon": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidRepelled": "ลานต้านไว้ได้: โจมตี {attack} ต่อป้องกัน {defense}",
+  "@neighborsRaidRepelled": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsGuarding": "การปกป้องมีผลถึง {time}",
+  "@neighborsGuarding": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsGuardEnded": "การปกป้องสิ้นสุดแล้ว",
+  "neighborsCrossResult": "ผลการผสม: เมล็ด {plant}",
+  "@neighborsCrossResult": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsSeedClaimed": "เมล็ดอยู่ในคลังเมล็ดของคุณแล้ว",
+  "neighborsSeedMissing": "ต้องมี {plant} ในคลังจึงจะรับเมล็ดได้",
+  "@neighborsSeedMissing": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsYourDefense": "การป้องกันลานของคุณ: {value}",
+  "@neighborsYourDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsReplied": "ส่งคำตอบแล้ว",
+  "neighborsSignalMessage": "ข้อความใหม่",
+  "neighborsSignalDefense": "เสนอการปกป้อง",
+  "neighborsSignalRaid": "กำลังจู่โจมลานของคุณ",
+  "neighborsSignalResult": "ได้รับคำตอบแล้ว",
+  "socialFriends": "เพื่อน",
+  "socialFriend": "คุณเป็นเพื่อนกันแล้ว",
+  "socialFriendsEmpty": "ยังไม่มีเพื่อน เปิดโปรไฟล์เพื่อนบ้านแล้วส่งคำเชิญ เมื่อยอมรับแล้วจะปรากฏที่นี่",
+  "socialIncoming": "คำเชิญเป็นเพื่อน",
+  "socialWaiting": "รอการตอบรับ",
+  "socialUnavailable": "เชื่อมต่อไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "socialChat": "การสนทนา",
+  "socialRemoveFriend": "ลบเพื่อน",
+  "socialFriendConsent": "การยอมรับเป็นเพื่อนอนุญาตให้ทั้งสองคนส่งข้อความส่วนตัวได้",
+  "socialAccept": "ยอมรับเป็นเพื่อน",
+  "socialInvite": "เชิญเป็นเพื่อน",
+  "socialInvitesClosed": "ผู้เล่นนี้ยังไม่รับคำเชิญเป็นเพื่อน",
+  "socialMyProfile": "โปรไฟล์ของฉัน",
+  "socialProfilePublic": "ข้อมูลเหล่านี้ไม่จำเป็นต้องกรอกและผู้เล่นอื่นมองเห็นได้",
+  "socialAbout": "เกี่ยวกับฉัน",
+  "socialLanguage": "ภาษาที่ใช้สนทนา",
+  "socialInterests": "ความสนใจ",
+  "socialGoal": "สิ่งที่มองหาในเกม",
+  "socialPicAboutFriendly": "เป็นมิตร",
+  "socialPicAboutCalm": "สงบ",
+  "socialPicAboutCheerful": "ร่าเริง",
+  "socialPicAboutGentle": "อ่อนโยน",
+  "socialPicAboutNight": "ตอนเย็น",
+  "socialPicAboutCurious": "อยากรู้",
+  "socialPicInterestGarden": "สวน",
+  "socialPicInterestPets": "สัตว์เลี้ยง",
+  "socialPicInterestMahjong": "ไพ่นกกระจอก",
+  "socialPicInterestCourtyard": "ลานบ้าน",
+  "socialPicInterestSeeds": "เมล็ด",
+  "socialPicInterestStars": "ดาว",
+  "socialPicGoalFlower": "ดอกไม้หายาก",
+  "socialPicGoalHouse": "บ้านที่สวยขึ้น",
+  "socialPicGoalFriends": "เพื่อน",
+  "socialPicGoalLevels": "ผ่านด่าน",
+  "socialPicGoalChat": "คุยกัน",
+  "socialPicGoalCross": "ผสมพันธุ์",
+  "socialOpenInvites": "รับคำเชิญเป็นเพื่อนใหม่",
+  "socialSave": "บันทึกโปรไฟล์",
+  "socialProfileHeading": "โปรไฟล์",
+  "socialNotChosen": "ยังไม่ได้เลือก",
+  "socialInvitesOpen": "รับคำเชิญเป็นเพื่อน",
+  "socialBadgesTitle": "ป้ายในรายชื่อเพื่อนบ้าน",
+  "socialBadgesExplain": "ใช้แต้มเพื่อแสดงอวาตาร์และป้ายโปรไฟล์ข้างชื่อของคุณชั่วคราว",
+  "socialBadgesActive": "เพื่อนบ้านมองเห็นถึง {time}",
+  "@socialBadgesActive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "socialBadgesOff": "ตอนนี้รายชื่อแสดงเฉพาะชื่อของคุณ",
+  "socialBadgesOffer": "{days, plural, other{{days} วัน}} · {price} แต้ม",
+  "@socialBadgesOffer": {
+    "description": "Button that buys showing profile badges in the neighbor list for a number of days.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "socialBadgesTooLong": "ต่อเวลาได้ไม่เกิน 30 วันล่วงหน้า",
+  "socialBadgesFailed": "เปิดป้ายไม่สำเร็จ คืนแต้มให้แล้ว",
+  "socialBadgesNotListed": "คุณยังไม่อยู่ในรายชื่อเพื่อนบ้าน ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง ยังไม่มีการหักแต้ม",
+  "socialChatEmpty": "ทักทายหรือขอบคุณเพื่อนที่ช่วยเหลือ!",
+  "socialReportMessage": "รายงานข้อความ",
+  "socialOlderMessages": "ข้อความก่อนหน้า",
+  "socialSendFailed": "ยังไม่ยืนยันการส่ง ลองอีกครั้งหรือกลับไปที่โปรไฟล์เพื่อตรวจสอบสถานะเพื่อน",
+  "socialMessageHint": "เขียนข้อความ",
+  "socialGrownTogether": "ปลูกร่วมกับ",
+  "socialHistoryEmpty": "ช่วงเวลาร่วมกันจะปรากฏที่นี่",
+  "socialHistory": "ประวัติร่วมกัน",
+  "socialProfileReport": "รายงานโปรไฟล์",
+  "neighborsRaidDeadline": "หากไม่ตอบภายใน {time} ผู้เฝ้ายามที่กำหนดไว้จะป้องกันเอง",
+  "neighborsRaidDefendTitle": "ใครจะป้องกันลาน?",
+  "neighborsRaidDefendRule": "พลังโจมตี {value} ลานจะรอดก็ต่อเมื่อผู้ป้องกันแรงกว่า",
+  "neighborsRaidOptionOwn": "{pet} · ป้องกัน {value}",
+  "neighborsRaidOptionGuard": "ผู้เฝ้ายามจาก {name} · ป้องกัน {value}",
+  "neighborsRaidOptionHelp": "{name} ตอบรับคำขอ · ป้องกัน {value}",
+  "neighborsRaidOptionNone": "ไม่ป้องกัน",
+  "neighborsRaidHolds": "รอด",
+  "neighborsRaidFalls": "อ่อนกว่า",
+  "neighborsRaidNoDefenders": "คุณไม่มีสัตว์เฝ้ายาม และยังไม่มีใครตอบรับคำขอ หากไม่มีผู้ป้องกัน การจู่โจมจะสำเร็จ",
+  "neighborsRaidChooseLoss": "ลานจะไม่รอด เลือกพืชที่จะถูกเผา ผู้จู่โจมจะสุ่มเอาหนึ่งต้นจากที่เหลือ",
+  "neighborsRaidOnlyPlant": "พืชต้นเดียวของคุณ {plant} จะตกเป็นของผู้จู่โจม",
+  "neighborsRaidEmptyStorage": "คลังว่างเปล่า ผู้จู่โจมจึงไม่ได้อะไรไป",
+  "neighborsRaidAcceptLoss": "ยอมรับความสูญเสีย",
+  "neighborsRaidDestroyed": "ถูกเผา: {plant}",
+  "neighborsRaidStolen": "ผู้จู่โจมเอาไป: {plant}",
+  "neighborsRaidLoot": "ของที่ได้: {plant}",
+  "neighborsRaidNoLoot": "ในคลังไม่มีอะไรให้เอาไป",
+  "neighborsRaidAutoDefended": "ไม่มีใครตอบทันเวลา ผู้เฝ้ายามที่กำหนดไว้จึงป้องกันเอง",
+  "neighborsRaidDefendedBy": "ป้องกันโดยสัตว์ของ {name}",
+  "neighborsRaidTakeLoot": "รับพืช",
+  "neighborsRaidLootTaken": "{plant} อยู่ในคลังของคุณแล้ว",
+  "neighborsRaidTooSoon": "ลานนี้กำลังพักหลังการจู่โจม ลองใหม่ภายหลัง",
+  "neighborsHelpTitle": "คำขอความช่วยเหลือ",
+  "neighborsHelpExplain": "เพื่อนเห็นคำขอได้ฟรี การขอจากผู้เล่นทุกคนใช้ {price} พอยต์ ผู้เฝ้ายามที่ตอบรับจะปรากฏในรายการป้องกัน",
+  "neighborsHelpAskFriends": "ขอความช่วยเหลือจากเพื่อน",
+  "neighborsHelpAskEveryone": "ขอจากผู้เล่นทุกคน · {price} พอยต์",
+  "neighborsHelpAskedFriends": "เพื่อนของคุณเห็นคำขอความช่วยเหลือแล้ว",
+  "neighborsHelpAskedEveryone": "ผู้เล่นทุกคนเห็นคำขอความช่วยเหลือแล้ว",
+  "neighborsHelpNoFriends": "คุณยังไม่มีเพื่อนให้ขอความช่วยเหลือ",
+  "neighborsHelpArrived": "ผู้ป้องกันที่ตอบรับ: {count}",
+  "neighborsHelpFailed": "ส่งคำขอความช่วยเหลือไม่สำเร็จ คืนพอยต์ที่ใช้ไปแล้ว",
+  "neighborsHelpCallLine": "{name} ถูกจู่โจม · โจมตี {attack}",
+  "neighborsHelpUntil": "เปิดถึง {time}",
+  "neighborsHelpSend": "ส่งผู้เฝ้ายามของฉัน · ป้องกัน {value}",
+  "neighborsHelpSent": "ผู้เฝ้ายามของคุณพร้อมป้องกัน {name} แล้ว",
+  "neighborsHelpOffered": "เสนอผู้เฝ้ายามของคุณแล้ว",
+  "neighborsHelpNeedGuard": "กำหนดสัตว์เฝ้ายามก่อนจึงจะช่วยได้",
+  "plantOriginRaid": "ได้มาจากการจู่โจม",
+  "deleteAccount": "ลบบัญชีและข้อมูล",
+  "deleteAccountTitle": "ลบบัญชีและข้อมูล?",
+  "deleteAccountBody": "การทำนี้จะลบสนามหญ้า ความคืบหน้า และการตั้งค่าบนอุปกรณ์นี้ หากอุปกรณ์ลงชื่อเข้าใช้แล้ว บัญชีนิรนามนี้จะถูกลบด้วย ได้แก่ อันดับ โปรไฟล์ มิตรภาพ ข้อความ การกระทำกับเพื่อนบ้าน เสียงเรียกช่วยเหลือ และการ์ดโชว์ต้นไม้ บทสนทนาหรือคำขอที่ใช้ร่วมกันจะหายไปของอีกฝ่ายด้วย รายงานที่ผู้เล่นคนอื่นส่งไว้จะคงอยู่จนกว่าการตรวจสอบจะจบ การลบนี้ย้อนกลับไม่ได้",
+  "deleteAccountConfirm": "ลบ",
+  "deleteAccountFailed": "ลบไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง หรืออีเมล myevidentsuccess@gmail.com",
+  "deleteAccountWorking": "กำลังลบ…"
 }

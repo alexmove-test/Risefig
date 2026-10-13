@@ -121,6 +121,27 @@
   },
   "hubQuestRewardReady": "Weekly reward is ready",
   "hubThreeStarUntilReward": "A 3★ clear unlocks the reward",
+  "hubNeighborEvent": "{name}: {text}",
+  "@hubNeighborEvent": {
+    "description": "Hub banner line for the latest neighbor event. text is an existing neighbor status phrase.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "hubHarvestReady": "{plant} is ripe — tap to harvest",
+  "@hubHarvestReady": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "hubBedFree": "A garden bed is free — plant a seed",
   "today": "Today",
   "@today": {
     "description": "Label of the daily table."
@@ -504,6 +525,42 @@
   "coachTapFree": "Take a free tile — open on top and one side",
   "coachMatchPair": "A pair in the tray clears",
   "coachTrayLimit": "The tray holds 4 — fill it with no pair and you lose",
+  "tutorialCollect": "Tap a free tile — it goes into the tray",
+  "tutorialMatch": "Collect two matching tiles — the pair clears. The tray has only 4 slots.",
+  "tutorialLayers": "A covered tile can't be taken until the one on top is gone.",
+  "tutorialBoosts": "Hint shows a move, magnet collects a pair, undo takes a move back.",
+  "tutorialSkip": "Skip",
+  "featureGotIt": "Got it",
+  "featureNewBadge": "NEW",
+  "featureNewGarden": "New: garden beds in the yard — tap a bed to plant a seed",
+  "featureUnlockGoal": "{count, plural, =1{1 more level} other{{count} more levels}} to unlock: {feature}",
+  "@featureUnlockGoal": {
+    "description": "Hub goal: how many campaign levels until a meta feature appears.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "feature": {
+        "type": "String"
+      }
+    }
+  },
+  "winPointsHint": "Spend points on your house in the yard",
+  "replayTips": "Show tips again",
+  "replayTipsDone": "Tips will show again",
+  "featureTitleHouse": "House",
+  "featureTitleGarden": "Garden",
+  "featureTitleSeeds": "Seeds",
+  "featureBodyHouse": "Levels earn points. Spend them here to upgrade the house — it also produces seeds for the garden.",
+  "featureBodyPoints": "Points come from every cleared level. They pay for house upgrades and planting.",
+  "featureBodyGarden": "Plant a seed in a bed, wait, and harvest a plant. Plants feed pets and can be shown to neighbors.",
+  "featureBodyWarehouse": "Harvested plants are kept here. Feed them to pets, cross two of them, or put one in the showcase.",
+  "featureBodySeeds": "Seeds made by the house are stored here. Plant them in the garden beds.",
+  "featureBodyCross": "Spend two plants to get one new seed. A stronger or rare result is a chance, not a promise.",
+  "featureBodyNeighbors": "Players near you on the leaderboard live on the hills. Send them messages and team up for crossing and defense.",
+  "featureBodyShowcase": "Show your best plants to everyone and see what other players grow.",
+  "featureBodyLeaderboard": "Stars and wins this week move you up the ranking against other players.",
+  "featureBodyPets": "Your pet lives in the yard. Feed it plants from the garden.",
   "easy": "Easy",
   "@easy": {
     "description": "Difficulty label for the first campaign levels."
@@ -782,22 +839,13 @@
       }
     }
   },
-  "petStrengthLineText": "{stat} {total} = base {base} + item {main} + accessory {accessory}",
+  "petStrengthLineText": "{stat} {total}",
   "@petStrengthLineText": {
     "placeholders": {
       "stat": {
         "type": "String"
       },
       "total": {
-        "type": "int"
-      },
-      "base": {
-        "type": "int"
-      },
-      "main": {
-        "type": "int"
-      },
-      "accessory": {
         "type": "int"
       }
     }
@@ -860,10 +908,6 @@
   },
   "petFeedFailed": "Could not save. The plant was not spent.",
   "petFeedMissing": "That plant is no longer in the warehouse.",
-  "petSlotEmpty": "Empty",
-  "@petSlotEmpty": {
-    "description": "Short interface label: Empty"
-  },
   "petGuardAction": "Guard the garden",
   "@petGuardAction": {
     "description": "Short interface label: Guard the garden"
@@ -882,73 +926,6 @@
     "description": "Short interface label: Chosen for raids"
   },
   "petStopRaid": "Clear raid choice",
-  "gearBonus": "+{bonus} strength",
-  "@gearBonus": {
-    "placeholders": {
-      "bonus": {
-        "type": "int"
-      }
-    }
-  },
-  "gearPriceText": "{price} points",
-  "@gearPriceText": {
-    "placeholders": {
-      "price": {
-        "type": "String"
-      }
-    }
-  },
-  "gearLevelRequired": "Requires level {level}",
-  "@gearLevelRequired": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "gearIfEquipped": "If equipped: {stat} {from} → {to}",
-  "@gearIfEquipped": {
-    "placeholders": {
-      "stat": {
-        "type": "String"
-      },
-      "from": {
-        "type": "int"
-      },
-      "to": {
-        "type": "int"
-      }
-    }
-  },
-  "gearBuy": "Buy",
-  "@gearBuy": {
-    "description": "Buys a pet item."
-  },
-  "gearEquip": "Equip",
-  "@gearEquip": {
-    "description": "Equips an owned pet item."
-  },
-  "gearUnequip": "Take off",
-  "@gearUnequip": {
-    "description": "Removes an equipped pet item."
-  },
-  "gearWornBy": "Worn by {name}",
-  "@gearWornBy": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "gearShortfallText": "Need {shortfall} more points",
-  "@gearShortfallText": {
-    "placeholders": {
-      "shortfall": {
-        "type": "String"
-      }
-    }
-  },
-  "gearBuyFailed": "Could not save. Points were not spent.",
   "gardenGuardLabel": "{name} guards the garden. Defense {power}",
   "@gardenGuardLabel": {
     "placeholders": {
@@ -1118,6 +1095,45 @@
   },
   "produceSeedForText": "Produce a seed · {price} points",
   "@produceSeedForText": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "yardSeedOfferText": "Produce\na seed\n{price}",
+  "@yardSeedOfferText": {
+    "description": "Square button that starts seed production. Price is on its own line.",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "yardSeedTimerText": "Seed\n{time}",
+  "@yardSeedTimerText": {
+    "description": "Square button while a seed is being produced. Time is mm:ss.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "yardGrowPlant": "Grow a plant",
+  "@yardGrowPlant": {
+    "description": "Square button that opens a garden bed to plant a seed."
+  },
+  "watchAdHarvest": "Watch ad · collect now",
+  "@watchAdHarvest": {
+    "description": "Optional rewarded ad that harvests one growing plant immediately. Offered once per day beside the points speed-up."
+  },
+  "plantAdUsed": "Already collected with an ad today",
+  "@plantAdUsed": {
+    "description": "Shown if the once-a-day garden ad harvest was already used."
+  },
+  "speedUpForText": "Speed up · {price} points",
+  "@speedUpForText": {
+    "description": "Button that finishes the remaining seed or plant timer for a point price.",
     "placeholders": {
       "price": {
         "type": "String"
@@ -1374,6 +1390,14 @@
   "languageThai": "ไทย",
   "@languageThai": {
     "description": "Language name shown in the picker. Stays Thai in every locale."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language name shown in the picker. Stays German in every locale."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language name shown in the picker. Stays Ukrainian in every locale."
   },
   "challengeCompactTower": "Tower: clear every layer",
   "@challengeCompactTower": {
@@ -1715,14 +1739,6 @@
   "petStatDefense": "Defense",
   "@petStatDefense": {
     "description": "Defense stat name."
-  },
-  "gearSlotMain": "Main item",
-  "@gearSlotMain": {
-    "description": "Primary gear slot."
-  },
-  "gearSlotAccessory": "Accessory",
-  "@gearSlotAccessory": {
-    "description": "Secondary gear slot."
   },
   "growthSown": "Seed planted",
   "@growthSown": {
@@ -2093,18 +2109,6 @@
       }
     }
   },
-  "gearOfferText": "{role} · {slot}",
-  "@gearOfferText": {
-    "description": "Gear shop line joining the role and the slot.",
-    "placeholders": {
-      "role": {
-        "type": "String"
-      },
-      "slot": {
-        "type": "String"
-      }
-    }
-  },
   "petBadgeText": "{role}, {level}",
   "@petBadgeText": {
     "description": "Compact pet badge joining role and level.",
@@ -2364,54 +2368,6 @@
   "familyWinter": "Winter",
   "@familyWinter": {
     "description": "Season on a tile."
-  },
-  "gearAttackerMain1": "Silk Sash",
-  "@gearAttackerMain1": {
-    "description": "Pet item name for id attacker_main_1."
-  },
-  "gearAttackerMain2": "Night Claw",
-  "@gearAttackerMain2": {
-    "description": "Pet item name for id attacker_main_2."
-  },
-  "gearAttackerMain3": "Raid Lantern",
-  "@gearAttackerMain3": {
-    "description": "Pet item name for id attacker_main_3."
-  },
-  "gearAttackerAccessory1": "Scout Bell",
-  "@gearAttackerAccessory1": {
-    "description": "Pet item name for id attacker_accessory_1."
-  },
-  "gearAttackerAccessory2": "Prowl Pouch",
-  "@gearAttackerAccessory2": {
-    "description": "Pet item name for id attacker_accessory_2."
-  },
-  "gearAttackerAccessory3": "Moon Charm",
-  "@gearAttackerAccessory3": {
-    "description": "Pet item name for id attacker_accessory_3."
-  },
-  "gearDefenderMain1": "Padded Vest",
-  "@gearDefenderMain1": {
-    "description": "Pet item name for id defender_main_1."
-  },
-  "gearDefenderMain2": "Guard Vest",
-  "@gearDefenderMain2": {
-    "description": "Pet item name for id defender_main_2."
-  },
-  "gearDefenderMain3": "Lantern Plate",
-  "@gearDefenderMain3": {
-    "description": "Pet item name for id defender_main_3."
-  },
-  "gearDefenderAccessory1": "Leather Collar",
-  "@gearDefenderAccessory1": {
-    "description": "Pet item name for id defender_accessory_1."
-  },
-  "gearDefenderAccessory2": "Watch Band",
-  "@gearDefenderAccessory2": {
-    "description": "Pet item name for id defender_accessory_2."
-  },
-  "gearDefenderAccessory3": "Gate Charm",
-  "@gearDefenderAccessory3": {
-    "description": "Pet item name for id defender_accessory_3."
   },
   "storyCampaign0": "Sprout",
   "@storyCampaign0": {
@@ -3604,5 +3560,769 @@
   "petItemCampfire": "Campfire",
   "@petItemCampfire": {
     "description": "Collectible name for campfire."
-  }
+  },
+  "neighborsTitle": "Neighbors",
+  "neighborsClose": "Close",
+  "neighborsTabAll": "All players",
+  "neighborsTabSaved": "Favorites",
+  "neighborsSearchHint": "Search by the start of a name",
+  "neighborsForYou": "For you",
+  "neighborsUpdates": "{count} updates",
+  "@neighborsUpdates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsShowLess": "Show less",
+  "neighborsEmptySaved": "People you save for later appear here.",
+  "neighborsBrowsePlayers": "Browse all players",
+  "neighborsEmptySearch": "No name starts with this.",
+  "neighborsEmptyPlayers": "No other players are in this list.",
+  "neighborsOffline": "No connection. Previously loaded players stay here.",
+  "neighborsLoadFailed": "Could not load players.",
+  "neighborsRetry": "Try again",
+  "neighborsLoading": "Loading players",
+  "neighborsLoadingMore": "Loading more players",
+  "neighborsLevel": "level {level}",
+  "@neighborsLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsAdd": "Add to favorites",
+  "neighborsRemove": "Remove from favorites",
+  "neighborsSaved": "{name} is in Favorites.",
+  "@neighborsSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRemoved": "{name} was removed from Favorites.",
+  "@neighborsRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsFindAgain": "Find them in Favorites",
+  "neighborsBack": "Back to the list",
+  "neighborsSavedHint": "Save this player to find them again in Favorites.",
+  "neighborsSignalAsksHelp": "Asks for help",
+  "neighborsSignalSeeksDefense": "Looking for protection",
+  "neighborsSignalOffersCross": "Offers a cross",
+  "neighborsSignalAwaitsReply": "Waiting for a reply",
+  "neighborsSignalHelpedYou": "Helped you",
+  "neighborsUnseen": "{count} new",
+  "@neighborsUnseen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHistory": "Together",
+  "neighborsBlock": "Block",
+  "neighborsBlocked": "{name} is blocked and hidden.",
+  "@neighborsBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsWaiting": "Waiting for a reply",
+  "neighborsUnavailable": "This action is not available.",
+  "neighborsFailed": "This did not go through. You can try again.",
+  "neighborsEnded": "This offer has ended.",
+  "neighborsDeclined": "This offer was declined.",
+  "neighborsCancelled": "This offer was cancelled.",
+  "neighborsInProgress": "Working on it",
+  "neighborsDone": "Finished",
+  "neighborsReply": "Reply",
+  "neighborsViewOffer": "View the offer",
+  "neighborsPeaceful": "Peaceful actions",
+  "neighborsAttackSection": "Attack",
+  "neighborsAttackExplain": "This starts an attack on this player.",
+  "neighborsConfirm": "Confirm",
+  "neighborsThank": "Say thanks",
+  "neighborsThankSent": "Thanks sent to {name}.",
+  "@neighborsThankSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOfferAgain": "Offer again",
+  "neighborsCost": "This uses: {cost}",
+  "@neighborsCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOutcome": "After you confirm: {outcome}",
+  "@neighborsOutcome": {
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsHelpAction": "Help",
+  "neighborsDefenseAction": "Protect",
+  "neighborsCrossDecline": "Decline",
+  "neighborsUsesPlant": "Plant: {plant}",
+  "@neighborsUsesPlant": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsPlantStays": "This plant stays with its owner.",
+  "neighborsPlantLeaves": "This plant is used up.",
+  "neighborsMemoryHelped": "{name} helped your plant.",
+  "@neighborsMemoryHelped": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryDefended": "{name}'s pet protected the garden.",
+  "@neighborsMemoryDefended": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryCrossed": "You and {name} received a new plant.",
+  "@neighborsMemoryCrossed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryThanked": "You thanked {name}.",
+  "@neighborsMemoryThanked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryRaid": "Attack report with {name}.",
+  "@neighborsMemoryRaid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsReasonUnsupported": "This shared action is not available yet.",
+  "neighborsReasonNotAllowed": "This action is not available for this player.",
+  "neighborsReasonMissingPet": "A protecting pet is needed.",
+  "neighborsReasonMissingPlant": "The plant for this action is needed.",
+  "neighborsProtector": "Protector: {name}",
+  "@neighborsProtector": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsUntil": "Until {time}",
+  "@neighborsUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsAttackPower": "Attack {value}",
+  "@neighborsAttackPower": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsDefensePower": "Defense {value}",
+  "@neighborsDefensePower": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsLoot": "Possible essence: {count}",
+  "@neighborsLoot": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showcaseTitle": "Plant showcase",
+  "showcaseAll": "All plants",
+  "showcaseMine": "My plants",
+  "showcaseManage": "Display my plants",
+  "showcaseRefresh": "Refresh showcase",
+  "showcaseIntro": "Discover plants grown by other players. Each card shows its owner.",
+  "showcaseMyIntro": "Choose a harvested plant to display with your player name. It stays in your inventory and cannot be fed to a pet until you remove it from display.",
+  "showcaseEmpty": "No plants on display yet. You can add the first one.",
+  "showcaseChoose": "Choose a plant",
+  "showcaseNoPlants": "Harvest a plant from your garden to put it on display.",
+  "showcasePublish": "Put on display",
+  "showcaseWithdraw": "Remove from display",
+  "showcasePublished": "On public display",
+  "showcasePrivate": "Only you can see this plant",
+  "showcaseUnconfirmed": "Publication not confirmed. Retry or remove it from display.",
+  "showcasePublishedNotice": "Your plant is now on public display.",
+  "showcaseRemovedNotice": "Plant removed from display. You can use it again.",
+  "showcaseUnavailable": "The online showcase is unavailable. Your plants are still here.",
+  "showcaseLoadFailed": "Could not refresh the showcase. Check your connection and try again.",
+  "showcaseOperationFailed": "Could not confirm the action. Your plant is protected; retry when connected.",
+  "showcaseMissingLocal": "This published plant is not in this device’s inventory.",
+  "showcaseMore": "Load more plants",
+  "showcaseSpecimen": "Plant {number}",
+  "showcaseFeedLocked": "Plants on display cannot be fed to pets. Remove them from the showcase first.",
+  "@showcaseSpecimen": {
+    "description": "Identifies a harvested plant in the player's inventory.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "crossOpen": "Cross plants",
+  "@crossOpen": {
+    "description": "Short interface label: Cross plants"
+  },
+  "crossTitle": "Cross plants",
+  "@crossTitle": {
+    "description": "Short interface label: Cross plants"
+  },
+  "crossNeedTwo": "Choose two harvested plants.",
+  "crossAimCombat": "Combat feed",
+  "@crossAimCombat": {
+    "description": "Short interface label: Combat feed"
+  },
+  "crossAimGarden": "Richer garden",
+  "@crossAimGarden": {
+    "description": "Short interface label: Richer garden"
+  },
+  "crossAimSeeds": "Choose a seed",
+  "@crossAimSeeds": {
+    "description": "Short interface label: Choose a seed"
+  },
+  "crossOdds": "Ordinary {ordinary}%. Stronger {raised}%. Rare {rare}%.",
+  "@crossOdds": {
+    "placeholders": {
+      "ordinary": {
+        "type": "int"
+      },
+      "raised": {
+        "type": "int"
+      },
+      "rare": {
+        "type": "int"
+      }
+    }
+  },
+  "crossConfirm": "Cross",
+  "@crossConfirm": {
+    "description": "Short interface label: Cross"
+  },
+  "crossFailed": "The cross could not be saved. Try again.",
+  "crossListed": "Take a plant off the showcase before crossing it.",
+  "crossWaiting": "Finish the current cross first.",
+  "crossChooseTrait": "Choose attack or defense for this feed.",
+  "crossAttack": "Attack",
+  "@crossAttack": {
+    "description": "Short interface label: Attack"
+  },
+  "crossDefense": "Defense",
+  "@crossDefense": {
+    "description": "Short interface label: Defense"
+  },
+  "crossChooseSpecies": "Choose the seed.",
+  "crossOrdinary": "The cross stayed ordinary. An ordinary seed was added.",
+  "crossGranted": "The seed from the cross is in storage.",
+  "crossTraitAttack": "Attack feed",
+  "crossTraitDefense": "Defense feed",
+  "crossTraitBloom": "Grows faster",
+  "plantOriginCross": "Origin: cross",
+  "neighborsActions": "Actions",
+  "neighborsActionMessage": "Send a message",
+  "neighborsActionDefend": "Protect",
+  "neighborsActionCross": "Offer a cross",
+  "neighborsActionRaid": "Attack",
+  "neighborsActionsOffline": "Actions with players need an internet connection.",
+  "neighborsNeedGuard": "Assign a guarding pet in the pet yard first.",
+  "neighborsNeedRaider": "Assign a raiding pet in the pet yard first.",
+  "neighborsNeedPlant": "You need a harvested plant in storage.",
+  "neighborsChoosePhrase": "Choose a phrase",
+  "neighborsChoosePlant": "Choose a plant to give",
+  "neighborsSend": "Send",
+  "neighborsSent": "Sent to {name}.",
+  "@neighborsSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsAlreadyOpen": "You already have an open request of this kind with this player.",
+  "neighborsRequestClosed": "This request is already closed.",
+  "neighborsSendFailed": "This did not go through. Check the connection and try again.",
+  "neighborsDefendExplain": "After {name} accepts, your pet helps guard their yard for 24 hours. Defense {value}.",
+  "@neighborsDefendExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidExplain": "{name} has 24 hours to answer with a guard pet. The yard holds only if the guard is stronger than your attack {value}. Otherwise one of their plants burns and you take another.",
+  "@neighborsRaidExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsCrossExplain": "Each of you gives one plant and gets one seed of the result. Your plant is spent only when you take the seed.",
+  "neighborsMessages": "Messages and requests",
+  "neighborsPhraseHello": "Hi, neighbor!",
+  "neighborsPhraseGoodLuck": "Good luck!",
+  "neighborsPhraseThanks": "Thank you!",
+  "neighborsPhraseNiceGarden": "Lovely garden!",
+  "neighborsPhraseLetsCross": "Let's grow something rare together.",
+  "neighborsPhraseIWillGuard": "I'll keep an eye on your yard.",
+  "neighborsPhraseReadyForRaid": "Ready? I'm coming for your yard!",
+  "neighborsPhraseWellPlayed": "Well played!",
+  "neighborsInMessage": "{name} wrote to you",
+  "@neighborsInMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsInDefense": "{name} offers to guard your yard for 24 hours. Defense {value}.",
+  "@neighborsInDefense": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsInCross": "{name} offers to cross their {plant} with one of your plants.",
+  "@neighborsInCross": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsInRaid": "{name} is raiding your yard. Attack {value}.",
+  "@neighborsInRaid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsOutMessage": "You wrote",
+  "neighborsOutDefense": "You offered protection. Defense {value}.",
+  "@neighborsOutDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsOutCross": "You offered your {plant} for a cross.",
+  "@neighborsOutCross": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOutRaid": "You raided this yard. Attack {value}.",
+  "@neighborsOutRaid": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsQuote": "{name}: “{text}”",
+  "@neighborsQuote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsYou": "You",
+  "neighborsAcceptDefense": "Accept protection",
+  "neighborsChooseCrossPlant": "Choose your plant",
+  "neighborsRepel": "Defend the yard",
+  "neighborsCancelRequest": "Cancel request",
+  "neighborsClaimSeed": "Take the seed",
+  "neighborsRaidWon": "The raid succeeded: attack {attack} against defense {defense}.",
+  "@neighborsRaidWon": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidRepelled": "The yard held: attack {attack} against defense {defense}.",
+  "@neighborsRaidRepelled": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsGuarding": "Protection is active until {time}.",
+  "@neighborsGuarding": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsGuardEnded": "Protection has ended.",
+  "neighborsCrossResult": "Cross result: {plant} seed.",
+  "@neighborsCrossResult": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsSeedClaimed": "The seed is in your seed storage.",
+  "neighborsSeedMissing": "Put a {plant} in storage to take the seed.",
+  "@neighborsSeedMissing": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsYourDefense": "Your yard defense: {value}",
+  "@neighborsYourDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsReplied": "Reply sent.",
+  "neighborsSignalMessage": "New message",
+  "neighborsSignalDefense": "Offers protection",
+  "neighborsSignalRaid": "Raiding your yard",
+  "neighborsSignalResult": "Reply received",
+  "socialFriends": "Friends",
+  "socialFriend": "You are friends",
+  "socialFriendsEmpty": "No friends yet. Open a neighbor’s card and invite them. They appear here after accepting.",
+  "socialIncoming": "Friend invitation",
+  "socialWaiting": "Waiting for acceptance",
+  "socialUnavailable": "Could not connect. Check your connection and try again.",
+  "socialChat": "Conversation",
+  "socialRemoveFriend": "Remove friend",
+  "socialFriendConsent": "Accepting friendship lets both of you send personal messages.",
+  "socialAccept": "Accept friendship",
+  "socialInvite": "Invite as friend",
+  "socialInvitesClosed": "This player is not accepting friend invitations.",
+  "socialMyProfile": "My profile",
+  "socialProfilePublic": "These optional details are visible to other players.",
+  "socialAbout": "About me",
+  "socialLanguage": "Languages for conversation",
+  "socialInterests": "Interests",
+  "socialGoal": "What I am looking for in the game",
+  "socialPicAboutFriendly": "Friendly",
+  "socialPicAboutCalm": "Calm",
+  "socialPicAboutCheerful": "Cheerful",
+  "socialPicAboutGentle": "Gentle",
+  "socialPicAboutNight": "Evenings",
+  "socialPicAboutCurious": "Curious",
+  "socialPicInterestGarden": "Garden",
+  "socialPicInterestPets": "Pets",
+  "socialPicInterestMahjong": "Mahjong",
+  "socialPicInterestCourtyard": "Courtyard",
+  "socialPicInterestSeeds": "Seeds",
+  "socialPicInterestStars": "Stars",
+  "socialPicGoalFlower": "A rare flower",
+  "socialPicGoalHouse": "A finer house",
+  "socialPicGoalFriends": "Friends",
+  "socialPicGoalLevels": "Clearing levels",
+  "socialPicGoalChat": "A conversation",
+  "socialPicGoalCross": "Crossbreeding",
+  "socialOpenInvites": "Accept new friend invitations",
+  "socialSave": "Save profile",
+  "socialProfileHeading": "Profile",
+  "socialNotChosen": "Not chosen",
+  "socialInvitesOpen": "Accepts friend invitations",
+  "socialBadgesTitle": "Badges in the neighbor list",
+  "socialBadgesExplain": "Spend points to show your avatar and profile badges next to your name for a while.",
+  "socialBadgesActive": "Visible to neighbors until {time}",
+  "@socialBadgesActive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "socialBadgesOff": "Right now the list shows only your name.",
+  "socialBadgesOffer": "{days, plural, one{1 day} other{{days} days}} · {price} points",
+  "@socialBadgesOffer": {
+    "description": "Button that buys showing profile badges in the neighbor list for a number of days.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "socialBadgesTooLong": "You can extend the display up to 30 days ahead.",
+  "socialBadgesFailed": "Couldn't turn on badges. Your points were returned.",
+  "socialBadgesNotListed": "You're not in the neighbor list yet. Check your connection and try again. No points were spent.",
+  "socialChatEmpty": "Say hello or thank your friend for helping!",
+  "socialReportMessage": "Report message",
+  "socialOlderMessages": "Earlier messages",
+  "socialSendFailed": "Message was not confirmed. Retry, or return to the profile to check your friendship.",
+  "socialMessageHint": "Write a message",
+  "socialGrownTogether": "Grown together with",
+  "socialHistoryEmpty": "Your shared moments will appear here.",
+  "socialHistory": "Shared history",
+  "socialProfileReport": "Report profile",
+  "neighborsRaidDeadline": "If there is no answer by {time}, the assigned guard defends on its own.",
+  "@neighborsRaidDeadline": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidDefendTitle": "Who defends the yard?",
+  "neighborsRaidDefendRule": "Attack {value}. Only a stronger defender holds the yard.",
+  "@neighborsRaidDefendRule": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidOptionOwn": "{pet} · defense {value}",
+  "@neighborsRaidOptionOwn": {
+    "placeholders": {
+      "pet": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidOptionGuard": "Guard from {name} · defense {value}",
+  "@neighborsRaidOptionGuard": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidOptionHelp": "{name} answered the call · defense {value}",
+  "@neighborsRaidOptionHelp": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidOptionNone": "Do not defend",
+  "neighborsRaidHolds": "Holds",
+  "neighborsRaidFalls": "Too weak",
+  "neighborsRaidNoDefenders": "You have no guard pets and nobody has answered your call yet. Without a defender the raid succeeds.",
+  "neighborsRaidChooseLoss": "The yard will fall. Choose which plant burns; the raider takes a random one of the rest.",
+  "neighborsRaidOnlyPlant": "Your only plant, {plant}, goes to the raider.",
+  "@neighborsRaidOnlyPlant": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidEmptyStorage": "Your storage is empty, so the raider leaves with nothing.",
+  "neighborsRaidAcceptLoss": "Accept the loss",
+  "neighborsRaidDestroyed": "Burned: {plant}.",
+  "@neighborsRaidDestroyed": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidStolen": "Taken by the raider: {plant}.",
+  "@neighborsRaidStolen": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidLoot": "Your loot: {plant}.",
+  "@neighborsRaidLoot": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidNoLoot": "There was nothing in storage to take.",
+  "neighborsRaidAutoDefended": "Nobody answered in time, so the assigned guard defended.",
+  "neighborsRaidDefendedBy": "Defended by a pet from {name}.",
+  "@neighborsRaidDefendedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidTakeLoot": "Take the plant",
+  "neighborsRaidLootTaken": "{plant} is in your storage.",
+  "@neighborsRaidLootTaken": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRaidTooSoon": "This yard is resting after a raid. Try again later.",
+  "neighborsHelpTitle": "Calls for help",
+  "neighborsHelpExplain": "Friends see your call for free. A call to all players costs {price} points. Answering guards appear in the defender list.",
+  "@neighborsHelpExplain": {
+    "placeholders": {
+      "price": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHelpAskFriends": "Ask friends for help",
+  "neighborsHelpAskEveryone": "Ask all players · {price} points",
+  "@neighborsHelpAskEveryone": {
+    "placeholders": {
+      "price": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHelpAskedFriends": "Your friends can see the call for help.",
+  "neighborsHelpAskedEveryone": "All players can see the call for help.",
+  "neighborsHelpNoFriends": "You have no friends to ask yet.",
+  "neighborsHelpArrived": "Defenders answered: {count}",
+  "@neighborsHelpArrived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHelpFailed": "The call for help was not sent. Any points spent were returned.",
+  "neighborsHelpCallLine": "{name} is under attack · attack {attack}",
+  "@neighborsHelpCallLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "attack": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHelpUntil": "Open until {time}",
+  "@neighborsHelpUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsHelpSend": "Send my guard · defense {value}",
+  "@neighborsHelpSend": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHelpSent": "Your guard is ready to defend {name}.",
+  "@neighborsHelpSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsHelpOffered": "Your guard is offered.",
+  "neighborsHelpNeedGuard": "Assign a guarding pet to help.",
+  "plantOriginRaid": "Taken in a raid",
+  "deleteAccount": "Delete account and data",
+  "@deleteAccount": {
+    "description": "Settings action that deletes the anonymous account and local data."
+  },
+  "deleteAccountTitle": "Delete account and data?",
+  "deleteAccountBody": "This erases the courtyard, progress, and settings on this device. If this device is signed in, it also deletes that anonymous account: the leaderboard entry, profile, friendships, messages, neighbor actions, calls for help, and showcase cards. A shared conversation or request is removed for the other player too. Reports sent by other players stay until moderation finishes. This cannot be undone.",
+  "deleteAccountConfirm": "Delete",
+  "deleteAccountFailed": "Could not finish deletion. Check the connection and try again, or email myevidentsuccess@gmail.com.",
+  "deleteAccountWorking": "Deleting…"
 }

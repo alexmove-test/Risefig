@@ -16,7 +16,7 @@ void main() {
         jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
             as Map<String, dynamic>;
     final keys = en.keys.where((key) => !key.startsWith('@'));
-    for (final code in ['ru', 'th']) {
+    for (final code in ['ru', 'uk', 'th', 'de']) {
       final translated =
           jsonDecode(File('lib/l10n/app_$code.arb').readAsStringSync())
               as Map<String, dynamic>;
@@ -57,14 +57,20 @@ void main() {
     expect(again.preference, LanguagePref.system);
   });
 
-  test('unsupported and stored Ukrainian choices fall back to English', () async {
+  test('a stored Ukrainian choice stays Ukrainian', () async {
     SharedPreferences.setMockInitialValues({'app.languagePref': 'uk'});
     final store = await LocaleStore.open();
-    expect(store.preference, LanguagePref.en);
-    expect(LocaleStore.resolve(store.preference, 'uk'), 'en');
-    expect(LocaleStore.resolve(LanguagePref.system, 'de'), 'en');
-    expect(LocaleStore.resolve(LanguagePref.system, 'uk'), 'en');
-    expect(LocaleStore.resolve(LanguagePref.system, 'th'), 'th');
+    expect(store.preference, LanguagePref.uk);
+    expect(LocaleStore.resolve(store.preference, 'en'), 'uk');
+    expect(LocaleStore.resolve(LanguagePref.system, 'uk'), 'uk');
+    expect(LocaleStore.resolve(LanguagePref.system, 'fr'), 'en');
+  });
+
+  test('a stored German choice stays German', () async {
+    SharedPreferences.setMockInitialValues({'app.languagePref': 'de'});
+    final store = await LocaleStore.open();
+    expect(store.preference, LanguagePref.de);
+    expect(LocaleStore.resolve(store.preference, 'en'), 'de');
   });
 
   test('a stored Thai choice stays Thai', () async {
@@ -145,6 +151,14 @@ void main() {
     await controller.setPreference(LanguagePref.th);
     await tester.pumpAndSettle();
     expect(find.text('ตั้งค่า'), findsOneWidget);
+
+    await controller.setPreference(LanguagePref.de);
+    await tester.pumpAndSettle();
+    expect(find.text('Einstellungen'), findsOneWidget);
+
+    await controller.setPreference(LanguagePref.uk);
+    await tester.pumpAndSettle();
+    expect(find.text('Налаштування'), findsOneWidget);
   });
 
   testWidgets('an unsupported locale resolves to English', (tester) async {

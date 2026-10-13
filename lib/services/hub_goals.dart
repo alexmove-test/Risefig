@@ -1,6 +1,7 @@
 import '../models/house_upgrade.dart';
 import '../models/hub_goal.dart';
 import '../models/levels.dart';
+import '../models/meta_features.dart';
 import '../models/plot_kind.dart';
 import '../models/weekly_quests.dart';
 import 'progress_store.dart';
@@ -16,6 +17,8 @@ abstract final class HubGoals {
     DateTime? now,
     int houseState = HouseUpgrade.firstState,
     int pointsBalance = 0,
+    bool featureUnlocks = false,
+    bool house = true,
   }) {
     HubGoal? best;
 
@@ -24,12 +27,27 @@ abstract final class HubGoals {
       if (best == null || next.nearerThan(best!)) best = next;
     }
 
+    final cleared = MetaFeatures.clearedFrom(progress.maxUnlocked);
+    if (featureUnlocks) consider(_featureUnlock(cleared));
     consider(_plotUnlock(progress, hasPet));
-    consider(_houseUpgrade(houseState, pointsBalance));
+    if (house &&
+        (!featureUnlocks || MetaFeatures.isOpen(MetaFeature.house, cleared))) {
+      consider(_houseUpgrade(houseState, pointsBalance));
+    }
     for (final quest in quests) {
       consider(_quest(quest));
     }
     return best;
+  }
+
+  static HubGoal? _featureUnlock(int cleared) {
+    final next = MetaFeatures.nextLocked(cleared);
+    if (next == null) return null;
+    return HubGoal(
+      kind: HubGoalKind.featureUnlock,
+      remaining: next.remaining,
+      feature: next.feature,
+    );
   }
 
   /// Старые четыре лота на хабе не обещаем: пруд и гостевой дом — не отдельные

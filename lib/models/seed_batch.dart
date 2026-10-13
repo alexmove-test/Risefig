@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'plant_cross.dart';
 import 'seed_catalog.dart';
 
 /// Одна партия дома. Вид выбран при запуске и не пересчитывается.
@@ -37,6 +38,19 @@ class SeedBatch {
     if (total <= 0) return 1;
     final done = now.toUtc().difference(startedAt).inMilliseconds;
     return (done / total).clamp(0.0, 1.0);
+  }
+
+  SeedBatch copyWith({DateTime? readyAt}) {
+    return SeedBatch(
+      id: id,
+      startedAt: startedAt,
+      readyAt: readyAt ?? this.readyAt,
+      houseLevel: houseLevel,
+      cost: cost,
+      species: species,
+      power: power,
+      rulesVersion: rulesVersion,
+    );
   }
 
   Map<String, Object> toJson() => {
@@ -88,6 +102,40 @@ class SeedBatch {
 }
 
 /// Отдельное семя. Позже его можно посадить или отдать на скрещивание.
+class CrossLineage {
+  const CrossLineage({
+    required this.partnerId,
+    required this.partnerName,
+    required this.parentSpecies,
+    required this.ownPlantId,
+  });
+  final String partnerId, partnerName, ownPlantId;
+  final List<String> parentSpecies;
+  Map<String, Object> toJson() => {
+    'partnerId': partnerId,
+    'partnerName': partnerName,
+    'parentSpecies': parentSpecies,
+    'ownPlantId': ownPlantId,
+  };
+  static CrossLineage? fromJson(Object? raw) {
+    if (raw is! Map ||
+        raw['partnerId'] is! String ||
+        raw['partnerName'] is! String ||
+        raw['ownPlantId'] is! String ||
+        raw['parentSpecies'] is! List) {
+      return null;
+    }
+    return CrossLineage(
+      partnerId: raw['partnerId'],
+      partnerName: raw['partnerName'],
+      ownPlantId: raw['ownPlantId'],
+      parentSpecies: (raw['parentSpecies'] as List)
+          .whereType<String>()
+          .toList(),
+    );
+  }
+}
+
 class SeedInstance {
   const SeedInstance({
     required this.id,
@@ -98,6 +146,8 @@ class SeedInstance {
     required this.source,
     required this.batchId,
     this.variant,
+    this.trait,
+    this.lineage,
   });
 
   final String id;
@@ -111,6 +161,10 @@ class SeedInstance {
   /// Внешний вариант, если он уже есть у экземпляра. Новые мутации не выдаются.
   final String? variant;
 
+  /// Атака, защита или быстрый рост. Корм класса живёт отдельно.
+  final PlantTrait? trait;
+  final CrossLineage? lineage;
+
   Map<String, Object> toJson() => {
     'id': id,
     'species': species.name,
@@ -120,6 +174,8 @@ class SeedInstance {
     'source': source,
     'batchId': batchId,
     'variant': ?variant,
+    'trait': ?trait?.name,
+    'lineage': ?lineage?.toJson(),
   };
 
   static SeedInstance? fromJson(Object? raw) {
@@ -132,6 +188,7 @@ class SeedInstance {
     final source = raw['source'];
     final batchId = raw['batchId'];
     final variantRaw = raw['variant'];
+    final traitRaw = raw['trait'];
     if (id is! String ||
         id.isEmpty ||
         speciesName is! String ||
@@ -145,6 +202,7 @@ class SeedInstance {
       return null;
     }
     if (variantRaw != null && variantRaw is! String) return null;
+    if (traitRaw != null && plantTraitNamed(traitRaw) == null) return null;
     final species = _species(speciesName);
     if (species == null) return null;
     final variant = variantRaw is String && variantRaw.isNotEmpty
@@ -159,6 +217,8 @@ class SeedInstance {
       source: source,
       batchId: batchId,
       variant: variant,
+      trait: plantTraitNamed(traitRaw),
+      lineage: CrossLineage.fromJson(raw['lineage']),
     );
   }
 }
@@ -267,7 +327,8 @@ class SeedSnapshot {
     for (var i = 0; i < a.length; i++) {
       if (a[i].id != b[i].id ||
           a[i].species != b[i].species ||
-          a[i].power != b[i].power) {
+          a[i].power != b[i].power ||
+          a[i].trait != b[i].trait) {
         return false;
       }
     }
@@ -293,6 +354,8 @@ class SeedStack {
 
   int get houseLevel => newest.houseLevel;
 
+  PlantTrait? get trait => newest.trait;
+
   DateTime get receivedAt => newest.createdAt;
 }
 
@@ -302,7 +365,8 @@ List<SeedStack> stackSeeds(
 }) {
   final groups = <String, List<SeedInstance>>{};
   for (final seed in seeds) {
-    final key = '${seed.species.name}#${seed.power}';
+    final key =
+        '${seed.species.name}#${seed.power}#${seed.trait?.name ?? ''}#${seed.lineage?.partnerId ?? ''}';
     groups.putIfAbsent(key, () => []).add(seed);
   }
   final stacks = [
@@ -389,6 +453,47 @@ class SeedClaimResult {
     required int balance,
     required SeedSnapshot seeds,
   }) : this(status: SeedClaimStatus.failed, balance: balance, seeds: seeds);
+}
+
+enum SeedSpeedStatus {
+  finished,
+  insufficient,
+  idle,
+  ready,
+  unavailable,
+  failed,
+}
+
+class SeedSpeedResult {
+  const SeedSpeedResult({
+    required this.status,
+    required this.balance,
+    required this.seeds,
+    this.cost = 0,
+    this.shortfall = 0,
+  });
+
+  final SeedSpeedStatus status;
+  final int balance;
+  final SeedSnapshot seeds;
+  final int cost;
+  final int shortfall;
+
+  bool get finished => status == SeedSpeedStatus.finished;
+
+  const SeedSpeedResult.unavailable({
+    required int balance,
+    required SeedSnapshot seeds,
+  }) : this(
+         status: SeedSpeedStatus.unavailable,
+         balance: balance,
+         seeds: seeds,
+       );
+
+  const SeedSpeedResult.failed({
+    required int balance,
+    required SeedSnapshot seeds,
+  }) : this(status: SeedSpeedStatus.failed, balance: balance, seeds: seeds);
 }
 
 SeedSpecies? _species(String name) {

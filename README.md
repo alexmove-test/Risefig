@@ -1,4 +1,4 @@
-# Mahjong Rise
+# Rise Fig
 
 Tile matching puzzle game built with Flutter.
 
@@ -68,11 +68,31 @@ banner. Later series keep offering remaining courtyard objects, table looks, and
 unfinished adventures. Progress and choices are stored under `courtyard.rewards.v1`.
 Existing completed campaign levels are credited once when the feature first loads.
 
+## Plant showcase
+
+Neighbors → Plant showcase opens a full-screen public plant list. Players can
+display individual harvested plants from My plants, or enter from the warehouse,
+and withdraw them later. Displayed specimens cannot be fed to pets. Publication
+requires Firebase confirmation; failed requests remain retryable without duplicates.
+See [plant-showcase.md](docs/plant-showcase.md) for deployment and test details.
+Crossbreeding spends two harvested plants from the warehouse for one seed. A stronger or rare result is a chance, not a promise. Plant transfers are not implemented by the showcase.
+
+## Friends and conversations
+
+Neighbors now includes a Friends tab, separate from personal saved acquaintances.
+Players can edit an optional public profile, invite a neighbor, and exchange private
+messages after the recipient accepts friendship. Server rules enforce consent and
+blocking. Accepted neighbor actions are kept in shared history, and crossbred plants
+retain their partner's identity through planting and harvesting.
+See [social-connections.md](docs/social-connections.md) for server rules, the required
+history index, tests, and the limits of the existing device-local plant economy.
+
 ## Localization
 
-English is the template. Russian and Thai are the other supported languages.
-Strings live in `lib/l10n/app_en.arb`, `lib/l10n/app_ru.arb`, and
-`lib/l10n/app_th.arb`. The app reads them through `AppLocalizations`.
+English is the template. Russian, Ukrainian, Thai, and German are the other
+supported languages. Strings live in `lib/l10n/app_en.arb`, `lib/l10n/app_ru.arb`,
+`lib/l10n/app_uk.arb`, `lib/l10n/app_th.arb`, and `lib/l10n/app_de.arb`. The app
+reads them through `AppLocalizations`.
 
 Add a string: put the same key in every ARB file. Use `{name}` placeholders and
 an `@key` block with types. For counts, write the whole phrase as an ICU plural
@@ -87,8 +107,9 @@ Missing translations are listed in `lib/l10n/untranslated_messages.txt`.
 Thai does not inflect plurals, so `one` and `other` use the same phrase. Thai
 letters fall back to the bundled Noto Sans Thai font.
 
+Ukrainian uses the same plural categories as Russian (`one`/`few`/`many`/`other`).
+
 Add a language: copy `app_en.arb` to `app_<code>.arb`, translate every key, and
 run generation again. The new locale is picked up from `supportedLocales`.
 Wire it in `LanguagePref` and the settings picker only after the file is
-complete. A partial Ukrainian draft is kept in `l10n_drafts/app_uk.arb` and is
-not a supported locale.
+complete.

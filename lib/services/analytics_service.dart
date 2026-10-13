@@ -6,6 +6,13 @@ import 'firebase_bootstrap.dart';
 abstract final class AnalyticsService {
   AnalyticsService._();
 
+  static Future<void> setCollectionEnabled(bool enabled) async {
+    if (!FirebaseBootstrap.enabled) return;
+    try {
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(enabled);
+    } catch (_) {}
+  }
+
   static Future<void> log(
     String name, [
     Map<String, Object>? parameters,

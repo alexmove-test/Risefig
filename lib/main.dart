@@ -3,15 +3,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'config/app_links.dart';
 import 'debug_agent_log.dart';
 import 'debug_boot_timer.dart';
 import 'package:mahjong/l10n/app_localizations.dart';
 
 import 'l10n/locale_controller.dart';
 import 'screens/level_select_screen.dart';
-import 'widgets/ads/banner_ad_slot.dart';
-import 'widgets/banner_hide_button.dart';
+import 'services/account_deletion.dart';
 import 'services/ad_bootstrap.dart';
 import 'services/banner_hide_controller.dart';
 import 'services/banner_hide_store.dart';
@@ -70,7 +71,8 @@ void main() async {
 }
 
 Future<void> _initServices() async {
-  await Future.wait([FirebaseBootstrap.init(), AdBootstrap.init()]);
+  await FirebaseBootstrap.init();
+  await AdBootstrap.init();
   unawaited(RewardedAdService.instance.preload());
   // #region agent log
   agentDbg(
@@ -110,20 +112,28 @@ class MahjongApp extends StatefulWidget {
 
 class _MahjongAppState extends State<MahjongApp> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
-  late final LocaleController _controller;
-  late final HapticController _haptic;
-  late final SfxController _sfx;
-  late final MusicController _music;
-  late final QModeController _qMode;
-  late final LockedTileDimController _lockedDim;
-  late final TableLookController _tableLook;
-  late final BannerHideController _bannerHide;
-  late final PointsController _points;
+  var _sessionKey = UniqueKey();
+  late LocaleController _controller;
+  late HapticController _haptic;
+  late SfxController _sfx;
+  late MusicController _music;
+  late QModeController _qMode;
+  late LockedTileDimController _lockedDim;
+  late TableLookController _tableLook;
+  late BannerHideController _bannerHide;
+  late PointsController _points;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _createControllers();
+    AppRestart.afterDataDeletion = _restartAfterDeletion;
+    unawaited(_music.init());
+    unawaited(_hydratePrefs());
+  }
+
+  void _createControllers() {
     _controller = LocaleController(
       LocaleStore.memory(),
       deviceLocale: WidgetsBinding.instance.platformDispatcher.locale,
@@ -137,8 +147,31 @@ class _MahjongAppState extends State<MahjongApp> with WidgetsBindingObserver {
     _bannerHide = BannerHideController(BannerHideStore.memory());
     _points = PointsController(PointsStore.memory());
     _controller.addListener(_onLocale);
+  }
+
+  void _releaseControllers() {
+    _controller.removeListener(_onLocale);
+    _controller.dispose();
+    _haptic.dispose();
+    _sfx.dispose();
+    _music.dispose();
+    _qMode.dispose();
+    _lockedDim.dispose();
+    _tableLook.dispose();
+    _bannerHide.dispose();
+    _points.dispose();
+  }
+
+  /// Drops in-memory progress so a deleted courtyard cannot be written back.
+  Future<void> _restartAfterDeletion() async {
+    _releaseControllers();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (!mounted) return;
+    _createControllers();
+    setState(() => _sessionKey = UniqueKey());
     unawaited(_music.init());
-    unawaited(_hydratePrefs());
+    await _hydratePrefs();
   }
 
   Future<void> _hydratePrefs() async {
@@ -178,17 +211,9 @@ class _MahjongAppState extends State<MahjongApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    AppRestart.afterDataDeletion = null;
     WidgetsBinding.instance.removeObserver(this);
-    _controller.removeListener(_onLocale);
-    _controller.dispose();
-    _haptic.dispose();
-    _sfx.dispose();
-    _music.dispose();
-    _qMode.dispose();
-    _lockedDim.dispose();
-    _tableLook.dispose();
-    _bannerHide.dispose();
-    _points.dispose();
+    _releaseControllers();
     super.dispose();
   }
 
@@ -228,61 +253,15 @@ class _MahjongAppState extends State<MahjongApp> with WidgetsBindingObserver {
                     child: PointsScope(
                       controller: _points,
                       child: MaterialApp(
+                        key: _sessionKey,
                         navigatorKey: _navigatorKey,
-                        title: 'Mahjong Rise',
+                        title: AppLinks.name,
                         locale: _controller.locale,
                         supportedLocales: AppLocalizations.supportedLocales,
                         localizationsDelegates:
                             AppLocalizations.localizationsDelegates,
                         localeResolutionCallback: (_, _) => _controller.locale,
                         debugShowCheckedModeBanner: false,
-                        builder: (context, child) {
-                          final media = MediaQuery.of(context);
-                          final hide = BannerHideScope.maybeOf(context);
-                          return ListenableBuilder(
-                            listenable: hide ?? const _IdleListenable(),
-                            builder: (context, _) {
-                              final offer =
-                                  hide != null &&
-                                  !AdBootstrap.simulation &&
-                                  !hide.isHidden;
-                              final lifted = media.removePadding(
-                                removeBottom: true,
-                              );
-                              return Column(
-                                children: [
-                                  Expanded(
-                                    child: MediaQuery(
-                                      data: lifted,
-                                      child: Stack(
-                                        children: [
-                                          child ?? const SizedBox.shrink(),
-                                          if (offer)
-                                            Positioned(
-                                              left: 0,
-                                              right: 0,
-                                              bottom: 14,
-                                              child: Center(
-                                                child: BannerHideButton(
-                                                  navigatorKey: _navigatorKey,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: media.padding.bottom,
-                                    ),
-                                    child: const BannerAdSlot(),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
                         theme: ThemeData(
                           colorScheme: ColorScheme.fromSeed(
                             seedColor: const Color(0xFF2F6B4F),
@@ -304,14 +283,4 @@ class _MahjongAppState extends State<MahjongApp> with WidgetsBindingObserver {
       ),
     );
   }
-}
-
-class _IdleListenable implements Listenable {
-  const _IdleListenable();
-
-  @override
-  void addListener(VoidCallback listener) {}
-
-  @override
-  void removeListener(VoidCallback listener) {}
 }

@@ -30,15 +30,17 @@ class SeedClassChance {
   ];
 }
 
-/// Источник экземпляра. Посадка и скрещивание появятся отдельными источниками.
+/// Источник экземпляра. Посадка копирует его с семени.
 abstract final class SeedSource {
   static const houseProduction = 'house_production';
+  static const cross = 'cross';
+  static const raid = 'raid';
 }
 
 /// Правила производства версии [rulesVersion].
 ///
 /// Срок дома, цена минуты, классы и корм живут только здесь.
-/// Платное ускорение, очередь и автозапуск в эту версию не входят.
+/// Очередь и автозапуск в эту версию не входят.
 abstract final class SeedCatalog {
   static const rulesVersion = 2;
 
@@ -52,6 +54,13 @@ abstract final class SeedCatalog {
   static int pointsFor(Duration duration) {
     final rounded = (duration.inSeconds / 60).round();
     return rounded < 1 ? 1 : rounded;
+  }
+
+  /// Цена того, чтобы закончить оставшееся время сразу.
+  /// Ноль — таймер уже истёк, и платить не за что.
+  static int speedUpCost(Duration remaining) {
+    if (remaining <= Duration.zero) return 0;
+    return pointsFor(remaining);
   }
 
   static int costForLevel(int houseLevel) =>

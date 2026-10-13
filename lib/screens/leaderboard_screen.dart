@@ -212,7 +212,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         scheme: 'mailto',
         path: AppLinks.supportEmail,
         queryParameters: {
-          'subject': 'Mahjong Rise name report',
+          'subject': '${AppLinks.name} name report',
           'body': 'Player id: ${entry.id}\nName: ${entry.name}',
         },
       );

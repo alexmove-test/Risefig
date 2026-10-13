@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../config/ad_config.dart';
 import 'analytics_service.dart';
+import 'firebase_bootstrap.dart';
 
 /// Инициализация AdMob (без падения приложения при ошибке).
 class AdBootstrap {
@@ -75,6 +76,7 @@ class AdBootstrap {
       initError = error.toString();
       _initFuture = null;
     } finally {
+      await applyAnalyticsConsent();
       initFinished = true;
       debugPrint(
         'AdBootstrap enabled=$enabled canRequest=$canRequest '
@@ -101,6 +103,31 @@ class AdBootstrap {
     return status != ConsentStatus.required;
   }
 
+  /// EEA/UK: only after the UMP form is accepted. Elsewhere: once consent is
+  /// not required. Unknown status stays off.
+  @visibleForTesting
+  static bool allowAnalytics({
+    required bool canRequestAds,
+    required ConsentStatus status,
+  }) {
+    if (status == ConsentStatus.required) return canRequestAds;
+    return status == ConsentStatus.obtained ||
+        status == ConsentStatus.notRequired;
+  }
+
+  static Future<void> applyAnalyticsConsent() async {
+    if (AdConfig.simulateAds || !FirebaseBootstrap.enabled) return;
+    var canRequest = false;
+    var status = ConsentStatus.unknown;
+    try {
+      canRequest = await ConsentInformation.instance.canRequestAds();
+      status = await ConsentInformation.instance.getConsentStatus();
+    } catch (_) {}
+    await AnalyticsService.setCollectionEnabled(
+      allowAnalytics(canRequestAds: canRequest, status: status),
+    );
+  }
+
   static String _clip(String value) =>
       value.length <= 99 ? value : value.substring(0, 99);
 
@@ -122,6 +149,7 @@ class AdBootstrap {
       await ConsentForm.showPrivacyOptionsForm((formError) {
         error = formError;
       });
+      await applyAnalyticsConsent();
       return error?.message;
     } catch (error) {
       return error.toString();

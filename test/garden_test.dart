@@ -9,6 +9,7 @@ import 'package:mahjong/models/seed_batch.dart';
 import 'package:mahjong/models/seed_catalog.dart';
 import 'package:mahjong/services/points_controller.dart';
 import 'package:mahjong/services/points_store.dart';
+import 'package:mahjong/services/rewarded_ad_service.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_world.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_estate.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_world_layout.dart';
@@ -58,31 +59,50 @@ void main() {
     );
   });
 
-  test('beds and the warehouse stay off the house, pets, pond and gifts', () {
-    final blocked = [
-      CourtyardWorldLayout.homeYard,
-      CourtyardWorldLayout.petYard,
-      CourtyardWorldLayout.pondYard,
-      CourtyardWorldLayout.seedBadge,
-      for (final reward in CourtyardReward.values)
-        CourtyardWorldLayout.rewardOf(reward),
-    ];
-    final plots = [
-      ...CourtyardWorldLayout.gardenBeds,
-      CourtyardWorldLayout.warehouse,
-    ];
-    for (final plot in plots) {
-      for (final other in blocked) {
-        expect(plot.overlaps(other), isFalse, reason: '$plot vs $other');
+  test(
+    'the garden is its own fenced place off the house, pets, pond and gifts',
+    () {
+      final plot = CourtyardWorldLayout.gardenPlot;
+      final warehouse = CourtyardWorldLayout.warehouse;
+      final blocked = [
+        CourtyardWorldLayout.homeYard,
+        CourtyardWorldLayout.petYard,
+        CourtyardWorldLayout.pondYard,
+        CourtyardWorldLayout.seedBadge,
+        for (final reward in CourtyardReward.values)
+          CourtyardWorldLayout.rewardOf(reward),
+      ];
+      for (final place in [plot, warehouse]) {
+        for (final other in blocked) {
+          expect(place.overlaps(other), isFalse, reason: '$place vs $other');
+        }
       }
-    }
-    for (var i = 0; i < plots.length; i++) {
-      for (var j = i + 1; j < plots.length; j++) {
-        expect(plots[i].overlaps(plots[j]), isFalse);
+      for (final bed in CourtyardWorldLayout.gardenBeds) {
+        expect(plot.contains(bed.topLeft), isTrue, reason: '$bed');
+        expect(plot.contains(bed.bottomRight), isTrue, reason: '$bed');
       }
-    }
-    expect(CourtyardWorldLayout.gardenBeds, hasLength(GardenCatalog.bedCount));
-  });
+      expect(plot.overlaps(warehouse), isFalse);
+      expect(
+        CourtyardWorldLayout.lawn.contains(
+          CourtyardWorldLayout.warehouse.bottomCenter.translate(0, -0.02),
+        ),
+        isTrue,
+      );
+      final plots = [
+        ...CourtyardWorldLayout.gardenBeds,
+        CourtyardWorldLayout.warehouse,
+      ];
+      for (var i = 0; i < plots.length; i++) {
+        for (var j = i + 1; j < plots.length; j++) {
+          expect(plots[i].overlaps(plots[j]), isFalse);
+        }
+      }
+      expect(
+        CourtyardWorldLayout.gardenBeds,
+        hasLength(GardenCatalog.bedCount),
+      );
+    },
+  );
 
   test(
     'an existing yard gains three empty beds and an empty warehouse',
@@ -324,6 +344,173 @@ void main() {
     },
   );
 
+  test(
+    'paying for the minutes left ripens one bed and leaves the other',
+    () async {
+      final common = _seed();
+      final rare = _seed(id: 'seed-rare', species: SeedSpecies.nightlotus);
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 200,
+        'points.earned': 200,
+        'points.houseMigrated': true,
+        'points.houseState': 1,
+        'seeds.state.v1': _chest([common, rare], seq: 2).encode(),
+      });
+      final store = await PointsStore.open();
+      final start = DateTime.utc(2026, 6, 8, 9);
+      await store.plantSeed(bedIndex: 0, seedId: common.id, now: start);
+      final other = await store.plantSeed(
+        bedIndex: 1,
+        seedId: rare.id,
+        now: start,
+      );
+      final now = start.add(const Duration(minutes: 2));
+      final sped = await store.speedUpPlant(bedIndex: 0, now: now);
+
+      expect(sped.finished, isTrue);
+      expect(sped.cost, 3);
+      expect(store.balance, 200 - 5 - 60 - 3);
+      expect(store.lifetimeEarned, 200);
+      expect(store.seeds.inventory, isEmpty);
+      final ripe = store.garden.bedAt(0)!;
+      expect(ripe.seedId, common.id);
+      expect(ripe.species, SeedSpecies.amberbell);
+      expect(ripe.power, 10);
+      expect(ripe.plantedAt, start);
+      expect(ripe.readyAt, now);
+      expect(ripe.isReady(now), isTrue);
+      expect(store.garden.bedAt(1)!.readyAt, other.planting!.readyAt);
+      expect(store.garden.bedAt(1)!.species, SeedSpecies.nightlotus);
+      expect(store.garden.warehouse, isEmpty);
+
+      final again = await store.speedUpPlant(bedIndex: 0, now: now);
+      expect(again.status, PlantSpeedStatus.ready);
+      expect(store.balance, 132);
+
+      final harvested = await store.harvestBed(bedIndex: 0, now: now);
+      expect(harvested.harvested, isTrue);
+      expect(harvested.plant!.power, 10);
+      expect(harvested.plant!.maturedAt, now);
+      expect(harvested.plant!.species, SeedSpecies.amberbell);
+      expect(store.garden.bedAt(0), isNull);
+      expect(store.garden.bedAt(1), isNotNull);
+      expect(store.balance, 132);
+
+      final empty = await store.speedUpPlant(bedIndex: 0, now: now);
+      expect(empty.status, PlantSpeedStatus.empty);
+      expect(store.balance, 132);
+      expect((await PointsStore.open()).garden.warehouse, hasLength(1));
+      expect(
+        (await PointsStore.open()).garden.bedAt(1)!.species,
+        SeedSpecies.nightlotus,
+      );
+    },
+  );
+
+  test('a short wallet does not ripen the plant', () async {
+    final seed = _seed();
+    SharedPreferences.setMockInitialValues({
+      'points.balance': 5,
+      'points.earned': 5,
+      'points.houseMigrated': true,
+      'points.houseState': 1,
+      'seeds.state.v1': _chest([seed]).encode(),
+    });
+    final store = await PointsStore.open();
+    final start = DateTime.utc(2026, 6, 9, 9);
+    final planted = await store.plantSeed(
+      bedIndex: 0,
+      seedId: seed.id,
+      now: start,
+    );
+    final now = start.add(const Duration(minutes: 2));
+    final short = await store.speedUpPlant(bedIndex: 0, now: now);
+
+    expect(short.status, PlantSpeedStatus.insufficient);
+    expect(short.cost, 3);
+    expect(short.shortfall, 3);
+    expect(store.balance, 0);
+    expect(store.garden.bedAt(0)!.readyAt, planted.planting!.readyAt);
+    expect(store.garden.warehouse, isEmpty);
+
+    final rewound = await store.speedUpPlant(
+      bedIndex: 0,
+      now: start.subtract(const Duration(seconds: 1)),
+    );
+    expect(rewound.status, PlantSpeedStatus.failed);
+    expect(store.garden.bedAt(0)!.readyAt, planted.planting!.readyAt);
+  });
+
+  test('a failed plant speed-up rolls the points and the bed back', () async {
+    final seed = _seed();
+    SharedPreferences.setMockInitialValues({
+      'points.balance': 20,
+      'points.earned': 20,
+      'points.houseMigrated': true,
+      'points.houseState': 1,
+      'seeds.state.v1': _chest([seed]).encode(),
+    });
+    final store = await PointsStore.open();
+    final start = DateTime.utc(2026, 6, 10, 9);
+    final planted = await store.plantSeed(
+      bedIndex: 0,
+      seedId: seed.id,
+      now: start,
+    );
+    store.debugAbortNextCommit();
+    final result = await store.speedUpPlant(
+      bedIndex: 0,
+      now: start.add(const Duration(minutes: 1)),
+    );
+
+    expect(result.status, PlantSpeedStatus.failed);
+    expect(store.balance, 15);
+    expect(store.garden.bedAt(0)!.readyAt, planted.planting!.readyAt);
+    expect(store.garden.warehouse, isEmpty);
+    expect(store.debugGardenJournal, isNull);
+
+    final reopened = await PointsStore.open();
+    expect(reopened.balance, 15);
+    expect(reopened.garden.bedAt(0)!.readyAt, planted.planting!.readyAt);
+  });
+
+  test('speeding one bed twice from the controller charges once', () async {
+    final seed = _seed();
+    SharedPreferences.setMockInitialValues({
+      'points.balance': 20,
+      'points.earned': 20,
+      'points.houseMigrated': true,
+      'points.houseState': 1,
+      'seeds.state.v1': _chest([seed]).encode(),
+    });
+    final controller = PointsController(await PointsStore.open());
+    final start = DateTime.utc(2026, 6, 11, 9);
+    await controller.plantSeed(bedIndex: 0, seedId: seed.id, now: start);
+    final now = start.add(const Duration(minutes: 1));
+    final first = controller.speedUpPlant(bedIndex: 0, now: now);
+    final second = controller.speedUpPlant(bedIndex: 0, now: now);
+    expect(identical(first, second), isTrue);
+    final result = await first;
+
+    expect(result.finished, isTrue);
+    expect(result.cost, 4);
+    expect(controller.balance, 11);
+    expect(controller.plantCount, 0);
+    expect(controller.garden.bedAt(0)!.isReady(now), isTrue);
+    expect(controller.garden.bedAt(0)!.power, 10);
+
+    final third = await controller.speedUpPlant(bedIndex: 0, now: now);
+    expect(third.status, PlantSpeedStatus.ready);
+    expect(controller.balance, 11);
+    controller.dispose();
+  });
+
+  test('a memory wallet cannot speed a plant', () async {
+    final store = PointsStore.memory();
+    final result = await store.speedUpPlant(bedIndex: 0);
+    expect(result.status, PlantSpeedStatus.unavailable);
+  });
+
   test('reopening finishes a journaled harvest that stopped halfway', () async {
     final seed = _seed();
     final start = DateTime.utc(2026, 7, 1);
@@ -538,6 +725,8 @@ void main() {
     expect(find.byKey(const ValueKey('garden-bed-2')), findsOneWidget);
     expect(find.byKey(const ValueKey('courtyard-warehouse')), findsOneWidget);
     expect(find.text('Склад'), findsOneWidget);
+    expect(find.text('Огород'), findsOneWidget);
+    expect(find.text('Дом'), findsOneWidget);
   });
 
   testWidgets('a ripe bed is marked for collection and a young one is not', (
@@ -793,7 +982,63 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('collection stays locked until the saved time is reached', (
+  test(
+    'an ad harvest collects one growing bed a day without spending points',
+    () async {
+      final firstSeed = _seed();
+      final secondSeed = _seed(id: 'seed-2');
+      final thirdSeed = _seed(id: 'seed-3');
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 30,
+        'points.earned': 30,
+        'points.houseMigrated': true,
+        'points.houseState': 1,
+        'seeds.state.v1': _chest([
+          firstSeed,
+          secondSeed,
+          thirdSeed,
+        ], seq: 3).encode(),
+      });
+      final store = await PointsStore.open();
+      final start = DateTime.utc(2026, 6, 8, 9);
+      await store.plantSeed(bedIndex: 0, seedId: firstSeed.id, now: start);
+      final balance = store.balance;
+      final now = start.add(const Duration(minutes: 1));
+      expect(store.plantAdOfferAvailable(now: now), isTrue);
+
+      final harvested = await store.collectPlantForAd(bedIndex: 0, now: now);
+      expect(harvested.harvested, isTrue);
+      expect(store.balance, balance);
+      expect(store.garden.bedAt(0), isNull);
+      expect(store.garden.warehouse.single.maturedAt, now);
+      expect(store.garden.warehouse.single.harvestedAt, now);
+      expect(store.plantAdOfferAvailable(now: now), isFalse);
+
+      await store.plantSeed(bedIndex: 1, seedId: secondSeed.id, now: now);
+      final afterSecondPlant = store.balance;
+      final blocked = await store.collectPlantForAd(bedIndex: 1, now: now);
+      expect(blocked.status, HarvestStatus.adUsed);
+      expect(store.garden.bedAt(1), isNotNull);
+      expect(store.balance, afterSecondPlant);
+
+      final later = now.add(const Duration(days: 1));
+      await store.plantSeed(
+        bedIndex: 0,
+        seedId: thirdSeed.id,
+        now: later.subtract(const Duration(minutes: 1)),
+      );
+      final beforeNextDay = store.balance;
+      expect(store.plantAdOfferAvailable(now: later), isTrue);
+      final again = await store.collectPlantForAd(bedIndex: 0, now: later);
+      expect(again.harvested, isTrue);
+      expect(again.plant!.maturedAt, later);
+      expect(store.garden.bedAt(0), isNull);
+      expect(store.garden.bedAt(1), isNotNull);
+      expect(store.balance, beforeNextDay);
+    },
+  );
+
+  testWidgets('a growing bed can be ripened now for the minutes left', (
     tester,
   ) async {
     final seed = _seed();
@@ -825,11 +1070,73 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('harvest-locked')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bed-speed-button')), findsOneWidget);
+    expect(find.text('Ускорить · 3 поинтов'), findsOneWidget);
     expect(find.byKey(const ValueKey('harvest-button')), findsNothing);
     expect(find.text('Росток'), findsOneWidget);
     expect(find.text('Корм: 10'), findsOneWidget);
     expect(controller.plantCount, 0);
+
+    await tester.tap(find.byKey(const ValueKey('bed-speed-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('harvest-button')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bed-speed-button')), findsNothing);
+    expect(controller.balance, 52);
+    expect(controller.plantCount, 0);
+    expect(
+      controller.garden
+          .bedAt(0)!
+          .isReady(start.add(const Duration(minutes: 2))),
+      isTrue,
+    );
+    controller.dispose();
+  });
+
+  testWidgets('a growing bed can be collected now after a rewarded ad', (
+    tester,
+  ) async {
+    final seed = _seed();
+    SharedPreferences.setMockInitialValues({
+      'points.balance': 60,
+      'points.houseMigrated': true,
+      'points.houseState': 1,
+      'seeds.state.v1': _chest([seed]).encode(),
+    });
+    final controller = PointsController(await PointsStore.open());
+    final start = DateTime.utc(2026, 9, 2, 10);
+    await controller.plantSeed(bedIndex: 0, seedId: seed.id, now: start);
+    final balance = controller.balance;
+    await tester.pumpWidget(
+      _scoped(
+        controller,
+        Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () => showGardenBed(
+                context,
+                bedIndex: 0,
+                now: () => start.add(const Duration(minutes: 2)),
+                adsLive: true,
+                showAd: (_) async => RewardedAdShowResult.earned,
+              ),
+              child: const Text('open'),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bed-ad-harvest')), findsOneWidget);
+    expect(find.text('Ролик · собрать сейчас'), findsOneWidget);
+    expect(find.byKey(const ValueKey('bed-speed-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('bed-ad-harvest')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bed-ad-harvest')), findsNothing);
+    expect(controller.balance, balance);
+    expect(controller.plantCount, 1);
+    expect(controller.garden.bedAt(0), isNull);
     controller.dispose();
   });
 

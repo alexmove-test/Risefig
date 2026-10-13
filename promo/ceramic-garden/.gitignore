@@ -1,0 +1,8 @@
+tools/
+motion-frames/
+ad-frames/
+eevee-bench/
+__pycache__/
+*.log
+*.blend1
+blender-index.html

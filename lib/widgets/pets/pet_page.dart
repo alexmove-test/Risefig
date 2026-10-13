@@ -4,19 +4,16 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
 import '../../models/pet.dart';
-import '../../models/pet_story.dart';
 import '../../services/analytics_service.dart';
 import '../../services/fox_adventure_store.dart';
 import '../../services/local_reminder_service.dart';
 import '../../services/pet_store.dart';
-import '../../services/pet_story_store.dart';
 import '../../services/points_controller.dart';
 import '../../services/reminder_store.dart';
 import '../mahjong_backdrop.dart';
 import 'pet_combat_section.dart';
 import 'pet_portrait.dart';
 import 'pet_sheet.dart';
-import 'pet_story_section.dart';
 
 const _gold = Color(0xFFD4AF37);
 const _goldSoft = Color(0xFFE8C96A);
@@ -24,25 +21,17 @@ const _ivory = Color(0xFFF8F1DE);
 const _woodTop = Color(0xFF6B3E24);
 const _woodDeep = Color(0xFF3A2012);
 
-Future<bool?> openPetPage(
+Future<void> openPetPage(
   BuildContext context, {
   required PetStore pets,
   FoxAdventureStore? adventure,
-  PetStoryStore? stories,
-  bool showStory = false,
 }) {
-  return Navigator.of(context).push<bool>(
-    PageRouteBuilder<bool>(
+  return Navigator.of(context).push<void>(
+    PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 420),
       reverseTransitionDuration: const Duration(milliseconds: 340),
       pageBuilder: (ctx, animation, secondaryAnimation) {
-        return PetPage(
-          pets: pets,
-          adventure: adventure,
-          stories: stories,
-          showStory: showStory,
-          onPlay: () => Navigator.of(ctx).pop(true),
-        );
+        return PetPage(pets: pets, adventure: adventure);
       },
       transitionsBuilder: (ctx, animation, secondaryAnimation, child) {
         final incoming = CurvedAnimation(
@@ -64,20 +53,10 @@ Future<bool?> openPetPage(
 
 /// Полноэкранный раздел питомца: крупный портрет и потребности.
 class PetPage extends StatefulWidget {
-  const PetPage({
-    super.key,
-    required this.pets,
-    this.adventure,
-    this.stories,
-    this.showStory = false,
-    this.onPlay,
-  });
+  const PetPage({super.key, required this.pets, this.adventure});
 
   final PetStore pets;
   final FoxAdventureStore? adventure;
-  final PetStoryStore? stories;
-  final bool showStory;
-  final VoidCallback? onPlay;
 
   @override
   State<PetPage> createState() => _PetPageState();
@@ -85,86 +64,26 @@ class PetPage extends StatefulWidget {
 
 class _PetPageState extends State<PetPage> {
   bool _picking = false;
-  bool _storyOpen = false;
   bool _adopting = false;
-  PetStoryStore? _stories;
-  FoxAdventureStore? _legacyAdventure;
 
   @override
   void initState() {
     super.initState();
     _picking = !widget.pets.hasPet;
-    unawaited(_loadStories());
+    unawaited(_attachLegacyCompanion());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(PointsScope.maybeOf(context)?.syncOwnedPets());
     });
   }
 
-  Future<void> _loadStories() async {
+  Future<void> _attachLegacyCompanion() async {
     final adventure = widget.adventure ?? await FoxAdventureStore.open();
     await adventure.attachExistingCompanion(widget.pets);
-    final stories = widget.stories ?? await PetStoryStore.open();
     if (!mounted) return;
     setState(() {
-      _stories = stories;
-      _legacyAdventure = adventure;
       if (widget.pets.hasPet) _picking = false;
     });
-    if (widget.showStory && stories.hasPendingMoment) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_openStory());
-      });
-    }
-  }
-
-  Future<void> _openStory() async {
-    final stories = _stories;
-    if (stories == null || _storyOpen || !stories.hasPendingMoment) return;
-    _storyOpen = true;
-    try {
-      await showPetStoryMoment(context, stories);
-    } finally {
-      _storyOpen = false;
-      if (mounted) setState(() {});
-    }
-  }
-
-  Future<void> _openStoryLibrary(PetKind pet) async {
-    final stories = _stories;
-    if (stories == null) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: _woodDeep,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.86,
-          minChildSize: 0.55,
-          maxChildSize: 0.94,
-          builder: (context, controller) => ListView(
-            controller: controller,
-            padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
-            children: [
-              PetStorySection(
-                pet: pet,
-                store: stories,
-                onPlay: widget.onPlay == null
-                    ? null
-                    : () {
-                        Navigator.of(sheetContext).pop();
-                        widget.onPlay!();
-                      },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _adopt(PetKind kind) async {
@@ -360,14 +279,6 @@ class _PetPageState extends State<PetPage> {
           for (final snapshot in ownedCare) ...[
             OwnedPetCard(
               snapshot: snapshot,
-              showPortrait: _stories == null,
-              header: _stories == null
-                  ? null
-                  : PetStorySummaryCard(
-                      pet: snapshot.kind,
-                      store: _stories!,
-                      onTap: () => unawaited(_openStoryLibrary(snapshot.kind)),
-                    ),
               footer: PetCombatSection(
                 kind: snapshot.kind,
                 hunger: snapshot.of(PetNeed.hunger),
@@ -428,21 +339,12 @@ class _PetPageState extends State<PetPage> {
 
   Widget _soloPortrait(AppLocalizations l10n, PetCare snapshot) {
     final def = PetDef.of(snapshot.kind);
-    final stories = _stories;
-    final story = stories?.currentFor(def.kind);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (story != null && stories != null)
-            _HeroScene(
-              mood: snapshot.mood,
-              story: story,
-              stage: stories.progress(story),
-            )
-          else
-            _HeroPortrait(kind: def.kind, mood: snapshot.mood),
+          _HeroPortrait(kind: def.kind, mood: snapshot.mood),
           const SizedBox(height: 18),
           Text(
             l10n.petName(snapshot.kind),
@@ -480,15 +382,6 @@ class _PetPageState extends State<PetPage> {
             ),
             const SizedBox(height: 14),
           ],
-          if (stories != null) ...[
-            const SizedBox(height: 8),
-            PetStorySection(
-              pet: def.kind,
-              store: stories,
-              onPlay: widget.onPlay,
-              showScene: false,
-            ),
-          ],
           const SizedBox(height: 8),
           Text(
             l10n.petCareHint,
@@ -514,40 +407,6 @@ class _PetPageState extends State<PetPage> {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _HeroScene extends StatelessWidget {
-  const _HeroScene({
-    required this.mood,
-    required this.story,
-    required this.stage,
-  });
-
-  final PetMood mood;
-  final PetStoryDef story;
-  final int stage;
-
-  @override
-  Widget build(BuildContext context) {
-    final glow = switch (mood) {
-      PetMood.starving => const Color(0xFFC45C4A),
-      PetMood.asking => const Color(0xFFE0A24B),
-      PetMood.content => _goldSoft,
-    };
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: glow.withValues(alpha: 0.38),
-            blurRadius: 28,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: PetStoryScene(story: story, stage: stage, height: 268),
     );
   }
 }
@@ -633,14 +492,6 @@ class _AdoptCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
-                child: Text(
-                  l10n.fiveAdventures,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: _goldSoft, fontSize: 12),
                 ),
               ),
             ],

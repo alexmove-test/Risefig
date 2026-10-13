@@ -117,7 +117,7 @@ class FirebaseLeaderboardRepository {
             .get();
 
         final entries = snapshot.docs
-            .map((doc) => _entryFromDoc(doc, currentUid: user.uid))
+            .map((doc) => entryFromDoc(doc, currentUid: user.uid))
             .toList();
 
         if (!entries.any((e) => e.isCurrentPlayer)) {
@@ -166,7 +166,7 @@ class FirebaseLeaderboardRepository {
     };
   }
 
-  static LeaderboardEntry _entryFromDoc(
+  static LeaderboardEntry entryFromDoc(
     QueryDocumentSnapshot<Map<String, dynamic>> doc, {
     required String currentUid,
   }) {

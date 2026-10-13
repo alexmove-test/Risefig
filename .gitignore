@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Grok Bot webhook secret and one-off task payloads. Never commit.
+.grok-bot-webhook.txt
+.grok-task-connection.json
+.grok-task-fix.json
+.grok-task-round2.json
+.grok-task-essay.json
+.grok-task-forms.json
+.grok-task-mail-nolo.json
+.grok-task-mail-hasif.json
+.grok-task-ping.json
+.grok-task-noodles.json
+.grok-task-ideas.json
+.grok-task-next.json

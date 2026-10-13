@@ -3,9 +3,7 @@ import 'pet.dart';
 /// Роль задаётся видом и живёт в каталоге, а не в сохранении питомца.
 enum PetRole { attacker, defender }
 
-enum GearSlot { main, accessory }
-
-/// Числа развития и вещи. Виджеты читают готовые значения, не формулы.
+/// Числа развития. Виджеты читают готовые значения, не формулы.
 abstract final class PetCombatRules {
   static const maxLevel = 20;
   static const minLevel = 1;
@@ -14,12 +12,6 @@ abstract final class PetCombatRules {
   static const xpFactor = 20;
   static const basePower = 10;
   static const powerPerLevel = 5;
-
-  static const gearRanks = <({int rank, int bonus, int price, int minLevel})>[
-    (rank: 1, bonus: 3, price: 100, minLevel: 1),
-    (rank: 2, bonus: 7, price: 300, minLevel: 5),
-    (rank: 3, bonus: 12, price: 700, minLevel: 10),
-  ];
 
   static PetRole roleOf(PetKind kind) => switch (kind) {
     PetKind.cat || PetKind.fox || PetKind.raccoon => PetRole.attacker,
@@ -32,59 +24,11 @@ abstract final class PetCombatRules {
     return xpFactor * level;
   }
 
+  /// Сила растёт только с уровнем, а уровень — только от корма.
   static int baseStrength(int level) {
     final clamped = level.clamp(minLevel, maxLevel);
     return basePower + powerPerLevel * (clamped - 1);
   }
-}
-
-class GearDef {
-  const GearDef({
-    required this.id,
-    required this.role,
-    required this.slot,
-    required this.rank,
-    required this.bonus,
-    required this.price,
-    required this.minLevel,
-  });
-
-  final String id;
-  final PetRole role;
-  final GearSlot slot;
-  final int rank;
-  final int bonus;
-  final int price;
-  final int minLevel;
-}
-
-abstract final class GearCatalog {
-  static final List<GearDef> all = [
-    for (final role in PetRole.values)
-      for (final slot in GearSlot.values)
-        for (final rank in PetCombatRules.gearRanks)
-          GearDef(
-            id: '${role.name}_${slot.name}_${rank.rank}',
-            role: role,
-            slot: slot,
-            rank: rank.rank,
-            bonus: rank.bonus,
-            price: rank.price,
-            minLevel: rank.minLevel,
-          ),
-  ];
-
-  static GearDef? byId(String id) {
-    for (final def in all) {
-      if (def.id == id) return def;
-    }
-    return null;
-  }
-
-  static List<GearDef> forSlot(PetRole role, GearSlot slot) => [
-    for (final def in all)
-      if (def.role == role && def.slot == slot) def,
-  ];
 }
 
 /// Уровень и остаток опыта до следующего перехода. Итоговая сила здесь не хранится.
@@ -141,37 +85,12 @@ class PetLevelProgress {
 }
 
 class PetStrength {
-  const PetStrength({
-    required this.base,
-    required this.main,
-    required this.accessory,
-  });
+  const PetStrength(this.total);
 
-  final int base;
-  final int main;
-  final int accessory;
+  final int total;
 
-  int get total => base + main + accessory;
-
-  static PetStrength of({
-    required int level,
-    GearDef? main,
-    GearDef? accessory,
-  }) {
-    return PetStrength(
-      base: PetCombatRules.baseStrength(level),
-      main: main?.bonus ?? 0,
-      accessory: accessory?.bonus ?? 0,
-    );
-  }
-
-  /// Сила, если в слот встать другой предмет. Покупка сама уровень не меняет.
-  PetStrength replacing({required GearSlot slot, required int bonus}) {
-    return PetStrength(
-      base: base,
-      main: slot == GearSlot.main ? bonus : main,
-      accessory: slot == GearSlot.accessory ? bonus : accessory,
-    );
+  static PetStrength of({required int level}) {
+    return PetStrength(PetCombatRules.baseStrength(level));
   }
 }
 
@@ -205,8 +124,6 @@ FeedPreview previewFeed({
   required int xp,
   required int plantPower,
   required double hunger,
-  GearDef? main,
-  GearDef? accessory,
 }) {
   final before = PetLevelProgress.of(level, xp);
   final restoresHunger = hunger < 1;
@@ -217,16 +134,8 @@ FeedPreview previewFeed({
     xpGain: gain,
     before: before,
     after: after,
-    beforeStrength: PetStrength.of(
-      level: before.level,
-      main: main,
-      accessory: accessory,
-    ),
-    afterStrength: PetStrength.of(
-      level: after.level,
-      main: main,
-      accessory: accessory,
-    ),
+    beforeStrength: PetStrength.of(level: before.level),
+    afterStrength: PetStrength.of(level: after.level),
     restoresHunger: restoresHunger,
     pointless: pointless,
   );

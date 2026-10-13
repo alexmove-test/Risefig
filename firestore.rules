@@ -17,6 +17,129 @@ service cloud.firestore {
       return wholeNum(value) && value >= min && value <= max;
     }
 
+    function contactAllowed(a, b) {
+      return !exists(/databases/$(database)/documents/social_blocks/$(a)/players/$(b))
+        && !exists(/databases/$(database)/documents/social_blocks/$(b)/players/$(a));
+    }
+
+    match /social_blocks/{owner}/players/{target} {
+      allow read: if request.auth != null && request.auth.uid == owner;
+      allow create, update: if request.auth != null && request.auth.uid == owner
+        && owner != target && target.size() <= 128
+        && request.resource.data.keys().hasOnly(['createdAt'])
+        && request.resource.data.createdAt == request.time;
+      allow delete: if request.auth != null && request.auth.uid == owner;
+    }
+
+    match /social_profiles/{owner} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == owner
+        && request.resource.data.keys().hasAll(['about', 'language', 'interests', 'goal', 'avatar', 'openToFriends'])
+        && request.resource.data.keys().hasOnly(['about', 'language', 'interests', 'goal', 'avatar', 'openToFriends'])
+        // 0 means none. Upper bounds match SocialProfile picture lists.
+        && inRange(request.resource.data.about, 0, 6)
+        && inRange(request.resource.data.language, 0, 5)
+        && inRange(request.resource.data.interests, 0, 6)
+        && inRange(request.resource.data.goal, 0, 6)
+        && inRange(request.resource.data.avatar, 0, 5)
+        && request.resource.data.openToFriends is bool;
+      allow delete: if request.auth != null && request.auth.uid == owner;
+    }
+
+    match /friendships/{pairId} {
+      function party(data) { return request.auth.uid in data.members; }
+      function inviting() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['members', 'fromId', 'fromName', 'toId', 'toName', 'status', 'createdAt', 'updatedAt'])
+          && d.fromId == request.auth.uid && d.toId is string
+          && d.toId.size() > 0 && d.toId.size() <= 128 && d.fromId != d.toId
+          && d.members is list && d.members.size() == 2
+          && d.members[0] < d.members[1]
+          && d.fromId in d.members && d.toId in d.members
+          && pairId == d.members[0] + '__' + d.members[1]
+          && validName(d.fromName) && validName(d.toName)
+          && d.status == 'pending' && d.createdAt == request.time && d.updatedAt == request.time
+          && contactAllowed(d.fromId, d.toId)
+          && (!exists(/databases/$(database)/documents/social_profiles/$(d.toId))
+            || get(/databases/$(database)/documents/social_profiles/$(d.toId)).data.openToFriends == true);
+      }
+      function changing() {
+        let old = resource.data;
+        let d = request.resource.data;
+        return party(old) && d.diff(old).affectedKeys().hasOnly(['status', 'updatedAt'])
+          && d.updatedAt == request.time
+          && ((old.status == 'pending' && old.toId == request.auth.uid
+              && d.status in ['accepted', 'declined']
+              && (d.status == 'declined' || contactAllowed(old.fromId, old.toId)))
+            || (old.status == 'pending' && old.fromId == request.auth.uid && d.status == 'cancelled')
+            || (old.status == 'accepted' && d.status == 'removed'));
+      }
+      allow get: if request.auth != null && (resource == null || party(resource.data));
+      allow list: if request.auth != null && party(resource.data);
+      allow create: if request.auth != null && inviting();
+      allow update: if request.auth != null && (changing()
+        || (party(resource.data) && resource.data.status in ['declined', 'cancelled', 'removed'] && inviting()));
+      // Account deletion removes the shared document for both participants.
+      allow delete: if request.auth != null && party(resource.data);
+
+      match /messages/{messageId} {
+        function friendship() { return get(/databases/$(database)/documents/friendships/$(pairId)).data; }
+        // Past conversation remains readable for reporting after removal/blocking.
+        allow read: if request.auth != null && request.auth.uid in friendship().members;
+        allow create: if request.auth != null && request.auth.uid in friendship().members
+          && friendship().status == 'accepted'
+          && contactAllowed(friendship().fromId, friendship().toId)
+          && request.resource.data.keys().hasOnly(['senderId', 'text', 'sentAt'])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 1000
+          && request.resource.data.text.matches('[\\s\\S]*[^\\s][\\s\\S]*')
+          && request.resource.data.sentAt == request.time;
+        allow update: if false;
+        // A participant may delete messages when deleting their account.
+        allow delete: if request.auth != null && request.auth.uid in friendship().members;
+      }
+    }
+
+    match /message_reports/{reportId} {
+      function validReport() {
+        let d = request.resource.data;
+        let link = get(/databases/$(database)/documents/friendships/$(d.friendshipId)).data;
+        let message = get(/databases/$(database)/documents/friendships/$(d.friendshipId)/messages/$(d.messageId)).data;
+        return d.keys().hasOnly(['reporterUid', 'targetUid', 'friendshipId', 'messageId', 'createdAt'])
+          && d.reporterUid == request.auth.uid && request.auth.uid in link.members
+          && d.targetUid == message.senderId && d.targetUid != request.auth.uid
+          && d.createdAt == request.time;
+      }
+      allow create: if request.auth != null && validReport();
+      allow get, list, delete: if request.auth != null
+        && resource.data.reporterUid == request.auth.uid;
+      allow update: if false;
+    }
+
+    // History is derived from a real accepted request, never a client-invented event.
+    match /neighbor_history/{eventId} {
+      function validHistory() {
+        let d = request.resource.data;
+        let path = /databases/$(database)/documents/neighbor_requests/$(d.requestId);
+        return d.keys().hasOnly(['members', 'pairId', 'requestId', 'snapshot', 'createdAt'])
+          && d.snapshot.status == 'accepted'
+          && d.members == [d.snapshot.fromId, d.snapshot.toId]
+          && request.auth.uid in d.members
+          && d.pairId == (d.snapshot.fromId < d.snapshot.toId
+            ? d.snapshot.fromId + '__' + d.snapshot.toId : d.snapshot.toId + '__' + d.snapshot.fromId)
+          && d.createdAt == d.snapshot.createdAt
+          && (d.snapshot == getAfter(path).data || d.snapshot == get(path).data);
+      }
+      allow read: if request.auth != null && request.auth.uid in resource.data.members;
+      allow create: if request.auth != null && validHistory();
+      // Claim flags may advance on the original request before it is archived again.
+      allow update: if request.auth != null && validHistory()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['snapshot'])
+        && request.resource.data.snapshot.diff(resource.data.snapshot).affectedKeys().hasOnly(['fromClaimed', 'toClaimed']);
+      allow delete: if request.auth != null && request.auth.uid in resource.data.members;
+    }
+
     function nameOnlyUpdate() {
       return request.resource.data.diff(resource.data)
         .affectedKeys()
@@ -24,11 +147,34 @@ service cloud.firestore {
         && validName(request.resource.data.name);
     }
 
+    // Paid display of profile pictures in the neighbor list. Points live on the
+    // device, so the server only bounds the period, not the payment.
+    function badgeKeys() { return ['badges', 'badgesUntil']; }
+
+    function badgeUpdate() {
+      let d = request.resource.data;
+      return d.diff(resource.data).affectedKeys().hasOnly(badgeKeys())
+        && d.badges is map
+        && d.badges.keys().hasAll(['avatar', 'about', 'interests', 'goal'])
+        && d.badges.keys().hasOnly(['avatar', 'about', 'interests', 'goal'])
+        && inRange(d.badges.avatar, 0, 5)
+        && inRange(d.badges.about, 0, 6)
+        && inRange(d.badges.interests, 0, 6)
+        && inRange(d.badges.goal, 0, 6)
+        && d.badgesUntil is timestamp
+        && d.badgesUntil <= request.time + duration.value(31, 'd');
+    }
+
+    function badgesUntouched() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(badgeKeys());
+    }
+
     match /leaderboard/{userId} {
       allow read: if true;
 
       allow create: if request.auth != null
         && request.auth.uid == userId
+        && !request.resource.data.keys().hasAny(badgeKeys())
         && request.resource.data.keys().hasAll([
           'name',
           'rating',
@@ -50,8 +196,10 @@ service cloud.firestore {
         && request.auth.uid == userId
         && (
           nameOnlyUpdate()
+          || badgeUpdate()
           || (
-            request.resource.data.keys().hasAll([
+            badgesUntouched()
+            && request.resource.data.keys().hasAll([
               'name',
               'rating',
               'totalStars',
@@ -70,11 +218,329 @@ service cloud.firestore {
           )
         );
 
-      allow delete: if false;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Public display snapshots only. No inventory transfer or breeding rights
+    // are granted by these records; the current inventory is device-local.
+    match /plant_showcase/{listingId} {
+      function validListing() {
+        let data = request.resource.data;
+        return data.keys().hasAll([
+            'ownerId', 'ownerName', 'plantId', 'species', 'power', 'publishedAt'
+          ])
+          && data.keys().hasOnly([
+            'ownerId', 'ownerName', 'plantId', 'species', 'power', 'publishedAt'
+          ])
+          && data.ownerId == request.auth.uid
+          && validName(data.ownerName)
+          && data.plantId is string
+          && data.plantId.matches('[A-Za-z0-9_-]{1,128}')
+          && listingId == request.auth.uid + '__' + data.plantId
+          && data.publishedAt is timestamp
+          && wholeNum(data.power)
+          && ((data.species in ['amberbell', 'mistfern'] && data.power == 10)
+            || (data.species in ['glassreed', 'crimsonplum'] && data.power == 25)
+            || (data.species in ['nightlotus', 'starbamboo'] && data.power == 60));
+      }
+
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && validListing()
+        && request.resource.data.publishedAt == request.time;
+      allow update: if request.auth != null
+        && resource.data.ownerId == request.auth.uid
+        && validListing()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['ownerName']);
+      allow delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Requests between two players. Results are reports for both sides; the
+    // only grant is one cross seed per side, marked by fromClaimed/toClaimed.
+    match /neighbor_requests/{requestId} {
+      function validPhrase(value) {
+        return value in ['hello', 'goodLuck', 'thanks', 'niceGarden',
+          'letsCross', 'iWillGuard', 'readyForRaid', 'wellPlayed'];
+      }
+
+      function validSpecies(value) {
+        return value in ['amberbell', 'mistfern', 'glassreed', 'crimsonplum',
+          'nightlotus', 'starbamboo'];
+      }
+
+      function validPower(value, low) {
+        return wholeNum(value) && value >= low && value <= 1000;
+      }
+
+      function party(data) {
+        return request.auth.uid == data.fromId || request.auth.uid == data.toId;
+      }
+
+      function freshRequest() {
+        let data = request.resource.data;
+        return data.keys().hasAll([
+            'fromId', 'fromName', 'toId', 'toName', 'kind', 'phrase',
+            'status', 'createdAt'
+          ])
+          && data.keys().hasOnly([
+            'fromId', 'fromName', 'toId', 'toName', 'kind', 'phrase',
+            'status', 'createdAt', 'power', 'species'
+          ])
+          && data.fromId == request.auth.uid
+          && data.toId is string
+          && data.toId.size() >= 1
+          && data.toId.size() <= 128
+          && data.toId != request.auth.uid
+          && contactAllowed(data.fromId, data.toId)
+          && validName(data.fromName)
+          && validName(data.toName)
+          && data.kind in ['message', 'defense', 'cross', 'raid']
+          && requestId == data.fromId + '__' + data.toId + '__' + data.kind
+          && validPhrase(data.phrase)
+          && data.status == 'pending'
+          && data.createdAt == request.time
+          && (data.kind in ['defense', 'raid']) == ('power' in data)
+          && (!('power' in data) || validPower(data.power, 1))
+          && (data.kind == 'cross') == ('species' in data)
+          && (!('species' in data) || validSpecies(data.species));
+      }
+
+      // Both sides have moved the raid result into their storage.
+      function raidSettled(old) {
+        let loot = ('stolenSpecies' in old);
+        let loss = loot || ('lostSpecies' in old);
+        return (!loot || old.get('fromClaimed', false) == true)
+          && (!loss || old.get('toClaimed', false) == true);
+      }
+
+      // A closed request may be replaced by a new one of the same kind. An
+      // accepted cross waits until both seeds are claimed or a week passes.
+      // A raid rests the yard for a day and waits for its plants to move.
+      function canReplace() {
+        let old = resource.data;
+        return old.fromId == request.auth.uid
+          && (old.status in ['declined', 'cancelled']
+            || (old.status == 'accepted'
+              && ((old.kind in ['message', 'defense'])
+                || (old.kind == 'cross'
+                  && ((old.get('fromClaimed', false) == true
+                      && old.get('toClaimed', false) == true)
+                    || old.respondedAt < request.time - duration.value(7, 'd')))
+                || (old.kind == 'raid'
+                  && old.respondedAt < request.time - duration.value(24, 'h')
+                  && (raidSettled(old)
+                    || old.respondedAt < request.time - duration.value(7, 'd'))))));
+      }
+
+      // A neighbor's guard counts only while its protection lasts, at the
+      // power it was sent with.
+      function guardBacks(old, data) {
+        let guard = get(/databases/$(database)/documents/neighbor_requests/$(data.defenderId + '__' + old.toId + '__defense')).data;
+        return guard.status == 'accepted'
+          && guard.respondedAt > request.time - duration.value(24, 'h')
+          && guard.power == data.replyPower;
+      }
+
+      // A helper answered this very raid's call for help with this power.
+      function helpBacks(old, data) {
+        let offer = get(/databases/$(database)/documents/raid_help/$(requestId)/offers/$(data.defenderId)).data;
+        return offer.helperId == data.defenderId
+          && offer.raidMs == old.createdAt.toMillis()
+          && offer.power == data.replyPower;
+      }
+
+      function validDefender(old, data) {
+        let source = data.get('defenseSource', '');
+        // Without an own pet the yard answers with zero defense.
+        return (source in ['own', 'auto']
+            && !('defenderId' in data) && !('defenderName' in data)
+            && (!('defenderPet' in data) || data.defenderPet in ['dog', 'hamster'])
+            && ('defenderPet' in data) == (data.replyPower > 0)
+            && (source == 'own' || request.time >= old.createdAt + duration.value(24, 'h')))
+          || (source in ['guard', 'help']
+            && data.defenderId is string
+            && data.defenderId != old.toId && data.defenderId != old.fromId
+            && validName(data.defenderName)
+            && (!('defenderPet' in data) || data.defenderPet in ['dog', 'hamster'])
+            && ((source == 'guard' && guardBacks(old, data))
+              || (source == 'help' && helpBacks(old, data))));
+      }
+
+      // The yard holds only with a strictly stronger defender. A lost raid
+      // names at most one burned and one taken plant; a held one names none.
+      function validRaidResult(old, data) {
+        let held = data.replyPower > old.power;
+        return held
+          ? !('lostSpecies' in data) && !('stolenSpecies' in data) && !('stolenTrait' in data)
+          : (!('lostSpecies' in data) || (validSpecies(data.lostSpecies) && 'stolenSpecies' in data))
+            && (!('stolenSpecies' in data) || validSpecies(data.stolenSpecies))
+            && (!('stolenTrait' in data)
+              || ('stolenSpecies' in data && data.stolenTrait in ['attack', 'defense', 'bloom']));
+      }
+
+      function cancels() {
+        let old = resource.data;
+        let data = request.resource.data;
+        return old.fromId == request.auth.uid
+          && old.status == 'pending'
+          && data.diff(old).affectedKeys().hasOnly(['status', 'respondedAt'])
+          && data.status == 'cancelled'
+          && data.respondedAt == request.time;
+      }
+
+      function responds() {
+        let old = resource.data;
+        let data = request.resource.data;
+        let changed = data.diff(old).affectedKeys();
+        return old.toId == request.auth.uid
+          && old.status == 'pending'
+          && (data.status == 'declined' || contactAllowed(old.fromId, old.toId))
+          && data.respondedAt == request.time
+          && (!('replyPhrase' in data) || validPhrase(data.replyPhrase))
+          && ((data.status == 'declined'
+              && old.kind != 'raid'
+              && changed.hasOnly(['status', 'respondedAt', 'replyPhrase']))
+            || (data.status == 'accepted'
+              && old.kind in ['message', 'defense']
+              && changed.hasOnly(['status', 'respondedAt', 'replyPhrase']))
+            || (data.status == 'accepted'
+              && old.kind == 'raid'
+              && changed.hasAll(['status', 'respondedAt', 'replyPower', 'defenseSource'])
+              && changed.hasOnly([
+                'status', 'respondedAt', 'replyPhrase', 'replyPower',
+                'defenseSource', 'defenderId', 'defenderName', 'defenderPet',
+                'lostSpecies', 'stolenSpecies', 'stolenTrait'
+              ])
+              && validPower(data.replyPower, 0)
+              && validDefender(old, data)
+              && validRaidResult(old, data))
+            || (data.status == 'accepted'
+              && old.kind == 'cross'
+              && changed.hasOnly([
+                'status', 'respondedAt', 'replyPhrase', 'replySpecies',
+                'resultSpecies'
+              ])
+              && validSpecies(data.replySpecies)
+              && validSpecies(data.resultSpecies)));
+      }
+
+      function claims() {
+        let old = resource.data;
+        let data = request.resource.data;
+        let changed = data.diff(old).affectedKeys();
+        let raidLoot = old.kind == 'raid' && ('stolenSpecies' in old);
+        let raidLoss = old.kind == 'raid' && (('stolenSpecies' in old) || ('lostSpecies' in old));
+        return old.status == 'accepted'
+          && ((old.fromId == request.auth.uid
+              && (old.kind == 'cross' || raidLoot)
+              && changed.hasOnly(['fromClaimed'])
+              && data.fromClaimed == true)
+            || (old.toId == request.auth.uid
+              && (old.kind == 'cross' || raidLoss)
+              && changed.hasOnly(['toClaimed'])
+              && data.toClaimed == true));
+      }
+
+      allow get: if request.auth != null
+        && (resource == null || party(resource.data));
+      allow list: if request.auth != null && party(resource.data);
+      allow create: if request.auth != null && freshRequest();
+      allow update: if request.auth != null
+        && ((canReplace() && freshRequest())
+          || cancels()
+          || responds()
+          || claims());
+      allow delete: if request.auth != null && party(resource.data);
+    }
+
+    // A raided player calls for help while the raid waits for an answer.
+    // Friends are listed by the caller; 'everyone' is paid for with device
+    // points, so the server only checks that the raid is real and still open.
+    match /raid_help/{raidId} {
+      function raid() {
+        return get(/databases/$(database)/documents/neighbor_requests/$(raidId)).data;
+      }
+
+      function callKeys() {
+        return ['ownerId', 'ownerName', 'attackerId', 'attack', 'audience',
+          'viewers', 'raidMs', 'expiresAt', 'createdAt'];
+      }
+
+      function validCall() {
+        let d = request.resource.data;
+        let r = raid();
+        return d.keys().hasAll(callKeys()) && d.keys().hasOnly(callKeys())
+          && d.ownerId == request.auth.uid
+          && validName(d.ownerName)
+          && r.kind == 'raid' && r.status == 'pending'
+          && r.toId == request.auth.uid
+          && d.attackerId == r.fromId
+          && d.attack == r.power
+          && d.raidMs == r.createdAt.toMillis()
+          && d.expiresAt is timestamp
+          && d.expiresAt.toMillis() == d.raidMs + 86400000
+          && request.time < d.expiresAt
+          && d.audience in ['friends', 'everyone']
+          && d.viewers is list && d.viewers.size() <= 50
+          && !(request.auth.uid in d.viewers) && !(r.fromId in d.viewers)
+          && d.createdAt == request.time;
+      }
+
+      function visible(data) {
+        return request.auth.uid != data.attackerId
+          && (data.ownerId == request.auth.uid
+            || data.audience == 'everyone'
+            || request.auth.uid in data.viewers);
+      }
+
+      allow get: if request.auth != null && (resource == null || visible(resource.data));
+      allow list: if request.auth != null && visible(resource.data);
+      allow create: if request.auth != null && validCall();
+      // A new raid with the same id replaces the call; an open one only widens.
+      allow update: if request.auth != null
+        && resource.data.ownerId == request.auth.uid
+        && validCall()
+        && (resource.data.raidMs != request.resource.data.raidMs
+          || request.resource.data.audience == 'everyone');
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+
+      match /offers/{helperId} {
+        function call() {
+          return get(/databases/$(database)/documents/raid_help/$(raidId)).data;
+        }
+
+        function offerKeys() {
+          return ['helperId', 'helperName', 'power', 'pet', 'raidMs', 'createdAt'];
+        }
+
+        function validOffer() {
+          let d = request.resource.data;
+          let c = call();
+          return d.keys().hasAll(offerKeys()) && d.keys().hasOnly(offerKeys())
+            && helperId == request.auth.uid && d.helperId == request.auth.uid
+            && request.auth.uid != c.ownerId && request.auth.uid != c.attackerId
+            && (c.audience == 'everyone' || request.auth.uid in c.viewers)
+            && request.time < c.expiresAt
+            && d.raidMs == c.raidMs
+            && validName(d.helperName)
+            && wholeNum(d.power) && d.power >= 1 && d.power <= 1000
+            && d.pet in ['dog', 'hamster']
+            && d.createdAt == request.time
+            && contactAllowed(request.auth.uid, c.ownerId);
+        }
+
+        // Split so a helper can query their own offers without reading the parent call.
+        allow read: if request.auth != null && helperId == request.auth.uid;
+        allow read: if request.auth != null && call().ownerId == request.auth.uid;
+        allow create, update: if request.auth != null && validOffer();
+        allow delete: if request.auth != null && helperId == request.auth.uid;
+        allow delete: if request.auth != null && call().ownerId == request.auth.uid;
+      }
     }
 
     match /ugc_reports/{reportId} {
-      allow read: if false;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly([
           'reporterUid',
@@ -91,7 +557,9 @@ service cloud.firestore {
         && validName(request.resource.data.targetName)
         && request.resource.data.reason in ['name', 'abuse', 'other']
         && request.resource.data.createdAt is timestamp;
-      allow update, delete: if false;
+      allow get, list, delete: if request.auth != null
+        && resource.data.reporterUid == request.auth.uid;
+      allow update: if false;
     }
   }
 }

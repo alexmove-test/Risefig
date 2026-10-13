@@ -6,6 +6,14 @@ import '../../models/seed_catalog.dart';
 import '../../services/points_controller.dart';
 import 'seed_glyph.dart';
 
+CrossLineage? _lineage(SeedStack stack) {
+  for (final seed in stack.instances.reversed) {
+    final lineage = seed.lineage;
+    if (lineage != null) return lineage;
+  }
+  return null;
+}
+
 const _ivory = Color(0xFFF8F1DE);
 const _goldSoft = Color(0xFFE8C96A);
 const _gold = Color(0xFFD4AF37);
@@ -191,6 +199,12 @@ class _SeedStorageSheetState extends State<SeedStorageSheet> {
                 l10n.seedPowerLabel(SeedCatalog.foodFor(stack.species)),
                 style: const TextStyle(color: _ivory),
               ),
+              if (stack.trait != null)
+                Text(
+                  l10n.plantTraitLabel(stack.trait!),
+                  key: const ValueKey('seed-detail-trait'),
+                  style: const TextStyle(color: _goldSoft),
+                ),
               Text(
                 l10n.seedHouseLevel(stack.houseLevel),
                 key: const ValueKey('seed-detail-house'),
@@ -201,6 +215,13 @@ class _SeedStorageSheetState extends State<SeedStorageSheet> {
                 key: const ValueKey('seed-detail-date'),
                 style: const TextStyle(color: _ivory),
               ),
+              if (_lineage(stack) case final lineage?)
+                Text(
+                  '${l10n.socialGrownTogether} ${lineage.partnerName}',
+                  key: const ValueKey('seed-detail-lineage'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: _goldSoft),
+                ),
               if (stack.count > 1)
                 Text(
                   l10n.seedGroupCount(stack.count),
@@ -315,7 +336,11 @@ class _SeedStackCard extends StatelessWidget {
         color: const Color(0xFF2A160C),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          key: ValueKey('seed-stack-${stack.species.name}-${stack.power}'),
+          key: ValueKey(
+            'seed-stack-${stack.species.name}-${stack.power}'
+            '${stack.trait == null ? '' : '-${stack.trait!.name}'}'
+            '${_lineage(stack) == null ? '' : '-${_lineage(stack)!.partnerId}'}',
+          ),
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Ink(

@@ -178,6 +178,10 @@ tasks.configureEach {
     if (name == "assembleRelease") {
         finalizedBy("copyVersionedReleaseApk")
     }
+    // Очистка старых AAB должна закончиться до упаковки, иначе она удаляет только что подписанный файл.
+    if (name == "packageReleaseBundle" || name == "signReleaseBundle") {
+        mustRunAfter("cleanStaleReleaseBundles")
+    }
 }
 
 kotlin {

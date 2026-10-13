@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mahjong/models/garden.dart';
+import 'package:mahjong/models/plant_cross.dart';
+import 'package:mahjong/models/seed_batch.dart';
+import 'package:mahjong/models/seed_catalog.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_estate.dart';
 import 'package:mahjong/widgets/courtyard/courtyard_world.dart';
 import 'package:mahjong/widgets/courtyard/home_upgrade_preview.dart';
@@ -151,6 +156,228 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('seed and plant squares sit to the right of upgrade', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    var seeds = 0;
+    var plants = 0;
+
+    Future<void> show({required int balance}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ru'),
+          supportedLocales: const [Locale('ru')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.all(12),
+              child: HomeUpgradePreview(
+                state: 1,
+                balance: balance,
+                onBuy: () async {},
+                onStartSeed: () async {
+                  seeds++;
+                },
+                onClaimSeed: () async {},
+                onOpenSeed: () {},
+                onGrowPlant: () {
+                  plants++;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    await show(balance: 500);
+    expect(tester.takeException(), isNull);
+    final upgrade = tester.getRect(
+      find.byKey(const ValueKey('house-upgrade-button')),
+    );
+    final seed = tester.getRect(find.byKey(const ValueKey('yard-seed-button')));
+    final plant = tester.getRect(
+      find.byKey(const ValueKey('yard-plant-button')),
+    );
+    expect((upgrade.width - upgrade.height).abs(), lessThan(1));
+    expect((seed.width - seed.height).abs(), lessThan(1));
+    expect((plant.width - plant.height).abs(), lessThan(1));
+    expect(seed.width, upgrade.width);
+    expect(seed.left, greaterThan(upgrade.right - 1));
+    expect(plant.left, greaterThan(seed.right - 1));
+    expect(find.textContaining('Произвести'), findsOneWidget);
+    expect(find.text('Вырастить растение'), findsOneWidget);
+    for (final key in const [
+      'house-upgrade-button',
+      'yard-seed-button',
+      'yard-plant-button',
+    ]) {
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.descendant(
+          of: find.byKey(ValueKey(key)),
+          matching: find.byType(Text),
+        ),
+      );
+      expect(paragraph.didExceedMaxLines, isFalse, reason: key);
+    }
+
+    await tester.tap(find.byKey(const ValueKey('yard-seed-button')));
+    await tester.pump();
+    expect(seeds, 1);
+    await tester.tap(find.byKey(const ValueKey('yard-plant-button')));
+    await tester.pump();
+    expect(plants, 1);
+
+    await show(balance: 0);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('yard-seed-button')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('yard-plant-button')))
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('the curtain lists seeds, warehouse and garden beds', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final now = DateTime.now().toUtc();
+    final growing = Planting(
+      id: 'bed-grow',
+      seedId: 'seed-grow',
+      species: SeedSpecies.amberbell,
+      power: 10,
+      houseLevel: 1,
+      source: SeedSource.houseProduction,
+      batchId: 'batch-grow',
+      plantedAt: now.subtract(const Duration(minutes: 1)),
+      readyAt: now.add(const Duration(minutes: 4)),
+      cost: 5,
+      rulesVersion: GardenCatalog.rulesVersion,
+    );
+    final ripe = Planting(
+      id: 'bed-ripe',
+      seedId: 'seed-ripe',
+      species: SeedSpecies.glassreed,
+      power: 25,
+      houseLevel: 8,
+      source: SeedSource.houseProduction,
+      batchId: 'batch-ripe',
+      plantedAt: now.subtract(const Duration(minutes: 30)),
+      readyAt: now.subtract(const Duration(minutes: 1)),
+      cost: 10,
+      rulesVersion: GardenCatalog.rulesVersion,
+      trait: PlantTrait.bloom,
+    );
+    final stored = HarvestedPlant(
+      id: 'plant-1',
+      species: SeedSpecies.mistfern,
+      power: 10,
+      houseLevel: 1,
+      seedId: 'seed-stored',
+      source: SeedSource.houseProduction,
+      batchId: 'batch-stored',
+      plantingId: 'planted-stored',
+      plantedAt: now,
+      maturedAt: now,
+      harvestedAt: now,
+    );
+    final spare = SeedInstance(
+      id: 'spare-1',
+      species: SeedSpecies.crimsonplum,
+      power: 25,
+      houseLevel: 6,
+      createdAt: now,
+      source: SeedSource.houseProduction,
+      batchId: 'batch-spare',
+    );
+    final batch = SeedBatch(
+      id: 'batch-live',
+      startedAt: now.subtract(const Duration(minutes: 2)),
+      readyAt: now.add(const Duration(minutes: 8)),
+      houseLevel: 1,
+      cost: 10,
+      species: SeedSpecies.nightlotus,
+      power: 60,
+      rulesVersion: SeedCatalog.rulesVersion,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        supportedLocales: const [Locale('ru')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(12),
+            child: HomeUpgradePreview(
+              state: 1,
+              balance: 500,
+              onBuy: () async {},
+              seedBatch: batch,
+              onStartSeed: () async {},
+              onClaimSeed: () async {},
+              onOpenSeed: () {},
+              onGrowPlant: () {},
+              seeds: [spare],
+              garden: GardenSnapshot(
+                beds: [null, growing, ripe],
+                warehouse: [stored],
+                seq: 1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('yard-curtain-seeds')), findsNothing);
+    expect(find.byKey(const ValueKey('yard-curtain-warehouse')), findsNothing);
+    expect(find.byKey(const ValueKey('yard-curtain-garden')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('house-upgrade-curtain')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    expect(find.text('Семена'), findsOneWidget);
+    expect(find.textContaining('Сажайте их на грядки'), findsOneWidget);
+    expect(find.byKey(const ValueKey('yard-seed-producing')), findsOneWidget);
+    expect(find.textContaining('Ночной лотос'), findsNothing);
+    expect(find.text('Багряная слива ×1 · Корм: 25'), findsOneWidget);
+
+    expect(find.text('Склад'), findsOneWidget);
+    expect(find.textContaining('Кормите ими питомцев'), findsOneWidget);
+    expect(find.text('Туманный папоротник ×1 · Корм: 10'), findsOneWidget);
+
+    expect(find.text('Огород'), findsOneWidget);
+    expect(find.textContaining('Посадите семя на грядку'), findsOneWidget);
+    expect(find.text('Грядка 1, пустая'), findsOneWidget);
+    expect(find.textContaining('Грядка 2, Янтарный колокольчик'), findsOneWidget);
+    expect(
+      find.text('Грядка 3, Стеклянный тростник, можно собрать'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('house-upgrade-curtain')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('yard-curtain-garden')), findsNothing);
+  });
+
   testWidgets('a bought step eases the house, and reduced motion skips it', (
     tester,
   ) async {
@@ -160,8 +387,8 @@ void main() {
     Future<void> show(int home, {required bool reduceMotion}) async {
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: MediaQuery(
             data: MediaQueryData(disableAnimations: reduceMotion),
             child: CourtyardWorld(

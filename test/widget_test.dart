@@ -36,6 +36,7 @@ void main() {
       'progress.stars.1': 1,
       'progress.best.1': 400,
       'progress.lastPlayed': 1,
+      'intro.pets': true,
     });
     await tester.pumpWidget(const MahjongApp());
     await tester.pump();

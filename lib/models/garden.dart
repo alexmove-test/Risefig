@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'plant_cross.dart';
 import 'seed_batch.dart';
 import 'seed_catalog.dart';
 
@@ -8,12 +9,19 @@ abstract final class GardenCatalog {
   static const rulesVersion = 3;
   static const bedCount = 3;
 
-  static Duration durationFor(SeedSpecies species) =>
-      switch (species.seedClass) {
-        SeedClass.common => const Duration(minutes: 5),
-        SeedClass.nutrient => const Duration(minutes: 20),
-        SeedClass.rare => const Duration(minutes: 60),
-      };
+  static Duration durationFor(SeedSpecies species, {PlantTrait? trait}) {
+    final base = switch (species.seedClass) {
+      SeedClass.common => const Duration(minutes: 5),
+      SeedClass.nutrient => const Duration(minutes: 20),
+      SeedClass.rare => const Duration(minutes: 60),
+    };
+    if (trait != PlantTrait.bloom) return base;
+    final shortened = Duration(milliseconds: base.inMilliseconds * 7 ~/ 10);
+    if (shortened < const Duration(seconds: 30)) {
+      return const Duration(seconds: 30);
+    }
+    return shortened;
+  }
 
   static int costFor(SeedSpecies species) =>
       SeedCatalog.pointsFor(durationFor(species));
@@ -47,6 +55,8 @@ class Planting {
     required this.cost,
     required this.rulesVersion,
     this.variant,
+    this.trait,
+    this.lineage,
   });
 
   final String id;
@@ -55,6 +65,8 @@ class Planting {
   final int power;
   final int houseLevel;
   final String? variant;
+  final PlantTrait? trait;
+  final CrossLineage? lineage;
   final String source;
   final String batchId;
   final DateTime plantedAt;
@@ -81,6 +93,25 @@ class Planting {
     return value;
   }
 
+  Planting copyWith({DateTime? readyAt}) {
+    return Planting(
+      id: id,
+      seedId: seedId,
+      species: species,
+      power: power,
+      houseLevel: houseLevel,
+      variant: variant,
+      trait: trait,
+      lineage: lineage,
+      source: source,
+      batchId: batchId,
+      plantedAt: plantedAt,
+      readyAt: readyAt ?? this.readyAt,
+      cost: cost,
+      rulesVersion: rulesVersion,
+    );
+  }
+
   Map<String, Object> toJson() => {
     'id': id,
     'seedId': seedId,
@@ -94,6 +125,8 @@ class Planting {
     'cost': cost,
     'rules': rulesVersion,
     'variant': ?variant,
+    'trait': ?trait?.name,
+    'lineage': ?lineage?.toJson(),
   };
 
   static Planting? fromJson(Object? raw) {
@@ -110,6 +143,7 @@ class Planting {
     final cost = raw['cost'];
     final rules = raw['rules'];
     final variantRaw = raw['variant'];
+    final traitRaw = raw['trait'];
     if (id is! String ||
         id.isEmpty ||
         seedId is! String ||
@@ -129,6 +163,7 @@ class Planting {
       return null;
     }
     if (variantRaw != null && variantRaw is! String) return null;
+    if (traitRaw != null && plantTraitNamed(traitRaw) == null) return null;
     final species = _species(speciesName);
     if (species == null) return null;
     final variant = variantRaw is String && variantRaw.isNotEmpty
@@ -147,6 +182,8 @@ class Planting {
       cost: cost,
       rulesVersion: rules,
       variant: variant,
+      trait: plantTraitNamed(traitRaw),
+      lineage: CrossLineage.fromJson(raw['lineage']),
     );
   }
 }
@@ -166,6 +203,8 @@ class HarvestedPlant {
     required this.maturedAt,
     required this.harvestedAt,
     this.variant,
+    this.trait,
+    this.lineage,
   });
 
   final String id;
@@ -173,6 +212,8 @@ class HarvestedPlant {
   final int power;
   final int houseLevel;
   final String? variant;
+  final PlantTrait? trait;
+  final CrossLineage? lineage;
   final String seedId;
   final String source;
   final String batchId;
@@ -194,6 +235,8 @@ class HarvestedPlant {
     'maturedAt': maturedAt.millisecondsSinceEpoch,
     'harvestedAt': harvestedAt.millisecondsSinceEpoch,
     'variant': ?variant,
+    'trait': ?trait?.name,
+    'lineage': ?lineage?.toJson(),
   };
 
   static HarvestedPlant? fromJson(Object? raw) {
@@ -210,6 +253,7 @@ class HarvestedPlant {
     final matured = raw['maturedAt'];
     final harvested = raw['harvestedAt'];
     final variantRaw = raw['variant'];
+    final traitRaw = raw['trait'];
     if (id is! String ||
         id.isEmpty ||
         speciesName is! String ||
@@ -230,6 +274,7 @@ class HarvestedPlant {
       return null;
     }
     if (variantRaw != null && variantRaw is! String) return null;
+    if (traitRaw != null && plantTraitNamed(traitRaw) == null) return null;
     final species = _species(speciesName);
     if (species == null) return null;
     final variant = variantRaw is String && variantRaw.isNotEmpty
@@ -248,6 +293,8 @@ class HarvestedPlant {
       maturedAt: DateTime.fromMillisecondsSinceEpoch(matured, isUtc: true),
       harvestedAt: DateTime.fromMillisecondsSinceEpoch(harvested, isUtc: true),
       variant: variant,
+      trait: plantTraitNamed(traitRaw),
+      lineage: CrossLineage.fromJson(raw['lineage']),
     );
   }
 }
@@ -258,6 +305,10 @@ class GardenSnapshot {
     required this.beds,
     required this.warehouse,
     required this.seq,
+    this.pending,
+    this.lastCrossId,
+    this.claimedNeighborCrosses = const {},
+    this.settledRaids = const {},
   });
 
   static final empty = GardenSnapshot(
@@ -271,6 +322,14 @@ class GardenSnapshot {
   final List<Planting?> beds;
   final List<HarvestedPlant> warehouse;
   final int seq;
+  final CrossPending? pending;
+  final String? lastCrossId;
+
+  /// Receipts survive planting, harvesting and feeding the awarded seed.
+  final Set<String> claimedNeighborCrosses;
+
+  /// Набеги, чья потеря или добыча уже применена к складу.
+  final Set<String> settledRaids;
 
   int get plantCount => warehouse.length;
 
@@ -290,11 +349,21 @@ class GardenSnapshot {
     List<Planting?>? beds,
     List<HarvestedPlant>? warehouse,
     int? seq,
+    CrossPending? pending,
+    bool clearPending = false,
+    String? lastCrossId,
+    Set<String>? claimedNeighborCrosses,
+    Set<String>? settledRaids,
   }) {
     return GardenSnapshot(
       beds: beds ?? this.beds,
       warehouse: warehouse ?? this.warehouse,
       seq: seq ?? this.seq,
+      pending: clearPending ? null : pending ?? this.pending,
+      lastCrossId: lastCrossId ?? this.lastCrossId,
+      claimedNeighborCrosses:
+          claimedNeighborCrosses ?? this.claimedNeighborCrosses,
+      settledRaids: settledRaids ?? this.settledRaids,
     );
   }
 
@@ -302,6 +371,10 @@ class GardenSnapshot {
     'seq': seq,
     'beds': [for (final bed in beds) bed?.toJson()],
     'warehouse': [for (final plant in warehouse) plant.toJson()],
+    'pending': ?pending?.toJson(),
+    'lastCrossId': ?lastCrossId,
+    'claimedNeighborCrosses': claimedNeighborCrosses.toList(),
+    'settledRaids': settledRaids.toList(),
   };
 
   String encode() => jsonEncode(toJson());
@@ -324,6 +397,17 @@ class GardenSnapshot {
       return null;
     }
     if (warehouseRaw is! List) return null;
+    final pendingRaw = raw['pending'];
+    CrossPending? pending;
+    if (pendingRaw != null) {
+      pending = CrossPending.fromJson(pendingRaw);
+      if (pending == null) return null;
+    }
+    final lastRaw = raw['lastCrossId'];
+    if (lastRaw != null && lastRaw is! String) return null;
+    final lastCrossId = lastRaw is String && lastRaw.isNotEmpty
+        ? lastRaw
+        : null;
     final beds = <Planting?>[];
     for (final item in bedsRaw) {
       if (item == null) {
@@ -340,7 +424,19 @@ class GardenSnapshot {
       if (plant == null) return null;
       warehouse.add(plant);
     }
-    return GardenSnapshot(beds: beds, warehouse: warehouse, seq: seq);
+    return GardenSnapshot(
+      beds: beds,
+      warehouse: warehouse,
+      seq: seq,
+      pending: pending,
+      lastCrossId: lastCrossId,
+      claimedNeighborCrosses: (raw['claimedNeighborCrosses'] is List)
+          ? (raw['claimedNeighborCrosses'] as List).whereType<String>().toSet()
+          : const {},
+      settledRaids: (raw['settledRaids'] is List)
+          ? (raw['settledRaids'] as List).whereType<String>().toSet()
+          : const {},
+    );
   }
 
   @override
@@ -348,6 +444,8 @@ class GardenSnapshot {
     return other is GardenSnapshot &&
         other.seq == seq &&
         other.warehouse.length == warehouse.length &&
+        other.pending?.id == pending?.id &&
+        other.lastCrossId == lastCrossId &&
         _sameBeds(other.beds, beds) &&
         _sameWarehouse(other.warehouse, warehouse);
   }
@@ -392,6 +490,8 @@ class PlantStack {
 
   String? get variant => newest.variant;
 
+  PlantTrait? get trait => newest.trait;
+
   int get count => instances.length;
 
   DateTime get receivedAt => newest.harvestedAt;
@@ -403,7 +503,8 @@ List<PlantStack> stackPlants(
 }) {
   final groups = <String, List<HarvestedPlant>>{};
   for (final plant in plants) {
-    final key = '${plant.species.name}#${plant.power}#${plant.variant ?? ''}';
+    final key =
+        '${plant.species.name}#${plant.power}#${plant.variant ?? ''}#${plant.trait?.name ?? ''}';
     groups.putIfAbsent(key, () => []).add(plant);
   }
   final stacks = [
@@ -479,7 +580,7 @@ class PlantResult {
        );
 }
 
-enum HarvestStatus { harvested, notReady, empty, unavailable, failed }
+enum HarvestStatus { harvested, notReady, empty, unavailable, failed, adUsed }
 
 class HarvestResult {
   const HarvestResult({
@@ -519,6 +620,122 @@ class HarvestResult {
          seeds: seeds,
          garden: garden,
        );
+}
+
+enum PlantSpeedStatus {
+  finished,
+  insufficient,
+  empty,
+  ready,
+  unavailable,
+  failed,
+}
+
+class PlantSpeedResult {
+  const PlantSpeedResult({
+    required this.status,
+    required this.balance,
+    required this.seeds,
+    required this.garden,
+    this.cost = 0,
+    this.shortfall = 0,
+  });
+
+  final PlantSpeedStatus status;
+  final int balance;
+  final SeedSnapshot seeds;
+  final GardenSnapshot garden;
+  final int cost;
+  final int shortfall;
+
+  bool get finished => status == PlantSpeedStatus.finished;
+
+  const PlantSpeedResult.unavailable({
+    required int balance,
+    required SeedSnapshot seeds,
+    required GardenSnapshot garden,
+  }) : this(
+         status: PlantSpeedStatus.unavailable,
+         balance: balance,
+         seeds: seeds,
+         garden: garden,
+       );
+
+  const PlantSpeedResult.failed({
+    required int balance,
+    required SeedSnapshot seeds,
+    required GardenSnapshot garden,
+  }) : this(
+         status: PlantSpeedStatus.failed,
+         balance: balance,
+         seeds: seeds,
+         garden: garden,
+       );
+}
+
+class CrossResult {
+  const CrossResult({
+    required this.status,
+    required this.balance,
+    required this.seeds,
+    required this.garden,
+    this.seed,
+    this.band,
+  });
+
+  final CrossStatus status;
+  final int balance;
+  final SeedSnapshot seeds;
+  final GardenSnapshot garden;
+  final SeedInstance? seed;
+  final CrossBand? band;
+
+  bool get granted => status == CrossStatus.granted;
+
+  const CrossResult.unavailable({
+    required int balance,
+    required SeedSnapshot seeds,
+    required GardenSnapshot garden,
+  }) : this(
+         status: CrossStatus.unavailable,
+         balance: balance,
+         seeds: seeds,
+         garden: garden,
+       );
+
+  const CrossResult.failed({
+    required int balance,
+    required SeedSnapshot seeds,
+    required GardenSnapshot garden,
+  }) : this(
+         status: CrossStatus.failed,
+         balance: balance,
+         seeds: seeds,
+         garden: garden,
+       );
+}
+
+enum RaidSettleStatus { settled, unavailable, failed }
+
+/// Итог списания потери или выдачи добычи набега.
+class RaidSettleResult {
+  const RaidSettleResult({
+    required this.status,
+    required this.balance,
+    required this.seeds,
+    required this.garden,
+    this.plant,
+  });
+
+  final RaidSettleStatus status;
+  final int balance;
+  final SeedSnapshot seeds;
+  final GardenSnapshot garden;
+
+  /// Растение, пришедшее налётчику.
+  final HarvestedPlant? plant;
+
+  bool get settled => status == RaidSettleStatus.settled;
 }
 
 SeedSpecies? _species(String name) {

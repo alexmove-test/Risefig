@@ -12,10 +12,13 @@ void main() {
       final en = GuestName.generate(isRu: false, random: Random(i));
       final ru = GuestName.generate(isRu: true, random: Random(i));
       final th = GuestName.generate(language: 'th', random: Random(i));
+      final de = GuestName.generate(language: 'de', random: Random(i));
       expect(en.length, inInclusiveRange(1, GuestName.maxLength));
       expect(ru.length, inInclusiveRange(1, GuestName.maxLength));
       expect(th.length, inInclusiveRange(1, GuestName.maxLength));
       expect(utf8.encode(th).length, lessThanOrEqualTo(GuestName.maxLength));
+      expect(de.length, inInclusiveRange(1, GuestName.maxLength));
+      expect(utf8.encode(de).length, lessThanOrEqualTo(GuestName.maxLength));
       expect(th, matches(RegExp(r'[\u0E00-\u0E7F]')));
       expect(en, isNot(anyOf('You', 'Player', '')));
       expect(ru, isNot(anyOf('Вы', 'Игрок', '')));

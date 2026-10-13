@@ -89,7 +89,10 @@ class HouseSheet extends StatelessWidget {
                     houseLevel: points.houseState,
                     balance: points.balance,
                     batch: points.seedBatch,
-                    busy: points.seedStartBusy || points.seedClaimBusy,
+                    busy:
+                        points.seedStartBusy ||
+                        points.seedClaimBusy ||
+                        points.seedSpeedBusy,
                     onStart: () async {
                       final result = await points.startSeedBatch();
                       if (result.started) {
@@ -105,6 +108,15 @@ class HouseSheet extends StatelessWidget {
                       if (result.claimed) {
                         AnalyticsService.log('seed_claim', <String, Object>{
                           'power': result.seed?.power ?? 0,
+                        });
+                      }
+                      return result;
+                    },
+                    onSpeedUp: () async {
+                      final result = await points.speedUpSeed();
+                      if (result.finished) {
+                        AnalyticsService.log('seed_speed', <String, Object>{
+                          'cost': result.cost,
                         });
                       }
                       return result;

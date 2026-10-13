@@ -46,6 +46,9 @@ class PointsShopSheet extends StatefulWidget {
   /// Сколько баллов даёт один рекламный ролик.
   static const adReward = 50;
 
+  /// Пакеты за деньги временно выключены; витрина и реклама остаются.
+  static const purchasesEnabled = false;
+
   @override
   State<PointsShopSheet> createState() => _PointsShopSheetState();
 }
@@ -64,7 +67,7 @@ class _PointsShopSheetState extends State<PointsShopSheet> {
   }
 
   Future<void> _buy(PointsPack pack) async {
-    if (_busy) return;
+    if (!PointsShopSheet.purchasesEnabled || _busy) return;
     final l10n = AppLocalizations.of(context);
     final controller = PointsScope.read(context);
     if (controller == null) return;
@@ -198,7 +201,9 @@ class _PointsShopSheetState extends State<PointsShopSheet> {
                   price: _backend.priceLabel(pack),
                   tier: PointsPack.catalog.indexOf(pack),
                   busy: _busyId == pack.id,
-                  onBuy: _busy ? null : () => _buy(pack),
+                  onBuy: (!PointsShopSheet.purchasesEnabled || _busy)
+                      ? null
+                      : () => _buy(pack),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -219,7 +224,7 @@ class _PointsShopSheetState extends State<PointsShopSheet> {
                   ),
                 ),
               ],
-              if (!_backend.isLive) ...[
+              if (PointsShopSheet.purchasesEnabled && !_backend.isLive) ...[
                 const SizedBox(height: 12),
                 Text(
                   l10n.pointsDemoNote,

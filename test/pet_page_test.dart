@@ -217,11 +217,8 @@ void main() {
     expect(find.text('Cat'), findsOneWidget);
     expect(find.text('Cat is content.'), findsOneWidget);
     expect(_petAsset('cat'), findsOneWidget);
-    expect(find.text('Adventures'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey('pet-story-scene-cat_window')),
-      findsOneWidget,
-    );
+    expect(find.text('Adventures'), findsNothing);
+    expect(find.text('5 adventures'), findsNothing);
     await tester.scrollUntilVisible(find.text('Rest'), 80);
     expect(find.text('Hunger'), findsOneWidget);
     expect(find.text('Play'), findsOneWidget);
@@ -260,14 +257,7 @@ void main() {
     expect(_petAsset('cat'), findsOneWidget);
     expect(_petAsset('dog'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNWidgets(6));
-    expect(
-      find.byKey(const ValueKey('pet-story-scene-cat_window')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey('pet-story-scene-dog_trail')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('pet-story-section')), findsNothing);
     expect(find.text('Show everyone in the yard'), findsOneWidget);
     expect(find.text('In the yard'), findsOneWidget);
     expect(find.text('Show in yard'), findsOneWidget);

@@ -15,30 +15,71 @@ abstract final class CourtyardWorldLayout {
   /// Лужайка внутри ограды, в долях карты. Небо над ней закрывает верхняя панель.
   static const lawn = Rect.fromLTRB(0.06, 0.38, 0.94, 0.70);
 
-  /// Дом на каменном круге: низ рамки — линия земли, примерно середина экрана.
+  /// Дом на каменном круге: левый верхний угол лужайки.
   static const homeYard = Rect.fromLTWH(0.111, 0.359, 0.278, 0.156);
 
-  /// Голая земля справа от развилки. Пруд встаёт сюда, когда дом достроен.
-  static const pondYard = Rect.fromLTWH(0.64, 0.345, 0.26, 0.15);
+  /// Пруд в верхней середине, между домом и складом, выше креста дорожек.
+  static const pondYard = Rect.fromLTWH(0.46, 0.418, 0.14, 0.078);
 
-  /// Знак производства семян: в зазоре между домом и качелями, не на доме и не на питомцах.
-  static const seedBadge = Rect.fromLTWH(0.393, 0.414, 0.083, 0.047);
+  /// Знак производства семян: узкий зазор между домом и прудом.
+  static const seedBadge = Rect.fromLTWH(0.392, 0.49, 0.042, 0.026);
 
-  /// Три грядки на траве сразу перед домом: ниже дома и выше клумбы.
-  static const gardenBeds = <Rect>[
-    Rect.fromLTWH(0.06, 0.522, 0.105, 0.038),
-    Rect.fromLTWH(0.175, 0.522, 0.105, 0.038),
-    Rect.fromLTWH(0.290, 0.522, 0.105, 0.038),
+  static const gardenPlotAsset = 'assets/courtyard/garden/garden_plot.png';
+  static const warehouseAsset = 'assets/courtyard/garden/warehouse.png';
+
+  /// Пропорции спрайтов в пикселях: рамки держат их без искажений.
+  static const _gardenPlotAspect = 904 / 628;
+  static const _warehouseAspect = 848 / 893;
+
+  /// Огород в левом нижнем углу. Ширина 0.30 — размер до того,
+  /// как участок ужали, чтобы обойти старую развилку.
+  static final gardenPlot = _sprite(0.145, 0.582, 0.30, _gardenPlotAspect);
+
+  /// Склад в правом верхнем углу, той же ширины 0.16, что была раньше.
+  static final warehouse = _standingSprite(
+    0.735,
+    0.520,
+    0.16,
+    _warehouseAspect,
+  );
+
+  /// Огород и склад стоят по диагонали, поэтому общий прямоугольник
+  /// накрыл бы центр лужайки. Для проверок берут каждое место отдельно.
+  static Rect get gardenYard => gardenPlot.expandToInclude(warehouse);
+
+  /// Грядки лежат на трёх рядах земли подложки — доли внутри [gardenPlot].
+  static final gardenBeds = <Rect>[
+    _inPlot(const Rect.fromLTWH(0.18, 0.32, 0.20, 0.24)),
+    _inPlot(const Rect.fromLTWH(0.395, 0.395, 0.20, 0.24)),
+    _inPlot(const Rect.fromLTWH(0.615, 0.47, 0.20, 0.24)),
   ];
 
   static Rect gardenBed(int index) => gardenBeds[index];
 
-  /// Склад на передней траве справа, ниже питомцев и в стороне от пруда.
-  static const warehouse = Rect.fromLTWH(0.64, 0.648, 0.22, 0.050);
+  static Rect _inPlot(Rect frac) => Rect.fromLTWH(
+    gardenPlot.left + frac.left * gardenPlot.width,
+    gardenPlot.top + frac.top * gardenPlot.height,
+    frac.width * gardenPlot.width,
+    frac.height * gardenPlot.height,
+  );
 
-  /// Питомцы на поляне впереди-справа, у развилки дорожки.
-  /// Шире одной фигурки: на лужайке может стоять вся компания.
-  static const petYard = Rect.fromLTWH(0.52, 0.50, 0.32, 0.14);
+  /// Рамка спрайта с пропорцией [aspect] (ширина к высоте в пикселях).
+  static Rect _sprite(double left, double top, double width, double aspect) {
+    return Rect.fromLTWH(left, top, width, width * mapAspect / aspect);
+  }
+
+  static Rect _standingSprite(
+    double x,
+    double ground,
+    double width,
+    double aspect,
+  ) {
+    final height = width * mapAspect / aspect;
+    return Rect.fromLTWH(x - width / 2, ground - height, width, height);
+  }
+
+  /// Питомцы в правом нижнем углу. Размер как до уменьшения площадки.
+  static const petYard = Rect.fromLTWH(0.53, 0.558, 0.32, 0.14);
 
   /// Соседние дворы вырезаны из кадра, тапать на карте нечего.
   static const neighbors = <Rect>[];
@@ -52,9 +93,9 @@ abstract final class CourtyardWorldLayout {
   /// Спрайты квадратные, поэтому рамка тоже квадратная в пикселях карты:
   /// доля высоты больше доли ширины во столько же раз, во сколько карта шире.
   static Rect rewardOf(CourtyardReward reward) => switch (reward) {
-    CourtyardReward.pond => _standing(0.78, 0.47, 0.16),
-    CourtyardReward.swing => _standing(0.55, 0.46, 0.14),
-    CourtyardReward.flowerBed => _standing(0.22, 0.64, 0.14),
+    CourtyardReward.pond => _standing(0.53, 0.496, 0.11),
+    CourtyardReward.swing => _standing(0.905, 0.50, 0.06),
+    CourtyardReward.flowerBed => _standing(0.905, 0.66, 0.055),
   };
 
   /// Квадратная рамка ширины [width], стоящая низом на точке ([x], [ground]).
@@ -103,5 +144,10 @@ abstract final class CourtyardWorldLayout {
     return (scale: scale, tx: tx, ty: ty);
   }
 
-  static List<String> get allAssets => [countryBase, ...PlotStages.allAssets];
+  static List<String> get allAssets => [
+    countryBase,
+    gardenPlotAsset,
+    warehouseAsset,
+    ...PlotStages.allAssets,
+  ];
 }

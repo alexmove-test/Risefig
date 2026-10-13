@@ -39,6 +39,11 @@ void main() {
       expect(SeedCatalog.offerFor(level).cost, SeedCatalog.costForLevel(level));
     }
     expect(HouseUpgrade.priceAfter(1), 100);
+    expect(SeedCatalog.speedUpCost(Duration.zero), 0);
+    expect(SeedCatalog.speedUpCost(const Duration(seconds: -4)), 0);
+    expect(SeedCatalog.speedUpCost(const Duration(seconds: 20)), 1);
+    expect(SeedCatalog.speedUpCost(const Duration(seconds: 90)), 2);
+    expect(SeedCatalog.speedUpCost(const Duration(minutes: 7)), 7);
   });
 
   test('class bands replace one-by-one species gates', () {
@@ -324,6 +329,202 @@ void main() {
     );
     expect(again.status, SeedClaimStatus.empty);
     expect(store.seeds.inventory, hasLength(1));
+  });
+
+  test(
+    'paying for the minutes left finishes the batch and keeps the seed',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 30,
+        'points.earned': 30,
+        'points.houseMigrated': true,
+        'points.houseState': 1,
+      });
+      final store = await PointsStore.open();
+      final start = DateTime.utc(2026, 5, 2, 12);
+      final started = await store.startSeedBatch(now: start, speciesIndex: 0);
+      final batch = started.seeds.batch!;
+      final now = start.add(const Duration(minutes: 3, seconds: 20));
+      final cost = SeedCatalog.speedUpCost(batch.remaining(now));
+      expect(cost, 7);
+
+      final sped = await store.speedUpSeed(now: now);
+      expect(sped.finished, isTrue);
+      expect(sped.cost, cost);
+      expect(store.balance, 13);
+      expect(store.lifetimeEarned, 30);
+      expect(store.seeds.inventory, isEmpty);
+      expect(store.seeds.batch!.id, batch.id);
+      expect(store.seeds.batch!.species, SeedSpecies.amberbell);
+      expect(store.seeds.batch!.power, 10);
+      expect(store.seeds.batch!.startedAt, start);
+      expect(store.seeds.batch!.readyAt, now);
+      expect(store.seeds.batch!.isReady(now), isTrue);
+
+      final again = await store.speedUpSeed(now: now);
+      expect(again.status, SeedSpeedStatus.ready);
+      expect(store.balance, 13);
+
+      final claimed = await store.claimSeed(now: now);
+      expect(claimed.claimed, isTrue);
+      expect(claimed.seed!.species, SeedSpecies.amberbell);
+      expect(claimed.seed!.power, 10);
+      expect(store.seeds.batch, isNull);
+      expect(store.balance, 13);
+
+      final idle = await store.speedUpSeed(
+        now: now.add(const Duration(minutes: 1)),
+      );
+      expect(idle.status, SeedSpeedStatus.idle);
+      expect(store.balance, 13);
+      expect((await PointsStore.open()).seeds.inventory, hasLength(1));
+      expect((await PointsStore.open()).balance, 13);
+    },
+  );
+
+  test(
+    'a short wallet or a rewound clock does not move the seed timer',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 12,
+        'points.earned': 12,
+        'points.houseMigrated': true,
+        'points.houseState': 1,
+      });
+      final store = await PointsStore.open();
+      final start = DateTime.utc(2026, 5, 3, 8);
+      final started = await store.startSeedBatch(now: start, speciesIndex: 0);
+      final readyAt = started.seeds.batch!.readyAt;
+      final now = start.add(const Duration(minutes: 3));
+
+      final short = await store.speedUpSeed(now: now);
+      expect(short.status, SeedSpeedStatus.insufficient);
+      expect(short.cost, 7);
+      expect(short.shortfall, 5);
+      expect(store.balance, 2);
+      expect(store.seeds.batch!.readyAt, readyAt);
+      expect(store.seeds.inventory, isEmpty);
+
+      final rewound = await store.speedUpSeed(
+        now: start.subtract(const Duration(minutes: 1)),
+      );
+      expect(rewound.status, SeedSpeedStatus.failed);
+      expect(store.balance, 2);
+      expect(store.seeds.batch!.readyAt, readyAt);
+      expect(store.seeds.batch!.species, SeedSpecies.amberbell);
+    },
+  );
+
+  test(
+    'a failed speed-up rolls the points and the timer back together',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 40,
+        'points.earned': 40,
+        'points.houseMigrated': true,
+        'points.houseState': 1,
+      });
+      final store = await PointsStore.open();
+      final start = DateTime.utc(2026, 5, 4, 9);
+      final started = await store.startSeedBatch(now: start, speciesIndex: 0);
+      store.debugAbortNextCommit();
+      final result = await store.speedUpSeed(
+        now: start.add(const Duration(minutes: 4)),
+      );
+
+      expect(result.status, SeedSpeedStatus.failed);
+      expect(store.balance, 30);
+      expect(store.seeds.batch!.readyAt, started.seeds.batch!.readyAt);
+      expect(store.seeds.batch!.species, SeedSpecies.amberbell);
+      expect(store.debugSeedJournal, isNull);
+
+      final reopened = await PointsStore.open();
+      expect(reopened.balance, 30);
+      expect(reopened.seeds.batch!.readyAt, started.seeds.batch!.readyAt);
+      expect(reopened.seeds.inventory, isEmpty);
+    },
+  );
+
+  test(
+    'reopening finishes a journaled speed-up that stopped halfway',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 40,
+        'points.earned': 40,
+        'points.houseMigrated': true,
+        'points.houseState': 1,
+      });
+      final store = await PointsStore.open();
+      final start = DateTime.utc(2026, 5, 5, 9);
+      final started = await store.startSeedBatch(now: start, speciesIndex: 0);
+      final now = start.add(const Duration(minutes: 4));
+      final sped = await store.speedUpSeed(now: now);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('points.balance', started.balance);
+      await prefs.setString('seeds.state.v1', started.seeds.encode());
+      await prefs.setString(
+        'seeds.journal.v1',
+        jsonEncode({
+          'wallet': WalletSnapshot(
+            balance: sped.balance,
+            lifetimeEarned: store.lifetimeEarned,
+            purchased: store.purchased,
+            houseState: store.houseState,
+            houseMigrated: true,
+          ).encode(),
+          'seeds': sped.seeds.toJson(),
+        }),
+      );
+
+      final recovered = await PointsStore.open();
+      expect(recovered.balance, sped.balance);
+      expect(recovered.balance, 24);
+      expect(recovered.seeds.batch!.readyAt, now);
+      expect(recovered.seeds.batch!.species, SeedSpecies.amberbell);
+      expect(recovered.seeds.inventory, isEmpty);
+      expect(recovered.debugSeedJournal, isNull);
+      expect((await PointsStore.open()).seeds.batch!.readyAt, now);
+    },
+  );
+
+  test('speeding a batch twice from the controller charges once', () async {
+    SharedPreferences.setMockInitialValues({
+      'points.balance': 30,
+      'points.earned': 30,
+      'points.houseMigrated': true,
+      'points.houseState': 1,
+    });
+    final controller = PointsController(await PointsStore.open());
+    final start = DateTime.utc(2026, 5, 6, 11);
+    await controller.startSeedBatch(now: start, speciesIndex: 0);
+    final now = start.add(const Duration(minutes: 4));
+    final first = controller.speedUpSeed(now: now);
+    final second = controller.speedUpSeed(now: now);
+    expect(identical(first, second), isTrue);
+    final result = await first;
+
+    expect(result.finished, isTrue);
+    expect(result.cost, 6);
+    expect(controller.balance, 14);
+    expect(controller.seedCount, 0);
+    expect(controller.seedBatch!.isReady(now), isTrue);
+    expect(controller.seedBatch!.species, SeedSpecies.amberbell);
+
+    final third = await controller.speedUpSeed(now: now);
+    expect(third.status, SeedSpeedStatus.ready);
+    expect(controller.balance, 14);
+    final claimed = await controller.claimSeed(now: now);
+    expect(claimed.claimed, isTrue);
+    expect(controller.seedCount, 1);
+    expect((await PointsStore.open()).balance, 14);
+    controller.dispose();
+  });
+
+  test('a memory wallet cannot speed a seed timer', () async {
+    final store = PointsStore.memory();
+    final result = await store.speedUpSeed();
+    expect(result.status, SeedSpeedStatus.unavailable);
+    expect(result.balance, 0);
   });
 
   test('a house upgrade does not change the batch already running', () async {
@@ -678,6 +879,92 @@ void main() {
     );
   });
 
+  testWidgets('a running batch offers to finish the minutes left', (
+    tester,
+  ) async {
+    final start = DateTime.utc(2026, 10, 1, 12);
+    final batch = SeedBatch(
+      id: 'batch-1',
+      startedAt: start,
+      readyAt: start.add(const Duration(minutes: 10)),
+      houseLevel: 1,
+      cost: 10,
+      species: SeedSpecies.amberbell,
+      power: 10,
+      rulesVersion: 1,
+    );
+    var calls = 0;
+    var played = false;
+    await tester.pumpWidget(
+      _app(
+        SeedProductionPanel(
+          houseLevel: 1,
+          balance: 2,
+          batch: batch,
+          tick: false,
+          now: () => start.add(const Duration(minutes: 3)),
+          onStart: () async =>
+              SeedStartResult.failed(balance: 2, seeds: SeedSnapshot.empty),
+          onClaim: () async =>
+              SeedClaimResult.failed(balance: 2, seeds: SeedSnapshot.empty),
+          onSpeedUp: () async {
+            calls++;
+            return const SeedSpeedResult(
+              status: SeedSpeedStatus.finished,
+              balance: 2,
+              seeds: SeedSnapshot.empty,
+            );
+          },
+          onPlayMahjong: () => played = true,
+        ),
+      ),
+    );
+    expect(find.text('Ускорить · 7 поинтов'), findsOneWidget);
+    expect(find.text('Не хватает 5 поинтов'), findsOneWidget);
+    expect(find.text('Янтарный колокольчик'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('seed-speed-button')))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.byKey(const ValueKey('seed-speed-play')));
+    expect(played, isTrue);
+    expect(calls, 0);
+
+    await tester.pumpWidget(
+      _app(
+        SeedProductionPanel(
+          houseLevel: 1,
+          balance: 100,
+          batch: batch,
+          tick: false,
+          now: () => start.add(const Duration(minutes: 3)),
+          onStart: () async =>
+              SeedStartResult.failed(balance: 100, seeds: SeedSnapshot.empty),
+          onClaim: () async =>
+              SeedClaimResult.failed(balance: 100, seeds: SeedSnapshot.empty),
+          onSpeedUp: () async {
+            calls++;
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            return const SeedSpeedResult(
+              status: SeedSpeedStatus.finished,
+              balance: 93,
+              seeds: SeedSnapshot.empty,
+              cost: 7,
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('seed-speed-button')));
+    await tester.tap(find.byKey(const ValueKey('seed-speed-button')));
+    await tester.pump();
+    expect(calls, 1);
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a short wallet shows the gap and a way into mahjong', (
     tester,
   ) async {
@@ -831,6 +1118,54 @@ void main() {
     expect(find.text('Произведено домом уровня 1'), findsOneWidget);
     expect(find.text('Посадить'), findsNothing);
     controller.dispose();
+  });
+
+  testWidgets('a neighbor seed keeps its partner on the storage card', (
+    tester,
+  ) async {
+    final crossed = SeedInstance(
+      id: 'seed-cross',
+      species: SeedSpecies.glassreed,
+      power: 25,
+      houseLevel: 1,
+      createdAt: DateTime.utc(2026, 10, 8),
+      source: SeedSource.cross,
+      batchId: 'ncross-1',
+      lineage: const CrossLineage(
+        partnerId: 'anna',
+        partnerName: 'Anna',
+        parentSpecies: ['amberbell', 'mistfern'],
+        ownPlantId: 'plant-1',
+      ),
+    );
+    SharedPreferences.setMockInitialValues({
+      'points.balance': 10,
+      'points.houseMigrated': true,
+      'seeds.state.v1': SeedSnapshot(
+        batch: null,
+        inventory: [crossed],
+        seq: 1,
+      ).encode(),
+    });
+    final crossedStore = await PointsStore.open();
+    final crossedController = PointsController(crossedStore);
+    await tester.pumpWidget(
+      _scoped(
+        crossedController,
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showSeedStorage(context),
+            child: const Text('lineage'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('lineage'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('seed-stack-glassreed-25-anna')));
+    await tester.pumpAndSettle();
+    expect(find.text('Вырастили вместе с Anna'), findsOneWidget);
+    crossedController.dispose();
   });
 }
 

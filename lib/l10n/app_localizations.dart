@@ -5,9 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_ru.dart';
 import 'app_localizations_th.dart';
+import 'app_localizations_uk.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,8 +98,10 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('de'),
     Locale('ru'),
     Locale('th'),
+    Locale('uk'),
   ];
 
   /// Resumes the current activity.
@@ -249,6 +253,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A 3★ clear unlocks the reward'**
   String get hubThreeStarUntilReward;
+
+  /// Hub banner line for the latest neighbor event. text is an existing neighbor status phrase.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {text}'**
+  String hubNeighborEvent(String name, String text);
+
+  /// No description provided for @hubHarvestReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{plant} is ripe — tap to harvest'**
+  String hubHarvestReady(String plant);
+
+  /// No description provided for @hubBedFree.
+  ///
+  /// In en, this message translates to:
+  /// **'A garden bed is free — plant a seed'**
+  String get hubBedFree;
 
   /// Label of the daily table.
   ///
@@ -838,6 +860,156 @@ abstract class AppLocalizations {
   /// **'The tray holds 4 — fill it with no pair and you lose'**
   String get coachTrayLimit;
 
+  /// No description provided for @tutorialCollect.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a free tile — it goes into the tray'**
+  String get tutorialCollect;
+
+  /// No description provided for @tutorialMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect two matching tiles — the pair clears. The tray has only 4 slots.'**
+  String get tutorialMatch;
+
+  /// No description provided for @tutorialLayers.
+  ///
+  /// In en, this message translates to:
+  /// **'A covered tile can\'t be taken until the one on top is gone.'**
+  String get tutorialLayers;
+
+  /// No description provided for @tutorialBoosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint shows a move, magnet collects a pair, undo takes a move back.'**
+  String get tutorialBoosts;
+
+  /// No description provided for @tutorialSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tutorialSkip;
+
+  /// No description provided for @featureGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get featureGotIt;
+
+  /// No description provided for @featureNewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get featureNewBadge;
+
+  /// No description provided for @featureNewGarden.
+  ///
+  /// In en, this message translates to:
+  /// **'New: garden beds in the yard — tap a bed to plant a seed'**
+  String get featureNewGarden;
+
+  /// Hub goal: how many campaign levels until a meta feature appears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more level} other{{count} more levels}} to unlock: {feature}'**
+  String featureUnlockGoal(int count, String feature);
+
+  /// No description provided for @winPointsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend points on your house in the yard'**
+  String get winPointsHint;
+
+  /// No description provided for @replayTips.
+  ///
+  /// In en, this message translates to:
+  /// **'Show tips again'**
+  String get replayTips;
+
+  /// No description provided for @replayTipsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips will show again'**
+  String get replayTipsDone;
+
+  /// No description provided for @featureTitleHouse.
+  ///
+  /// In en, this message translates to:
+  /// **'House'**
+  String get featureTitleHouse;
+
+  /// No description provided for @featureTitleGarden.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden'**
+  String get featureTitleGarden;
+
+  /// No description provided for @featureTitleSeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Seeds'**
+  String get featureTitleSeeds;
+
+  /// No description provided for @featureBodyHouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels earn points. Spend them here to upgrade the house — it also produces seeds for the garden.'**
+  String get featureBodyHouse;
+
+  /// No description provided for @featureBodyPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Points come from every cleared level. They pay for house upgrades and planting.'**
+  String get featureBodyPoints;
+
+  /// No description provided for @featureBodyGarden.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant a seed in a bed, wait, and harvest a plant. Plants feed pets and can be shown to neighbors.'**
+  String get featureBodyGarden;
+
+  /// No description provided for @featureBodyWarehouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Harvested plants are kept here. Feed them to pets, cross two of them, or put one in the showcase.'**
+  String get featureBodyWarehouse;
+
+  /// No description provided for @featureBodySeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Seeds made by the house are stored here. Plant them in the garden beds.'**
+  String get featureBodySeeds;
+
+  /// No description provided for @featureBodyCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend two plants to get one new seed. A stronger or rare result is a chance, not a promise.'**
+  String get featureBodyCross;
+
+  /// No description provided for @featureBodyNeighbors.
+  ///
+  /// In en, this message translates to:
+  /// **'Players near you on the leaderboard live on the hills. Send them messages and team up for crossing and defense.'**
+  String get featureBodyNeighbors;
+
+  /// No description provided for @featureBodyShowcase.
+  ///
+  /// In en, this message translates to:
+  /// **'Show your best plants to everyone and see what other players grow.'**
+  String get featureBodyShowcase;
+
+  /// No description provided for @featureBodyLeaderboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Stars and wins this week move you up the ranking against other players.'**
+  String get featureBodyLeaderboard;
+
+  /// No description provided for @featureBodyPets.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pet lives in the yard. Feed it plants from the garden.'**
+  String get featureBodyPets;
+
   /// Difficulty label for the first campaign levels.
   ///
   /// In en, this message translates to:
@@ -1303,14 +1475,8 @@ abstract class AppLocalizations {
   /// No description provided for @petStrengthLineText.
   ///
   /// In en, this message translates to:
-  /// **'{stat} {total} = base {base} + item {main} + accessory {accessory}'**
-  String petStrengthLineText(
-    String stat,
-    int total,
-    int base,
-    int main,
-    int accessory,
-  );
+  /// **'{stat} {total}'**
+  String petStrengthLineText(String stat, int total);
 
   /// No description provided for @petLevelChange.
   ///
@@ -1384,12 +1550,6 @@ abstract class AppLocalizations {
   /// **'That plant is no longer in the warehouse.'**
   String get petFeedMissing;
 
-  /// Short interface label: Empty
-  ///
-  /// In en, this message translates to:
-  /// **'Empty'**
-  String get petSlotEmpty;
-
   /// Short interface label: Guard the garden
   ///
   /// In en, this message translates to:
@@ -1425,66 +1585,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear raid choice'**
   String get petStopRaid;
-
-  /// No description provided for @gearBonus.
-  ///
-  /// In en, this message translates to:
-  /// **'+{bonus} strength'**
-  String gearBonus(int bonus);
-
-  /// No description provided for @gearPriceText.
-  ///
-  /// In en, this message translates to:
-  /// **'{price} points'**
-  String gearPriceText(String price);
-
-  /// No description provided for @gearLevelRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Requires level {level}'**
-  String gearLevelRequired(int level);
-
-  /// No description provided for @gearIfEquipped.
-  ///
-  /// In en, this message translates to:
-  /// **'If equipped: {stat} {from} → {to}'**
-  String gearIfEquipped(String stat, int from, int to);
-
-  /// Buys a pet item.
-  ///
-  /// In en, this message translates to:
-  /// **'Buy'**
-  String get gearBuy;
-
-  /// Equips an owned pet item.
-  ///
-  /// In en, this message translates to:
-  /// **'Equip'**
-  String get gearEquip;
-
-  /// Removes an equipped pet item.
-  ///
-  /// In en, this message translates to:
-  /// **'Take off'**
-  String get gearUnequip;
-
-  /// No description provided for @gearWornBy.
-  ///
-  /// In en, this message translates to:
-  /// **'Worn by {name}'**
-  String gearWornBy(String name);
-
-  /// No description provided for @gearShortfallText.
-  ///
-  /// In en, this message translates to:
-  /// **'Need {shortfall} more points'**
-  String gearShortfallText(String shortfall);
-
-  /// No description provided for @gearBuyFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not save. Points were not spent.'**
-  String get gearBuyFailed;
 
   /// No description provided for @gardenGuardLabel.
   ///
@@ -1641,6 +1741,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Produce a seed · {price} points'**
   String produceSeedForText(String price);
+
+  /// Square button that starts seed production. Price is on its own line.
+  ///
+  /// In en, this message translates to:
+  /// **'Produce\na seed\n{price}'**
+  String yardSeedOfferText(String price);
+
+  /// Square button while a seed is being produced. Time is mm:ss.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed\n{time}'**
+  String yardSeedTimerText(String time);
+
+  /// Square button that opens a garden bed to plant a seed.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow a plant'**
+  String get yardGrowPlant;
+
+  /// Optional rewarded ad that harvests one growing plant immediately. Offered once per day beside the points speed-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch ad · collect now'**
+  String get watchAdHarvest;
+
+  /// Shown if the once-a-day garden ad harvest was already used.
+  ///
+  /// In en, this message translates to:
+  /// **'Already collected with an ad today'**
+  String get plantAdUsed;
+
+  /// Button that finishes the remaining seed or plant timer for a point price.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed up · {price} points'**
+  String speedUpForText(String price);
 
   /// Short interface label: Collect seed
   ///
@@ -1935,6 +2071,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ไทย'**
   String get languageThai;
+
+  /// Language name shown in the picker. Stays German in every locale.
+  ///
+  /// In en, this message translates to:
+  /// **'Deutsch'**
+  String get languageGerman;
+
+  /// Language name shown in the picker. Stays Ukrainian in every locale.
+  ///
+  /// In en, this message translates to:
+  /// **'Українська'**
+  String get languageUkrainian;
 
   /// Goal for the compact tower challenge.
   ///
@@ -2284,18 +2432,6 @@ abstract class AppLocalizations {
   /// **'Defense'**
   String get petStatDefense;
 
-  /// Primary gear slot.
-  ///
-  /// In en, this message translates to:
-  /// **'Main item'**
-  String get gearSlotMain;
-
-  /// Secondary gear slot.
-  ///
-  /// In en, this message translates to:
-  /// **'Accessory'**
-  String get gearSlotAccessory;
-
   /// Garden stage after planting.
   ///
   /// In en, this message translates to:
@@ -2631,12 +2767,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fox’s story · {stage}/3'**
   String foxStoryProgress(int stage);
-
-  /// Gear shop line joining the role and the slot.
-  ///
-  /// In en, this message translates to:
-  /// **'{role} · {slot}'**
-  String gearOfferText(String role, String slot);
 
   /// Compact pet badge joining role and level.
   ///
@@ -3015,78 +3145,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Winter'**
   String get familyWinter;
-
-  /// Pet item name for id attacker_main_1.
-  ///
-  /// In en, this message translates to:
-  /// **'Silk Sash'**
-  String get gearAttackerMain1;
-
-  /// Pet item name for id attacker_main_2.
-  ///
-  /// In en, this message translates to:
-  /// **'Night Claw'**
-  String get gearAttackerMain2;
-
-  /// Pet item name for id attacker_main_3.
-  ///
-  /// In en, this message translates to:
-  /// **'Raid Lantern'**
-  String get gearAttackerMain3;
-
-  /// Pet item name for id attacker_accessory_1.
-  ///
-  /// In en, this message translates to:
-  /// **'Scout Bell'**
-  String get gearAttackerAccessory1;
-
-  /// Pet item name for id attacker_accessory_2.
-  ///
-  /// In en, this message translates to:
-  /// **'Prowl Pouch'**
-  String get gearAttackerAccessory2;
-
-  /// Pet item name for id attacker_accessory_3.
-  ///
-  /// In en, this message translates to:
-  /// **'Moon Charm'**
-  String get gearAttackerAccessory3;
-
-  /// Pet item name for id defender_main_1.
-  ///
-  /// In en, this message translates to:
-  /// **'Padded Vest'**
-  String get gearDefenderMain1;
-
-  /// Pet item name for id defender_main_2.
-  ///
-  /// In en, this message translates to:
-  /// **'Guard Vest'**
-  String get gearDefenderMain2;
-
-  /// Pet item name for id defender_main_3.
-  ///
-  /// In en, this message translates to:
-  /// **'Lantern Plate'**
-  String get gearDefenderMain3;
-
-  /// Pet item name for id defender_accessory_1.
-  ///
-  /// In en, this message translates to:
-  /// **'Leather Collar'**
-  String get gearDefenderAccessory1;
-
-  /// Pet item name for id defender_accessory_2.
-  ///
-  /// In en, this message translates to:
-  /// **'Watch Band'**
-  String get gearDefenderAccessory2;
-
-  /// Pet item name for id defender_accessory_3.
-  ///
-  /// In en, this message translates to:
-  /// **'Gate Charm'**
-  String get gearDefenderAccessory3;
 
   /// Campaign chapter name 1.
   ///
@@ -4875,6 +4933,1668 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Campfire'**
   String get petItemCampfire;
+
+  /// No description provided for @neighborsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Neighbors'**
+  String get neighborsTitle;
+
+  /// No description provided for @neighborsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get neighborsClose;
+
+  /// No description provided for @neighborsTabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All players'**
+  String get neighborsTabAll;
+
+  /// No description provided for @neighborsTabSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get neighborsTabSaved;
+
+  /// No description provided for @neighborsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by the start of a name'**
+  String get neighborsSearchHint;
+
+  /// No description provided for @neighborsForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'For you'**
+  String get neighborsForYou;
+
+  /// No description provided for @neighborsUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} updates'**
+  String neighborsUpdates(int count);
+
+  /// No description provided for @neighborsShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get neighborsShowLess;
+
+  /// No description provided for @neighborsEmptySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'People you save for later appear here.'**
+  String get neighborsEmptySaved;
+
+  /// No description provided for @neighborsBrowsePlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse all players'**
+  String get neighborsBrowsePlayers;
+
+  /// No description provided for @neighborsEmptySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'No name starts with this.'**
+  String get neighborsEmptySearch;
+
+  /// No description provided for @neighborsEmptyPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'No other players are in this list.'**
+  String get neighborsEmptyPlayers;
+
+  /// No description provided for @neighborsOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Previously loaded players stay here.'**
+  String get neighborsOffline;
+
+  /// No description provided for @neighborsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load players.'**
+  String get neighborsLoadFailed;
+
+  /// No description provided for @neighborsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get neighborsRetry;
+
+  /// No description provided for @neighborsLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading players'**
+  String get neighborsLoading;
+
+  /// No description provided for @neighborsLoadingMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading more players'**
+  String get neighborsLoadingMore;
+
+  /// No description provided for @neighborsLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'level {level}'**
+  String neighborsLevel(int level);
+
+  /// No description provided for @neighborsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get neighborsAdd;
+
+  /// No description provided for @neighborsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get neighborsRemove;
+
+  /// No description provided for @neighborsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is in Favorites.'**
+  String neighborsSaved(String name);
+
+  /// No description provided for @neighborsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was removed from Favorites.'**
+  String neighborsRemoved(String name);
+
+  /// No description provided for @neighborsFindAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Find them in Favorites'**
+  String get neighborsFindAgain;
+
+  /// No description provided for @neighborsBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the list'**
+  String get neighborsBack;
+
+  /// No description provided for @neighborsSavedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this player to find them again in Favorites.'**
+  String get neighborsSavedHint;
+
+  /// No description provided for @neighborsSignalAsksHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Asks for help'**
+  String get neighborsSignalAsksHelp;
+
+  /// No description provided for @neighborsSignalSeeksDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for protection'**
+  String get neighborsSignalSeeksDefense;
+
+  /// No description provided for @neighborsSignalOffersCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers a cross'**
+  String get neighborsSignalOffersCross;
+
+  /// No description provided for @neighborsSignalAwaitsReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a reply'**
+  String get neighborsSignalAwaitsReply;
+
+  /// No description provided for @neighborsSignalHelpedYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Helped you'**
+  String get neighborsSignalHelpedYou;
+
+  /// No description provided for @neighborsUnseen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new'**
+  String neighborsUnseen(int count);
+
+  /// No description provided for @neighborsHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Together'**
+  String get neighborsHistory;
+
+  /// No description provided for @neighborsBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get neighborsBlock;
+
+  /// No description provided for @neighborsBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is blocked and hidden.'**
+  String neighborsBlocked(String name);
+
+  /// No description provided for @neighborsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a reply'**
+  String get neighborsWaiting;
+
+  /// No description provided for @neighborsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is not available.'**
+  String get neighborsUnavailable;
+
+  /// No description provided for @neighborsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This did not go through. You can try again.'**
+  String get neighborsFailed;
+
+  /// No description provided for @neighborsEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'This offer has ended.'**
+  String get neighborsEnded;
+
+  /// No description provided for @neighborsDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'This offer was declined.'**
+  String get neighborsDeclined;
+
+  /// No description provided for @neighborsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'This offer was cancelled.'**
+  String get neighborsCancelled;
+
+  /// No description provided for @neighborsInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Working on it'**
+  String get neighborsInProgress;
+
+  /// No description provided for @neighborsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get neighborsDone;
+
+  /// No description provided for @neighborsReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get neighborsReply;
+
+  /// No description provided for @neighborsViewOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'View the offer'**
+  String get neighborsViewOffer;
+
+  /// No description provided for @neighborsPeaceful.
+  ///
+  /// In en, this message translates to:
+  /// **'Peaceful actions'**
+  String get neighborsPeaceful;
+
+  /// No description provided for @neighborsAttackSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack'**
+  String get neighborsAttackSection;
+
+  /// No description provided for @neighborsAttackExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'This starts an attack on this player.'**
+  String get neighborsAttackExplain;
+
+  /// No description provided for @neighborsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get neighborsConfirm;
+
+  /// No description provided for @neighborsThank.
+  ///
+  /// In en, this message translates to:
+  /// **'Say thanks'**
+  String get neighborsThank;
+
+  /// No description provided for @neighborsThankSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks sent to {name}.'**
+  String neighborsThankSent(String name);
+
+  /// No description provided for @neighborsOfferAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer again'**
+  String get neighborsOfferAgain;
+
+  /// No description provided for @neighborsCost.
+  ///
+  /// In en, this message translates to:
+  /// **'This uses: {cost}'**
+  String neighborsCost(String cost);
+
+  /// No description provided for @neighborsOutcome.
+  ///
+  /// In en, this message translates to:
+  /// **'After you confirm: {outcome}'**
+  String neighborsOutcome(String outcome);
+
+  /// No description provided for @neighborsHelpAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get neighborsHelpAction;
+
+  /// No description provided for @neighborsDefenseAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect'**
+  String get neighborsDefenseAction;
+
+  /// No description provided for @neighborsCrossDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get neighborsCrossDecline;
+
+  /// No description provided for @neighborsUsesPlant.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant: {plant}'**
+  String neighborsUsesPlant(String plant);
+
+  /// No description provided for @neighborsPlantStays.
+  ///
+  /// In en, this message translates to:
+  /// **'This plant stays with its owner.'**
+  String get neighborsPlantStays;
+
+  /// No description provided for @neighborsPlantLeaves.
+  ///
+  /// In en, this message translates to:
+  /// **'This plant is used up.'**
+  String get neighborsPlantLeaves;
+
+  /// No description provided for @neighborsMemoryHelped.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} helped your plant.'**
+  String neighborsMemoryHelped(String name);
+
+  /// No description provided for @neighborsMemoryDefended.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s pet protected the garden.'**
+  String neighborsMemoryDefended(String name);
+
+  /// No description provided for @neighborsMemoryCrossed.
+  ///
+  /// In en, this message translates to:
+  /// **'You and {name} received a new plant.'**
+  String neighborsMemoryCrossed(String name);
+
+  /// No description provided for @neighborsMemoryThanked.
+  ///
+  /// In en, this message translates to:
+  /// **'You thanked {name}.'**
+  String neighborsMemoryThanked(String name);
+
+  /// No description provided for @neighborsMemoryRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack report with {name}.'**
+  String neighborsMemoryRaid(String name);
+
+  /// No description provided for @neighborsReasonUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This shared action is not available yet.'**
+  String get neighborsReasonUnsupported;
+
+  /// No description provided for @neighborsReasonNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is not available for this player.'**
+  String get neighborsReasonNotAllowed;
+
+  /// No description provided for @neighborsReasonMissingPet.
+  ///
+  /// In en, this message translates to:
+  /// **'A protecting pet is needed.'**
+  String get neighborsReasonMissingPet;
+
+  /// No description provided for @neighborsReasonMissingPlant.
+  ///
+  /// In en, this message translates to:
+  /// **'The plant for this action is needed.'**
+  String get neighborsReasonMissingPlant;
+
+  /// No description provided for @neighborsProtector.
+  ///
+  /// In en, this message translates to:
+  /// **'Protector: {name}'**
+  String neighborsProtector(String name);
+
+  /// No description provided for @neighborsUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {time}'**
+  String neighborsUntil(String time);
+
+  /// No description provided for @neighborsAttackPower.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack {value}'**
+  String neighborsAttackPower(int value);
+
+  /// No description provided for @neighborsDefensePower.
+  ///
+  /// In en, this message translates to:
+  /// **'Defense {value}'**
+  String neighborsDefensePower(int value);
+
+  /// No description provided for @neighborsLoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible essence: {count}'**
+  String neighborsLoot(int count);
+
+  /// No description provided for @showcaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant showcase'**
+  String get showcaseTitle;
+
+  /// No description provided for @showcaseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All plants'**
+  String get showcaseAll;
+
+  /// No description provided for @showcaseMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My plants'**
+  String get showcaseMine;
+
+  /// No description provided for @showcaseManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Display my plants'**
+  String get showcaseManage;
+
+  /// No description provided for @showcaseRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh showcase'**
+  String get showcaseRefresh;
+
+  /// No description provided for @showcaseIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover plants grown by other players. Each card shows its owner.'**
+  String get showcaseIntro;
+
+  /// No description provided for @showcaseMyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a harvested plant to display with your player name. It stays in your inventory and cannot be fed to a pet until you remove it from display.'**
+  String get showcaseMyIntro;
+
+  /// No description provided for @showcaseEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No plants on display yet. You can add the first one.'**
+  String get showcaseEmpty;
+
+  /// No description provided for @showcaseChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a plant'**
+  String get showcaseChoose;
+
+  /// No description provided for @showcaseNoPlants.
+  ///
+  /// In en, this message translates to:
+  /// **'Harvest a plant from your garden to put it on display.'**
+  String get showcaseNoPlants;
+
+  /// No description provided for @showcasePublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Put on display'**
+  String get showcasePublish;
+
+  /// No description provided for @showcaseWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from display'**
+  String get showcaseWithdraw;
+
+  /// No description provided for @showcasePublished.
+  ///
+  /// In en, this message translates to:
+  /// **'On public display'**
+  String get showcasePublished;
+
+  /// No description provided for @showcasePrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Only you can see this plant'**
+  String get showcasePrivate;
+
+  /// No description provided for @showcaseUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Publication not confirmed. Retry or remove it from display.'**
+  String get showcaseUnconfirmed;
+
+  /// No description provided for @showcasePublishedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plant is now on public display.'**
+  String get showcasePublishedNotice;
+
+  /// No description provided for @showcaseRemovedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant removed from display. You can use it again.'**
+  String get showcaseRemovedNotice;
+
+  /// No description provided for @showcaseUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The online showcase is unavailable. Your plants are still here.'**
+  String get showcaseUnavailable;
+
+  /// No description provided for @showcaseLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not refresh the showcase. Check your connection and try again.'**
+  String get showcaseLoadFailed;
+
+  /// No description provided for @showcaseOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not confirm the action. Your plant is protected; retry when connected.'**
+  String get showcaseOperationFailed;
+
+  /// No description provided for @showcaseMissingLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'This published plant is not in this device’s inventory.'**
+  String get showcaseMissingLocal;
+
+  /// No description provided for @showcaseMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more plants'**
+  String get showcaseMore;
+
+  /// Identifies a harvested plant in the player's inventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant {number}'**
+  String showcaseSpecimen(int number);
+
+  /// No description provided for @showcaseFeedLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Plants on display cannot be fed to pets. Remove them from the showcase first.'**
+  String get showcaseFeedLocked;
+
+  /// Short interface label: Cross plants
+  ///
+  /// In en, this message translates to:
+  /// **'Cross plants'**
+  String get crossOpen;
+
+  /// Short interface label: Cross plants
+  ///
+  /// In en, this message translates to:
+  /// **'Cross plants'**
+  String get crossTitle;
+
+  /// No description provided for @crossNeedTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose two harvested plants.'**
+  String get crossNeedTwo;
+
+  /// Short interface label: Combat feed
+  ///
+  /// In en, this message translates to:
+  /// **'Combat feed'**
+  String get crossAimCombat;
+
+  /// Short interface label: Richer garden
+  ///
+  /// In en, this message translates to:
+  /// **'Richer garden'**
+  String get crossAimGarden;
+
+  /// Short interface label: Choose a seed
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a seed'**
+  String get crossAimSeeds;
+
+  /// No description provided for @crossOdds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ordinary {ordinary}%. Stronger {raised}%. Rare {rare}%.'**
+  String crossOdds(int ordinary, int raised, int rare);
+
+  /// Short interface label: Cross
+  ///
+  /// In en, this message translates to:
+  /// **'Cross'**
+  String get crossConfirm;
+
+  /// No description provided for @crossFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The cross could not be saved. Try again.'**
+  String get crossFailed;
+
+  /// No description provided for @crossListed.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a plant off the showcase before crossing it.'**
+  String get crossListed;
+
+  /// No description provided for @crossWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the current cross first.'**
+  String get crossWaiting;
+
+  /// No description provided for @crossChooseTrait.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose attack or defense for this feed.'**
+  String get crossChooseTrait;
+
+  /// Short interface label: Attack
+  ///
+  /// In en, this message translates to:
+  /// **'Attack'**
+  String get crossAttack;
+
+  /// Short interface label: Defense
+  ///
+  /// In en, this message translates to:
+  /// **'Defense'**
+  String get crossDefense;
+
+  /// No description provided for @crossChooseSpecies.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the seed.'**
+  String get crossChooseSpecies;
+
+  /// No description provided for @crossOrdinary.
+  ///
+  /// In en, this message translates to:
+  /// **'The cross stayed ordinary. An ordinary seed was added.'**
+  String get crossOrdinary;
+
+  /// No description provided for @crossGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'The seed from the cross is in storage.'**
+  String get crossGranted;
+
+  /// No description provided for @crossTraitAttack.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack feed'**
+  String get crossTraitAttack;
+
+  /// No description provided for @crossTraitDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'Defense feed'**
+  String get crossTraitDefense;
+
+  /// No description provided for @crossTraitBloom.
+  ///
+  /// In en, this message translates to:
+  /// **'Grows faster'**
+  String get crossTraitBloom;
+
+  /// No description provided for @plantOriginCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Origin: cross'**
+  String get plantOriginCross;
+
+  /// No description provided for @neighborsActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get neighborsActions;
+
+  /// No description provided for @neighborsActionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a message'**
+  String get neighborsActionMessage;
+
+  /// No description provided for @neighborsActionDefend.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect'**
+  String get neighborsActionDefend;
+
+  /// No description provided for @neighborsActionCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer a cross'**
+  String get neighborsActionCross;
+
+  /// No description provided for @neighborsActionRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack'**
+  String get neighborsActionRaid;
+
+  /// No description provided for @neighborsActionsOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Actions with players need an internet connection.'**
+  String get neighborsActionsOffline;
+
+  /// No description provided for @neighborsNeedGuard.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a guarding pet in the pet yard first.'**
+  String get neighborsNeedGuard;
+
+  /// No description provided for @neighborsNeedRaider.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a raiding pet in the pet yard first.'**
+  String get neighborsNeedRaider;
+
+  /// No description provided for @neighborsNeedPlant.
+  ///
+  /// In en, this message translates to:
+  /// **'You need a harvested plant in storage.'**
+  String get neighborsNeedPlant;
+
+  /// No description provided for @neighborsChoosePhrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a phrase'**
+  String get neighborsChoosePhrase;
+
+  /// No description provided for @neighborsChoosePlant.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a plant to give'**
+  String get neighborsChoosePlant;
+
+  /// No description provided for @neighborsSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get neighborsSend;
+
+  /// No description provided for @neighborsSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to {name}.'**
+  String neighborsSent(String name);
+
+  /// No description provided for @neighborsAlreadyOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have an open request of this kind with this player.'**
+  String get neighborsAlreadyOpen;
+
+  /// No description provided for @neighborsRequestClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This request is already closed.'**
+  String get neighborsRequestClosed;
+
+  /// No description provided for @neighborsSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This did not go through. Check the connection and try again.'**
+  String get neighborsSendFailed;
+
+  /// No description provided for @neighborsDefendExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'After {name} accepts, your pet helps guard their yard for 24 hours. Defense {value}.'**
+  String neighborsDefendExplain(String name, int value);
+
+  /// No description provided for @neighborsRaidExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has 24 hours to answer with a guard pet. The yard holds only if the guard is stronger than your attack {value}. Otherwise one of their plants burns and you take another.'**
+  String neighborsRaidExplain(String name, int value);
+
+  /// No description provided for @neighborsCrossExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Each of you gives one plant and gets one seed of the result. Your plant is spent only when you take the seed.'**
+  String get neighborsCrossExplain;
+
+  /// No description provided for @neighborsMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages and requests'**
+  String get neighborsMessages;
+
+  /// No description provided for @neighborsPhraseHello.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi, neighbor!'**
+  String get neighborsPhraseHello;
+
+  /// No description provided for @neighborsPhraseGoodLuck.
+  ///
+  /// In en, this message translates to:
+  /// **'Good luck!'**
+  String get neighborsPhraseGoodLuck;
+
+  /// No description provided for @neighborsPhraseThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you!'**
+  String get neighborsPhraseThanks;
+
+  /// No description provided for @neighborsPhraseNiceGarden.
+  ///
+  /// In en, this message translates to:
+  /// **'Lovely garden!'**
+  String get neighborsPhraseNiceGarden;
+
+  /// No description provided for @neighborsPhraseLetsCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s grow something rare together.'**
+  String get neighborsPhraseLetsCross;
+
+  /// No description provided for @neighborsPhraseIWillGuard.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll keep an eye on your yard.'**
+  String get neighborsPhraseIWillGuard;
+
+  /// No description provided for @neighborsPhraseReadyForRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready? I\'m coming for your yard!'**
+  String get neighborsPhraseReadyForRaid;
+
+  /// No description provided for @neighborsPhraseWellPlayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Well played!'**
+  String get neighborsPhraseWellPlayed;
+
+  /// No description provided for @neighborsInMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} wrote to you'**
+  String neighborsInMessage(String name);
+
+  /// No description provided for @neighborsInDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} offers to guard your yard for 24 hours. Defense {value}.'**
+  String neighborsInDefense(String name, int value);
+
+  /// No description provided for @neighborsInCross.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} offers to cross their {plant} with one of your plants.'**
+  String neighborsInCross(String name, String plant);
+
+  /// No description provided for @neighborsInRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is raiding your yard. Attack {value}.'**
+  String neighborsInRaid(String name, int value);
+
+  /// No description provided for @neighborsOutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You wrote'**
+  String get neighborsOutMessage;
+
+  /// No description provided for @neighborsOutDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'You offered protection. Defense {value}.'**
+  String neighborsOutDefense(int value);
+
+  /// No description provided for @neighborsOutCross.
+  ///
+  /// In en, this message translates to:
+  /// **'You offered your {plant} for a cross.'**
+  String neighborsOutCross(String plant);
+
+  /// No description provided for @neighborsOutRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'You raided this yard. Attack {value}.'**
+  String neighborsOutRaid(int value);
+
+  /// No description provided for @neighborsQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: “{text}”'**
+  String neighborsQuote(String name, String text);
+
+  /// No description provided for @neighborsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get neighborsYou;
+
+  /// No description provided for @neighborsAcceptDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept protection'**
+  String get neighborsAcceptDefense;
+
+  /// No description provided for @neighborsChooseCrossPlant.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your plant'**
+  String get neighborsChooseCrossPlant;
+
+  /// No description provided for @neighborsRepel.
+  ///
+  /// In en, this message translates to:
+  /// **'Defend the yard'**
+  String get neighborsRepel;
+
+  /// No description provided for @neighborsCancelRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel request'**
+  String get neighborsCancelRequest;
+
+  /// No description provided for @neighborsClaimSeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Take the seed'**
+  String get neighborsClaimSeed;
+
+  /// No description provided for @neighborsRaidWon.
+  ///
+  /// In en, this message translates to:
+  /// **'The raid succeeded: attack {attack} against defense {defense}.'**
+  String neighborsRaidWon(int attack, int defense);
+
+  /// No description provided for @neighborsRaidRepelled.
+  ///
+  /// In en, this message translates to:
+  /// **'The yard held: attack {attack} against defense {defense}.'**
+  String neighborsRaidRepelled(int attack, int defense);
+
+  /// No description provided for @neighborsGuarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection is active until {time}.'**
+  String neighborsGuarding(String time);
+
+  /// No description provided for @neighborsGuardEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection has ended.'**
+  String get neighborsGuardEnded;
+
+  /// No description provided for @neighborsCrossResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross result: {plant} seed.'**
+  String neighborsCrossResult(String plant);
+
+  /// No description provided for @neighborsSeedClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'The seed is in your seed storage.'**
+  String get neighborsSeedClaimed;
+
+  /// No description provided for @neighborsSeedMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Put a {plant} in storage to take the seed.'**
+  String neighborsSeedMissing(String plant);
+
+  /// No description provided for @neighborsYourDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'Your yard defense: {value}'**
+  String neighborsYourDefense(int value);
+
+  /// No description provided for @neighborsReplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply sent.'**
+  String get neighborsReplied;
+
+  /// No description provided for @neighborsSignalMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get neighborsSignalMessage;
+
+  /// No description provided for @neighborsSignalDefense.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers protection'**
+  String get neighborsSignalDefense;
+
+  /// No description provided for @neighborsSignalRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Raiding your yard'**
+  String get neighborsSignalRaid;
+
+  /// No description provided for @neighborsSignalResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply received'**
+  String get neighborsSignalResult;
+
+  /// No description provided for @socialFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get socialFriends;
+
+  /// No description provided for @socialFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'You are friends'**
+  String get socialFriend;
+
+  /// No description provided for @socialFriendsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends yet. Open a neighbor’s card and invite them. They appear here after accepting.'**
+  String get socialFriendsEmpty;
+
+  /// No description provided for @socialIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend invitation'**
+  String get socialIncoming;
+
+  /// No description provided for @socialWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for acceptance'**
+  String get socialWaiting;
+
+  /// No description provided for @socialUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect. Check your connection and try again.'**
+  String get socialUnavailable;
+
+  /// No description provided for @socialChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation'**
+  String get socialChat;
+
+  /// No description provided for @socialRemoveFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove friend'**
+  String get socialRemoveFriend;
+
+  /// No description provided for @socialFriendConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepting friendship lets both of you send personal messages.'**
+  String get socialFriendConsent;
+
+  /// No description provided for @socialAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept friendship'**
+  String get socialAccept;
+
+  /// No description provided for @socialInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite as friend'**
+  String get socialInvite;
+
+  /// No description provided for @socialInvitesClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This player is not accepting friend invitations.'**
+  String get socialInvitesClosed;
+
+  /// No description provided for @socialMyProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My profile'**
+  String get socialMyProfile;
+
+  /// No description provided for @socialProfilePublic.
+  ///
+  /// In en, this message translates to:
+  /// **'These optional details are visible to other players.'**
+  String get socialProfilePublic;
+
+  /// No description provided for @socialAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About me'**
+  String get socialAbout;
+
+  /// No description provided for @socialLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages for conversation'**
+  String get socialLanguage;
+
+  /// No description provided for @socialInterests.
+  ///
+  /// In en, this message translates to:
+  /// **'Interests'**
+  String get socialInterests;
+
+  /// No description provided for @socialGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'What I am looking for in the game'**
+  String get socialGoal;
+
+  /// No description provided for @socialPicAboutFriendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Friendly'**
+  String get socialPicAboutFriendly;
+
+  /// No description provided for @socialPicAboutCalm.
+  ///
+  /// In en, this message translates to:
+  /// **'Calm'**
+  String get socialPicAboutCalm;
+
+  /// No description provided for @socialPicAboutCheerful.
+  ///
+  /// In en, this message translates to:
+  /// **'Cheerful'**
+  String get socialPicAboutCheerful;
+
+  /// No description provided for @socialPicAboutGentle.
+  ///
+  /// In en, this message translates to:
+  /// **'Gentle'**
+  String get socialPicAboutGentle;
+
+  /// No description provided for @socialPicAboutNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Evenings'**
+  String get socialPicAboutNight;
+
+  /// No description provided for @socialPicAboutCurious.
+  ///
+  /// In en, this message translates to:
+  /// **'Curious'**
+  String get socialPicAboutCurious;
+
+  /// No description provided for @socialPicInterestGarden.
+  ///
+  /// In en, this message translates to:
+  /// **'Garden'**
+  String get socialPicInterestGarden;
+
+  /// No description provided for @socialPicInterestPets.
+  ///
+  /// In en, this message translates to:
+  /// **'Pets'**
+  String get socialPicInterestPets;
+
+  /// No description provided for @socialPicInterestMahjong.
+  ///
+  /// In en, this message translates to:
+  /// **'Mahjong'**
+  String get socialPicInterestMahjong;
+
+  /// No description provided for @socialPicInterestCourtyard.
+  ///
+  /// In en, this message translates to:
+  /// **'Courtyard'**
+  String get socialPicInterestCourtyard;
+
+  /// No description provided for @socialPicInterestSeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Seeds'**
+  String get socialPicInterestSeeds;
+
+  /// No description provided for @socialPicInterestStars.
+  ///
+  /// In en, this message translates to:
+  /// **'Stars'**
+  String get socialPicInterestStars;
+
+  /// No description provided for @socialPicGoalFlower.
+  ///
+  /// In en, this message translates to:
+  /// **'A rare flower'**
+  String get socialPicGoalFlower;
+
+  /// No description provided for @socialPicGoalHouse.
+  ///
+  /// In en, this message translates to:
+  /// **'A finer house'**
+  String get socialPicGoalHouse;
+
+  /// No description provided for @socialPicGoalFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get socialPicGoalFriends;
+
+  /// No description provided for @socialPicGoalLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearing levels'**
+  String get socialPicGoalLevels;
+
+  /// No description provided for @socialPicGoalChat.
+  ///
+  /// In en, this message translates to:
+  /// **'A conversation'**
+  String get socialPicGoalChat;
+
+  /// No description provided for @socialPicGoalCross.
+  ///
+  /// In en, this message translates to:
+  /// **'Crossbreeding'**
+  String get socialPicGoalCross;
+
+  /// No description provided for @socialOpenInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept new friend invitations'**
+  String get socialOpenInvites;
+
+  /// No description provided for @socialSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save profile'**
+  String get socialSave;
+
+  /// No description provided for @socialProfileHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get socialProfileHeading;
+
+  /// No description provided for @socialNotChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Not chosen'**
+  String get socialNotChosen;
+
+  /// No description provided for @socialInvitesOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts friend invitations'**
+  String get socialInvitesOpen;
+
+  /// No description provided for @socialBadgesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Badges in the neighbor list'**
+  String get socialBadgesTitle;
+
+  /// No description provided for @socialBadgesExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend points to show your avatar and profile badges next to your name for a while.'**
+  String get socialBadgesExplain;
+
+  /// No description provided for @socialBadgesActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible to neighbors until {time}'**
+  String socialBadgesActive(String time);
+
+  /// No description provided for @socialBadgesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Right now the list shows only your name.'**
+  String get socialBadgesOff;
+
+  /// Button that buys showing profile badges in the neighbor list for a number of days.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, one{1 day} other{{days} days}} · {price} points'**
+  String socialBadgesOffer(int days, String price);
+
+  /// No description provided for @socialBadgesTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'You can extend the display up to 30 days ahead.'**
+  String get socialBadgesTooLong;
+
+  /// No description provided for @socialBadgesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t turn on badges. Your points were returned.'**
+  String get socialBadgesFailed;
+
+  /// No description provided for @socialBadgesNotListed.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not in the neighbor list yet. Check your connection and try again. No points were spent.'**
+  String get socialBadgesNotListed;
+
+  /// No description provided for @socialChatEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Say hello or thank your friend for helping!'**
+  String get socialChatEmpty;
+
+  /// No description provided for @socialReportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get socialReportMessage;
+
+  /// No description provided for @socialOlderMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier messages'**
+  String get socialOlderMessages;
+
+  /// No description provided for @socialSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Message was not confirmed. Retry, or return to the profile to check your friendship.'**
+  String get socialSendFailed;
+
+  /// No description provided for @socialMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message'**
+  String get socialMessageHint;
+
+  /// No description provided for @socialGrownTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Grown together with'**
+  String get socialGrownTogether;
+
+  /// No description provided for @socialHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shared moments will appear here.'**
+  String get socialHistoryEmpty;
+
+  /// No description provided for @socialHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared history'**
+  String get socialHistory;
+
+  /// No description provided for @socialProfileReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report profile'**
+  String get socialProfileReport;
+
+  /// No description provided for @neighborsRaidDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'If there is no answer by {time}, the assigned guard defends on its own.'**
+  String neighborsRaidDeadline(String time);
+
+  /// No description provided for @neighborsRaidDefendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who defends the yard?'**
+  String get neighborsRaidDefendTitle;
+
+  /// No description provided for @neighborsRaidDefendRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack {value}. Only a stronger defender holds the yard.'**
+  String neighborsRaidDefendRule(int value);
+
+  /// No description provided for @neighborsRaidOptionOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'{pet} · defense {value}'**
+  String neighborsRaidOptionOwn(String pet, int value);
+
+  /// No description provided for @neighborsRaidOptionGuard.
+  ///
+  /// In en, this message translates to:
+  /// **'Guard from {name} · defense {value}'**
+  String neighborsRaidOptionGuard(String name, int value);
+
+  /// No description provided for @neighborsRaidOptionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} answered the call · defense {value}'**
+  String neighborsRaidOptionHelp(String name, int value);
+
+  /// No description provided for @neighborsRaidOptionNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not defend'**
+  String get neighborsRaidOptionNone;
+
+  /// No description provided for @neighborsRaidHolds.
+  ///
+  /// In en, this message translates to:
+  /// **'Holds'**
+  String get neighborsRaidHolds;
+
+  /// No description provided for @neighborsRaidFalls.
+  ///
+  /// In en, this message translates to:
+  /// **'Too weak'**
+  String get neighborsRaidFalls;
+
+  /// No description provided for @neighborsRaidNoDefenders.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no guard pets and nobody has answered your call yet. Without a defender the raid succeeds.'**
+  String get neighborsRaidNoDefenders;
+
+  /// No description provided for @neighborsRaidChooseLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'The yard will fall. Choose which plant burns; the raider takes a random one of the rest.'**
+  String get neighborsRaidChooseLoss;
+
+  /// No description provided for @neighborsRaidOnlyPlant.
+  ///
+  /// In en, this message translates to:
+  /// **'Your only plant, {plant}, goes to the raider.'**
+  String neighborsRaidOnlyPlant(String plant);
+
+  /// No description provided for @neighborsRaidEmptyStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your storage is empty, so the raider leaves with nothing.'**
+  String get neighborsRaidEmptyStorage;
+
+  /// No description provided for @neighborsRaidAcceptLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept the loss'**
+  String get neighborsRaidAcceptLoss;
+
+  /// No description provided for @neighborsRaidDestroyed.
+  ///
+  /// In en, this message translates to:
+  /// **'Burned: {plant}.'**
+  String neighborsRaidDestroyed(String plant);
+
+  /// No description provided for @neighborsRaidStolen.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken by the raider: {plant}.'**
+  String neighborsRaidStolen(String plant);
+
+  /// No description provided for @neighborsRaidLoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Your loot: {plant}.'**
+  String neighborsRaidLoot(String plant);
+
+  /// No description provided for @neighborsRaidNoLoot.
+  ///
+  /// In en, this message translates to:
+  /// **'There was nothing in storage to take.'**
+  String get neighborsRaidNoLoot;
+
+  /// No description provided for @neighborsRaidAutoDefended.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody answered in time, so the assigned guard defended.'**
+  String get neighborsRaidAutoDefended;
+
+  /// No description provided for @neighborsRaidDefendedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Defended by a pet from {name}.'**
+  String neighborsRaidDefendedBy(String name);
+
+  /// No description provided for @neighborsRaidTakeLoot.
+  ///
+  /// In en, this message translates to:
+  /// **'Take the plant'**
+  String get neighborsRaidTakeLoot;
+
+  /// No description provided for @neighborsRaidLootTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'{plant} is in your storage.'**
+  String neighborsRaidLootTaken(String plant);
+
+  /// No description provided for @neighborsRaidTooSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'This yard is resting after a raid. Try again later.'**
+  String get neighborsRaidTooSoon;
+
+  /// No description provided for @neighborsHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls for help'**
+  String get neighborsHelpTitle;
+
+  /// No description provided for @neighborsHelpExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends see your call for free. A call to all players costs {price} points. Answering guards appear in the defender list.'**
+  String neighborsHelpExplain(int price);
+
+  /// No description provided for @neighborsHelpAskFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask friends for help'**
+  String get neighborsHelpAskFriends;
+
+  /// No description provided for @neighborsHelpAskEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask all players · {price} points'**
+  String neighborsHelpAskEveryone(int price);
+
+  /// No description provided for @neighborsHelpAskedFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Your friends can see the call for help.'**
+  String get neighborsHelpAskedFriends;
+
+  /// No description provided for @neighborsHelpAskedEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'All players can see the call for help.'**
+  String get neighborsHelpAskedEveryone;
+
+  /// No description provided for @neighborsHelpNoFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no friends to ask yet.'**
+  String get neighborsHelpNoFriends;
+
+  /// No description provided for @neighborsHelpArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'Defenders answered: {count}'**
+  String neighborsHelpArrived(int count);
+
+  /// No description provided for @neighborsHelpFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The call for help was not sent. Any points spent were returned.'**
+  String get neighborsHelpFailed;
+
+  /// No description provided for @neighborsHelpCallLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is under attack · attack {attack}'**
+  String neighborsHelpCallLine(String name, int attack);
+
+  /// No description provided for @neighborsHelpUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Open until {time}'**
+  String neighborsHelpUntil(String time);
+
+  /// No description provided for @neighborsHelpSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send my guard · defense {value}'**
+  String neighborsHelpSend(int value);
+
+  /// No description provided for @neighborsHelpSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guard is ready to defend {name}.'**
+  String neighborsHelpSent(String name);
+
+  /// No description provided for @neighborsHelpOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guard is offered.'**
+  String get neighborsHelpOffered;
+
+  /// No description provided for @neighborsHelpNeedGuard.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a guarding pet to help.'**
+  String get neighborsHelpNeedGuard;
+
+  /// No description provided for @plantOriginRaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken in a raid'**
+  String get plantOriginRaid;
+
+  /// Settings action that deletes the anonymous account and local data.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account and data'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account and data?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This erases the courtyard, progress, and settings on this device. If this device is signed in, it also deletes that anonymous account: the leaderboard entry, profile, friendships, messages, neighbor actions, calls for help, and showcase cards. A shared conversation or request is removed for the other player too. Reports sent by other players stay until moderation finishes. This cannot be undone.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not finish deletion. Check the connection and try again, or email myevidentsuccess@gmail.com.'**
+  String get deleteAccountFailed;
+
+  /// No description provided for @deleteAccountWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting…'**
+  String get deleteAccountWorking;
 }
 
 class _AppLocalizationsDelegate
@@ -4888,7 +6608,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'ru', 'th'].contains(locale.languageCode);
+      <String>['de', 'en', 'ru', 'th', 'uk'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -4897,12 +6617,16 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de':
+      return AppLocalizationsDe();
     case 'en':
       return AppLocalizationsEn();
     case 'ru':
       return AppLocalizationsRu();
     case 'th':
       return AppLocalizationsTh();
+    case 'uk':
+      return AppLocalizationsUk();
   }
 
   throw FlutterError(

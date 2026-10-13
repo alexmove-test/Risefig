@@ -6,15 +6,18 @@ import 'package:mahjong/models/plot_kind.dart';
 import 'package:mahjong/services/locale_store.dart';
 
 void main() {
-  test('system follows Russian and falls back to English', () {
+  test('system follows a supported phone language and falls back to English', () {
     expect(LocaleStore.resolve(LanguagePref.system, 'ru'), 'ru');
+    expect(LocaleStore.resolve(LanguagePref.system, 'uk'), 'uk');
     expect(LocaleStore.resolve(LanguagePref.system, 'th'), 'th');
-    expect(LocaleStore.resolve(LanguagePref.system, 'uk'), 'en');
+    expect(LocaleStore.resolve(LanguagePref.system, 'fr'), 'en');
     expect(LocaleStore.resolve(LanguagePref.system, 'en'), 'en');
-    expect(LocaleStore.resolve(LanguagePref.system, 'de'), 'en');
+    expect(LocaleStore.resolve(LanguagePref.system, 'de'), 'de');
     expect(LocaleStore.resolve(LanguagePref.ru, 'en'), 'ru');
     expect(LocaleStore.resolve(LanguagePref.en, 'ru'), 'en');
+    expect(LocaleStore.resolve(LanguagePref.uk, 'en'), 'uk');
     expect(LocaleStore.resolve(LanguagePref.th, 'en'), 'th');
+    expect(LocaleStore.resolve(LanguagePref.de, 'en'), 'de');
   });
 
   test('AppLocalizations switches courtyard and menu labels', () {
@@ -26,6 +29,38 @@ void main() {
     expect(th.courtyard, 'ลานบ้าน');
     expect(th.settings, 'ตั้งค่า');
     expect(th.languageThai, 'ไทย');
+    final de = lookupAppLocalizations(const Locale('de'));
+    expect(de.courtyard, 'Zum Hof');
+    expect(de.settings, 'Einstellungen');
+    expect(de.languageGerman, 'Deutsch');
+    expect(de.youWin, 'Gewonnen!');
+    expect(de.winsUntilHouseUpgrade(1), 'Dein nächster Sieg baut das Haus aus');
+    expect(de.winsUntilHouseUpgrade(2), 'Noch 2 Siege bis zum Hausausbau');
+    expect(de.pointsReward(1), '+1 Punkt');
+    expect(de.pointsReward(5), '+5 Punkte');
+    final uk = lookupAppLocalizations(const Locale('uk'));
+    expect(uk.courtyard, 'До двору');
+    expect(uk.settings, 'Налаштування');
+    expect(uk.languageUkrainian, 'Українська');
+    expect(uk.languageGerman, 'Deutsch');
+    expect(
+      uk.winsUntilHouseUpgrade(1),
+      'Наступна перемога поліпшить будинок',
+    );
+    expect(uk.winsUntilHouseUpgrade(2), 'До поліпшення будинку — 2 перемоги');
+    expect(uk.winsUntilHouseUpgrade(5), 'До поліпшення будинку — 5 перемог');
+    expect(uk.winsUntilHouseUpgrade(21), 'До поліпшення будинку — 21 перемога');
+    expect(uk.pointsReward(1), '+1 бал');
+    expect(uk.pointsReward(2), '+2 бали');
+    expect(uk.pointsReward(5), '+5 балів');
+    expect(uk.pointsReward(11), '+11 балів');
+    expect(uk.pointsReward(21), '+21 бал');
+    expect(uk.hubLevelsUntilReward(1), 'Один рівень до нагороди');
+    expect(uk.hubLevelsUntilReward(2), 'ще 2 рівні до нагороди');
+    expect(uk.hubLevelsUntilReward(5), 'ще 5 рівнів до нагороди');
+    expect(uk.hubLevelsUntilReward(21), 'ще 21 рівень до нагороди');
+    expect(uk.featureUnlockGoal(2, 'Город'), 'Ще 2 рівні — відкриється: Город');
+    expect(uk.featureUnlockGoal(5, 'Город'), 'Ще 5 рівнів — відкриється: Город');
     expect(th.winsUntilHouseUpgrade(1), 'ชัยชนะครั้งถัดไปจะอัปเกรดบ้าน');
     expect(th.winsUntilHouseUpgrade(2), 'อีก 2 ชัยชนะก่อนบ้านจะอัปเกรด');
     expect(th.pointsReward(1), '+1 แต้ม');

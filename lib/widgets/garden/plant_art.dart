@@ -7,7 +7,9 @@ import '../../l10n/l10n.dart';
 import '../../models/garden.dart';
 import '../../models/seed_batch.dart';
 import '../../models/seed_catalog.dart';
+import '../courtyard/courtyard_world_layout.dart';
 import '../seeds/seed_glyph.dart';
+import 'plant_portrait.dart';
 
 const gardenIvory = Color(0xFFF8F1DE);
 const gardenGold = Color(0xFFD4AF37);
@@ -60,54 +62,7 @@ class _PlantPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final side = size.shortestSide;
-    final center = Offset(size.width / 2, size.height / 2);
-    final color = plantColor(species);
-    final stem = Paint()
-      ..color = const Color(0xFF2F5C45)
-      ..strokeWidth = side * 0.06
-      ..strokeCap = StrokeCap.round;
-    final leaf = Paint()..color = color;
-    final height = switch (stage) {
-      GrowthStage.sown => 0.05,
-      GrowthStage.sprout => 0.22,
-      GrowthStage.growing => 0.38,
-      GrowthStage.ripe => 0.48,
-    };
-    canvas.drawLine(
-      center.translate(0, side * 0.28),
-      center.translate(0, side * (0.28 - height)),
-      stem,
-    );
-    final spread = stage == GrowthStage.sprout ? 0.12 : 0.22;
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: center.translate(-side * spread * 0.7, side * 0.02),
-        width: side * spread,
-        height: side * spread * 0.55,
-      ),
-      leaf,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: center.translate(side * spread * 0.7, side * 0.02),
-        width: side * spread,
-        height: side * spread * 0.55,
-      ),
-      leaf,
-    );
-    if (stage == GrowthStage.ripe) {
-      canvas.drawCircle(
-        center.translate(0, -side * 0.16),
-        side * 0.12,
-        Paint()..color = color,
-      );
-      canvas.drawCircle(
-        center.translate(-side * 0.04, -side * 0.2),
-        side * 0.035,
-        Paint()..color = gardenIvory.withValues(alpha: 0.8),
-      );
-    }
+    paintGrownPlant(canvas, size, species, stage);
   }
 
   @override
@@ -207,57 +162,115 @@ class _GardenBedViewState extends State<GardenBedView>
         onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
         child: ExcludeSemantics(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: gardenSoil,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: ready ? gardenGoldSoft : gardenGold,
-                width: ready ? 2.4 : 1.4,
-              ),
-              boxShadow: ready && !reduced
-                  ? const [BoxShadow(color: Color(0x88E8C96A), blurRadius: 8)]
-                  : null,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: Column(
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final side = math.min(box.maxWidth, box.maxHeight);
+              return Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
                 children: [
-                  Expanded(
-                    child: planting == null || stage == null
-                        ? const FittedBox(
-                            child: Icon(
-                              Icons.add_rounded,
-                              color: gardenGoldSoft,
-                            ),
-                          )
-                        : PlantArt(species: planting.species, stage: stage),
-                  ),
                   if (ready)
-                    Text(
-                      l10n.harvestMark,
-                      key: ValueKey('garden-ready-${widget.index}'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: gardenIvory,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              gardenGoldSoft.withValues(
+                                alpha: reduced ? 0.35 : 0.55,
+                              ),
+                              gardenGoldSoft.withValues(alpha: 0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (planting == null || stage == null)
+                    _EmptyBedMark(size: side * 0.62)
+                  else
+                    Positioned.fill(
+                      bottom: box.maxHeight * 0.14,
+                      child: FittedBox(
+                        child: PlantArt(
+                          species: planting.species,
+                          stage: stage,
+                        ),
+                      ),
+                    ),
+                  if (ready)
+                    Positioned(
+                      bottom: -2,
+                      child: _BedTag(
+                        key: ValueKey('garden-ready-${widget.index}'),
+                        text: l10n.harvestMark,
+                        highlight: true,
                       ),
                     )
                   else if (planting != null && stage != null)
-                    Text(
-                      formatSeedCountdown(planting.remaining(now)),
-                      maxLines: 1,
-                      style: const TextStyle(
-                        color: gardenIvory,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
+                    Positioned(
+                      bottom: -2,
+                      child: _BedTag(
+                        text: formatSeedCountdown(planting.remaining(now)),
                       ),
                     ),
                 ],
-              ),
-            ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Пустая грядка: земля уже на подложке, поверх только приглашение посадить.
+class _EmptyBedMark extends StatelessWidget {
+  const _EmptyBedMark({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: gardenWood.withValues(alpha: 0.45),
+        border: Border.all(color: gardenGoldSoft.withValues(alpha: 0.8)),
+      ),
+      child: const FittedBox(
+        child: Icon(Icons.add_rounded, color: gardenGoldSoft),
+      ),
+    );
+  }
+}
+
+class _BedTag extends StatelessWidget {
+  const _BedTag({super.key, required this.text, this.highlight = false});
+
+  final String text;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: highlight
+            ? gardenGold.withValues(alpha: 0.95)
+            : gardenWood.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+        child: Text(
+          text,
+          maxLines: 1,
+          style: TextStyle(
+            color: highlight ? gardenWood : gardenIvory,
+            fontSize: highlight ? 8 : 7,
+            fontWeight: FontWeight.w800,
+            height: 1.1,
           ),
         ),
       ),
@@ -285,80 +298,128 @@ class WarehouseBuilding extends StatelessWidget {
         key: const ValueKey('courtyard-warehouse'),
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomPaint(
-                painter: const _WarehousePainter(),
-                child: const SizedBox.expand(),
-              ),
-            ),
-            Text(
-              l10n.warehouseTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: gardenIvory,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                shadows: [Shadow(color: Color(0xCC000000), blurRadius: 3)],
-              ),
-            ),
-          ],
+        child: ExcludeSemantics(
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final w = box.maxWidth;
+              final h = box.maxHeight;
+              final badge = math.max(14.0, w * 0.2);
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Positioned.fill(
+                    child: Image(
+                      image: AssetImage(CourtyardWorldLayout.warehouseAsset),
+                      fit: BoxFit.contain,
+                      alignment: Alignment.bottomCenter,
+                      filterQuality: FilterQuality.high,
+                      gaplessPlayback: true,
+                    ),
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: w * 0.02,
+                      top: h * 0.1,
+                      width: badge,
+                      height: badge,
+                      child: _WarehouseCountBadge(count: count),
+                    ),
+                  Positioned(
+                    left: -w * 0.1,
+                    right: -w * 0.1,
+                    bottom: -h * 0.06,
+                    child: Center(
+                      child: CourtyardPlaque(title: l10n.warehouseTitle),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
 
-class _WarehousePainter extends CustomPainter {
-  const _WarehousePainter();
+class _WarehouseCountBadge extends StatelessWidget {
+  const _WarehouseCountBadge({required this.count});
+
+  final int count;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final body = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.12, h * 0.38, w * 0.76, h * 0.58),
-      Radius.circular(w * 0.04),
-    );
-    canvas.drawRRect(body, Paint()..color = const Color(0xFF8A5A32));
-    canvas.drawRRect(
-      body,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(1.2, w * 0.02)
-        ..color = gardenGold,
-    );
-    final roof = Path()
-      ..moveTo(w * 0.06, h * 0.42)
-      ..lineTo(w * 0.5, h * 0.08)
-      ..lineTo(w * 0.94, h * 0.42)
-      ..close();
-    canvas.drawPath(roof, Paint()..color = const Color(0xFF6B3E24));
-    canvas.drawPath(
-      roof,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(1.2, w * 0.018)
-        ..color = gardenGoldSoft,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.42, h * 0.58, w * 0.16, h * 0.34),
-        Radius.circular(w * 0.02),
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: const ValueKey('courtyard-warehouse-count'),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          colors: [Color(0xFFFFE9A8), gardenGold],
+          center: Alignment(-0.3, -0.4),
+        ),
+        border: Border.all(color: gardenWood, width: 1.4),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x88000000),
+            blurRadius: 4,
+            offset: Offset(0, 1.5),
+          ),
+        ],
       ),
-      Paint()..color = gardenWood,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.18, h * 0.52, w * 0.16, h * 0.16),
-        Radius.circular(w * 0.02),
+      child: Padding(
+        padding: const EdgeInsets.all(2.5),
+        child: FittedBox(
+          child: Text(
+            count > 99 ? '99+' : '$count',
+            style: const TextStyle(
+              color: gardenWood,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              height: 1,
+            ),
+          ),
+        ),
       ),
-      Paint()..color = const Color(0xFFC4A574),
     );
   }
+}
+
+/// Короткая деревянная табличка у места на лужайке.
+class CourtyardPlaque extends StatelessWidget {
+  const CourtyardPlaque({super.key, required this.title});
+
+  final String title;
 
   @override
-  bool shouldRepaint(covariant _WarehousePainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: gardenWood.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: gardenGoldSoft.withValues(alpha: 0.8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 4,
+            offset: Offset(0, 1.5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        child: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: gardenIvory,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.2,
+            height: 1.1,
+          ),
+        ),
+      ),
+    );
+  }
 }

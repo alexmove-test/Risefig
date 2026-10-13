@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -23,6 +24,8 @@ class FirebaseBootstrap {
       );
       enabled = true;
       initError = null;
+      // Stay off until UMP consent is known. EEA/UK stays off without consent.
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
     } catch (error) {
       enabled = false;
       initError = error.toString();

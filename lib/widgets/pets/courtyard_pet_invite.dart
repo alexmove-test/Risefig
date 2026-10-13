@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import '../../l10n/l10n.dart';
 import '../../models/pet.dart';
 import '../../services/pet_store.dart';
-import '../../services/fox_adventure_store.dart';
-import '../../services/pet_story_store.dart';
 import 'pet_portrait.dart';
 
 const _gold = Color(0xFFD4AF37);
@@ -21,14 +19,10 @@ class CourtyardPetInvite extends StatefulWidget {
     super.key,
     required this.pets,
     required this.onTap,
-    this.adventure,
-    this.stories,
   });
 
   final PetStore? pets;
   final VoidCallback onTap;
-  final FoxAdventureStore? adventure;
-  final PetStoryStore? stories;
 
   @override
   State<CourtyardPetInvite> createState() => _CourtyardPetInviteState();
@@ -109,36 +103,10 @@ class _CourtyardPetInviteState extends State<CourtyardPetInvite>
     final cares = pets?.allCare() ?? const <PetCare>[];
     final urgent = pets?.mostUrgentCare();
     final asking = urgent?.asking ?? false;
-    final stories = widget.stories;
-    final activeStory = stories?.active;
-    final legacyAdventure = (pets?.owns(PetKind.fox) ?? false)
-        ? widget.adventure
-        : null;
-    final storyLabel = stories != null && cares.isNotEmpty
-        ? activeStory == null
-              ? l10n.petAdventures
-              : stories.hasPendingMoment
-              ? l10n.newChapterProgress(stories.progress(activeStory))
-              : l10n.storyProgressLine(
-                  l10n.petStoryTitle(activeStory.id),
-                  stories.progress(activeStory),
-                )
-        : legacyAdventure == null
-        ? null
-        : legacyAdventure.pending
-        ? l10n.storyReadyProgress(legacyAdventure.stage)
-        : legacyAdventure.complete
-        ? l10n.foxIsHome
-        : legacyAdventure.started
-        ? l10n.foxStoryProgress(legacyAdventure.stage)
-        : l10n.foxStory;
 
     if (_hidden) {
       return _YardPetsTab(
-        asking:
-            asking ||
-            (stories?.hasPendingMoment ?? false) ||
-            (legacyAdventure?.pending ?? false),
+        asking: asking,
         tooltip: l10n.petInviteShow,
         onTap: () => unawaited(_setHidden(false)),
       );
@@ -150,7 +118,7 @@ class _CourtyardPetInviteState extends State<CourtyardPetInvite>
 
     return Semantics(
       button: true,
-      label: '${l10n.pets}. $status${storyLabel == null ? '' : ' $storyLabel'}',
+      label: '${l10n.pets}. $status',
       child: GestureDetector(
         key: const ValueKey('courtyard-pets'),
         onTap: widget.onTap,
@@ -174,29 +142,6 @@ class _CourtyardPetInviteState extends State<CourtyardPetInvite>
               cares.isEmpty
                   ? const _YardPetFigure(kind: null, asking: false, adopt: true)
                   : _YardPetPack(cares: cares),
-              if (storyLabel != null)
-                Container(
-                  key: const ValueKey('courtyard-pet-story-status'),
-                  constraints: const BoxConstraints(maxWidth: 180),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _woodDeep,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _gold),
-                  ),
-                  child: Text(
-                    storyLabel,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: _goldSoft,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),

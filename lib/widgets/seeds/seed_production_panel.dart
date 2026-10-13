@@ -20,6 +20,7 @@ class SeedProductionPanel extends StatefulWidget {
     required this.batch,
     required this.onStart,
     required this.onClaim,
+    this.onSpeedUp,
     this.onPlayMahjong,
     this.onOpenStorage,
     this.busy = false,
@@ -32,6 +33,7 @@ class SeedProductionPanel extends StatefulWidget {
   final SeedBatch? batch;
   final Future<SeedStartResult> Function() onStart;
   final Future<SeedClaimResult> Function() onClaim;
+  final Future<SeedSpeedResult> Function()? onSpeedUp;
   final VoidCallback? onPlayMahjong;
   final VoidCallback? onOpenStorage;
   final bool busy;
@@ -120,6 +122,18 @@ class _SeedProductionPanelState extends State<SeedProductionPanel>
     }
   }
 
+  Future<void> _speedUp() async {
+    if (_locked) return;
+    final action = widget.onSpeedUp;
+    if (action == null) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -165,6 +179,10 @@ class _SeedProductionPanelState extends State<SeedProductionPanel>
               SeedPhase.producing => _ProducingBody(
                 batch: widget.batch!,
                 now: _now,
+                balance: widget.balance,
+                locked: _locked,
+                onSpeedUp: widget.onSpeedUp == null ? null : _speedUp,
+                onPlayMahjong: widget.onPlayMahjong,
               ),
               SeedPhase.ready => _ReadyBody(
                 batch: widget.batch!,
@@ -302,10 +320,21 @@ class _IdleBody extends StatelessWidget {
 }
 
 class _ProducingBody extends StatelessWidget {
-  const _ProducingBody({required this.batch, required this.now});
+  const _ProducingBody({
+    required this.batch,
+    required this.now,
+    required this.balance,
+    required this.locked,
+    required this.onSpeedUp,
+    required this.onPlayMahjong,
+  });
 
   final SeedBatch batch;
   final DateTime now;
+  final int balance;
+  final bool locked;
+  final VoidCallback? onSpeedUp;
+  final VoidCallback? onPlayMahjong;
 
   @override
   Widget build(BuildContext context) {
@@ -314,42 +343,88 @@ class _ProducingBody extends StatelessWidget {
     final clock = formatSeedCountdown(left);
     final minutes = left.inMinutes;
     final seconds = left.inSeconds.remainder(60);
-    return Semantics(
-      label: l10n.seedProducing,
-      value: l10n.seedTimeLeft(
-        minutes,
-        seconds == 0 && left > Duration.zero ? 1 : seconds,
-      ),
-      child: Column(
-        children: [
-          const SeedGlyph(size: 72, unknown: true),
-          const SizedBox(height: 8),
-          Text(
-            l10n.seedUnknown,
-            key: const ValueKey('seed-unknown'),
-            style: const TextStyle(color: _ivory, fontWeight: FontWeight.w700),
+    final cost = SeedCatalog.speedUpCost(left);
+    final shortfall = (cost - balance).clamp(0, cost);
+    final canSpeed = onSpeedUp != null && !locked && shortfall == 0 && cost > 0;
+    return Column(
+      children: [
+        Semantics(
+          label: l10n.seedProducing,
+          value: l10n.seedTimeLeft(
+            minutes,
+            seconds == 0 && left > Duration.zero ? 1 : seconds,
           ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            key: const ValueKey('seed-progress'),
-            value: batch.progress(now),
-            minHeight: 8,
-            backgroundColor: const Color(0x33F8F1DE),
-            color: _goldSoft,
-            borderRadius: BorderRadius.circular(8),
+          child: Column(
+            children: [
+              const SeedGlyph(size: 72, unknown: true),
+              const SizedBox(height: 8),
+              Text(
+                l10n.seedUnknown,
+                key: const ValueKey('seed-unknown'),
+                style: const TextStyle(
+                  color: _ivory,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(
+                key: const ValueKey('seed-progress'),
+                value: batch.progress(now),
+                minHeight: 8,
+                backgroundColor: const Color(0x33F8F1DE),
+                color: _goldSoft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                clock,
+                key: const ValueKey('seed-remaining'),
+                style: const TextStyle(
+                  color: _ivory,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            clock,
-            key: const ValueKey('seed-remaining'),
-            style: const TextStyle(
-              color: _ivory,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+        ),
+        if (onSpeedUp != null) ...[
+          if (shortfall > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.pointsShortfall(shortfall),
+              key: const ValueKey('seed-speed-shortfall'),
+              style: const TextStyle(
+                color: _goldSoft,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (onPlayMahjong != null) ...[
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const ValueKey('seed-speed-play'),
+                  onPressed: onPlayMahjong,
+                  child: Text(l10n.seedPlayMahjong),
+                ),
+              ),
+            ],
+          ],
+          const SizedBox(height: 8),
+          FilledButton(
+            key: const ValueKey('seed-speed-button'),
+            style: _goldButtonStyle(),
+            onPressed: canSpeed ? onSpeedUp : null,
+            child: Text(
+              l10n.speedUpFor(cost),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 }

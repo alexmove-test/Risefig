@@ -1,16 +1,25 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
+import '../../models/garden.dart';
 import '../../models/house_upgrade.dart';
+import '../../models/meta_features.dart';
 import '../../models/plot_kind.dart';
+import '../../models/plant_cross.dart';
+import '../../models/seed_batch.dart';
 import '../../models/seed_catalog.dart';
 import 'courtyard_lot_build.dart';
 
 const _ivory = Color(0xFFF8F1DE);
 const _goldSoft = Color(0xFFE8C96A);
 const _goldLine = Color(0xFFD4AF37);
+const _actionExtent = 72.0;
 
-/// Покупка следующего облика: снаружи миниатюра и кнопка, подробности в шторке.
+/// Покупка следующего облика: миниатюра и квадратные действия.
+/// Шторка раскрывает дом, семена, склад и огород.
 class HomeUpgradePreview extends StatefulWidget {
   const HomeUpgradePreview({
     super.key,
@@ -18,6 +27,14 @@ class HomeUpgradePreview extends StatefulWidget {
     required this.balance,
     this.busy = false,
     this.onBuy,
+    this.seedBatch,
+    this.seedBusy = false,
+    this.onStartSeed,
+    this.onClaimSeed,
+    this.onOpenSeed,
+    this.onGrowPlant,
+    this.seeds = const [],
+    this.garden,
   });
 
   /// Текущее состояние, 1…24.
@@ -26,6 +43,24 @@ class HomeUpgradePreview extends StatefulWidget {
   final bool busy;
   final Future<void> Function()? onBuy;
 
+  /// Партия семян дома. Квадрат производства виден, если задан любой колбэк семян.
+  final SeedBatch? seedBatch;
+  final bool seedBusy;
+  final Future<void> Function()? onStartSeed;
+  final Future<void> Function()? onClaimSeed;
+
+  /// Партия уже идёт: открыть карточку дома, где её можно ускорить.
+  final VoidCallback? onOpenSeed;
+
+  /// Пустая грядка или уже посаженное растение.
+  final VoidCallback? onGrowPlant;
+
+  /// Запас семян для шторки. Пустой список — производство ещё ничего не отдало.
+  final List<SeedInstance> seeds;
+
+  /// Грядки и склад. Без снимка шторка не рассказывает про огород.
+  final GardenSnapshot? garden;
+
   @override
   State<HomeUpgradePreview> createState() => _HomeUpgradePreviewState();
 }
@@ -33,10 +68,19 @@ class HomeUpgradePreview extends StatefulWidget {
 class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
     with SingleTickerProviderStateMixin {
   var _busy = false;
+  var _seedBusy = false;
   var _detailsOpen = false;
+  Timer? _clock;
   late final AnimationController _curtain;
 
   bool get _locked => widget.busy || _busy;
+
+  bool get _seedLocked => widget.seedBusy || _seedBusy;
+
+  bool get _showSeed =>
+      widget.onStartSeed != null ||
+      widget.onClaimSeed != null ||
+      widget.onOpenSeed != null;
 
   @override
   void initState() {
@@ -45,6 +89,13 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
       vsync: this,
       duration: const Duration(milliseconds: 220),
     );
+    _syncClock();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeUpgradePreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncClock();
   }
 
   @override
@@ -57,8 +108,34 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
 
   @override
   void dispose() {
+    _clock?.cancel();
     _curtain.dispose();
     super.dispose();
+  }
+
+  bool _gardenTicking(DateTime now) {
+    if (!_detailsOpen) return false;
+    final beds = widget.garden?.beds;
+    if (beds == null) return false;
+    for (final bed in beds) {
+      if (bed != null && !bed.isReady(now)) return true;
+    }
+    return false;
+  }
+
+  void _syncClock() {
+    final now = DateTime.now();
+    final producing =
+        _showSeed && phaseOf(widget.seedBatch, now) == SeedPhase.producing;
+    if (!producing && !_gardenTicking(now)) {
+      _clock?.cancel();
+      _clock = null;
+      return;
+    }
+    _clock ??= Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(_syncClock);
+    });
   }
 
   void _toggleDetails() {
@@ -68,6 +145,7 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
     } else {
       _curtain.reverse();
     }
+    _syncClock();
   }
 
   Future<void> _buy() async {
@@ -82,6 +160,89 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _pressSeed() async {
+    if (_seedLocked) return;
+    final phase = phaseOf(widget.seedBatch, DateTime.now());
+    switch (phase) {
+      case SeedPhase.idle:
+        final start = widget.onStartSeed;
+        if (start == null) return;
+        final price = SeedCatalog.costForLevel(widget.state);
+        if (widget.balance < price) return;
+        setState(() => _seedBusy = true);
+        try {
+          await start();
+        } finally {
+          if (mounted) setState(() => _seedBusy = false);
+        }
+      case SeedPhase.ready:
+        final claim = widget.onClaimSeed;
+        if (claim == null) return;
+        setState(() => _seedBusy = true);
+        try {
+          await claim();
+        } finally {
+          if (mounted) setState(() => _seedBusy = false);
+        }
+      case SeedPhase.producing:
+        widget.onOpenSeed?.call();
+    }
+  }
+
+  bool _seedEnabled() {
+    if (_seedLocked) return false;
+    final phase = phaseOf(widget.seedBatch, DateTime.now());
+    return switch (phase) {
+      SeedPhase.idle =>
+        widget.onStartSeed != null &&
+            widget.balance >= SeedCatalog.costForLevel(widget.state),
+      SeedPhase.ready => widget.onClaimSeed != null,
+      SeedPhase.producing => widget.onOpenSeed != null,
+    };
+  }
+
+  String _seedLabel(AppLocalizations l10n) {
+    final now = DateTime.now();
+    final phase = phaseOf(widget.seedBatch, now);
+    return switch (phase) {
+      SeedPhase.idle => l10n.yardSeedOffer(
+        SeedCatalog.costForLevel(widget.state),
+      ),
+      SeedPhase.producing => l10n.yardSeedTimerText(
+        formatSeedCountdown(widget.seedBatch?.remaining(now) ?? Duration.zero),
+      ),
+      SeedPhase.ready => l10n.claimSeed,
+    };
+  }
+
+  List<_YardAction> _actions(
+    AppLocalizations l10n, {
+    required int price,
+    required bool canBuy,
+    bool upgrade = true,
+  }) {
+    return [
+      if (upgrade)
+        _YardAction(
+          buttonKey: const ValueKey('house-upgrade-button'),
+          label: l10n.upgradeHouseFor(price),
+          onPressed: canBuy ? _buy : null,
+        ),
+      if (_showSeed)
+        _YardAction(
+          buttonKey: const ValueKey('yard-seed-button'),
+          label: _seedLabel(l10n),
+          onPressed: _seedEnabled() ? _pressSeed : null,
+        ),
+      if (widget.onGrowPlant != null)
+        _YardAction(
+          buttonKey: const ValueKey('yard-plant-button'),
+          label: l10n.yardGrowPlant,
+          onPressed: widget.onGrowPlant,
+        ),
+    ];
   }
 
   @override
@@ -105,7 +266,7 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (maxed)
+            if (maxed) ...[
               Text(
                 l10n.houseFullyUpgraded,
                 key: const ValueKey('house-upgrade-max'),
@@ -116,17 +277,27 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
                   fontWeight: FontWeight.w800,
                   fontSize: 14,
                 ),
-              )
-            else
+              ),
+              if (_showSeed || widget.onGrowPlant != null) ...[
+                const SizedBox(height: 8),
+                _ActionStrip(
+                  actions: _actions(
+                    l10n,
+                    price: price,
+                    canBuy: false,
+                    upgrade: false,
+                  ),
+                ),
+              ],
+            ] else
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _NextHouseArt(frame: state + 1),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: _UpgradeButton(
-                      label: l10n.upgradeHouseFor(price),
-                      onPressed: canBuy ? _buy : null,
+                    child: _ActionStrip(
+                      actions: _actions(l10n, price: price, canBuy: canBuy),
                     ),
                   ),
                 ],
@@ -142,11 +313,28 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
                     heightFactor: t == 0 ? 0 : t,
                     child: t == 0
                         ? const SizedBox(width: double.infinity, height: 0)
-                        : _UpgradeDetails(
-                            state: state,
-                            price: price,
-                            shortfall: shortfall,
-                            maxed: maxed,
+                        : ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: _curtainCap(context),
+                            ),
+                            child: ListView(
+                              shrinkWrap: true,
+                              primary: false,
+                              padding: EdgeInsets.zero,
+                              physics: const ClampingScrollPhysics(),
+                              children: [
+                                _UpgradeDetails(
+                                  state: state,
+                                  price: price,
+                                  shortfall: shortfall,
+                                  maxed: maxed,
+                                  showSeeds: _showSeed,
+                                  seedBatch: widget.seedBatch,
+                                  seeds: widget.seeds,
+                                  garden: widget.garden,
+                                ),
+                              ],
+                            ),
                           ),
                   ),
                 );
@@ -159,16 +347,66 @@ class _HomeUpgradePreviewState extends State<HomeUpgradePreview>
   }
 }
 
-class _UpgradeButton extends StatelessWidget {
-  const _UpgradeButton({required this.label, required this.onPressed});
+class _YardAction {
+  const _YardAction({
+    required this.buttonKey,
+    required this.label,
+    required this.onPressed,
+  });
 
+  final Key buttonKey;
   final String label;
   final VoidCallback? onPressed;
+}
+
+class _ActionStrip extends StatelessWidget {
+  const _ActionStrip({required this.actions});
+
+  final List<_YardAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    if (actions.isEmpty) return const SizedBox.shrink();
+    final onlyUpgrade =
+        actions.length == 1 &&
+        actions.single.buttonKey == const ValueKey('house-upgrade-button');
+    if (onlyUpgrade) return _WideUpgradeButton(action: actions.single);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        if (!width.isFinite || width <= 0) return const SizedBox.shrink();
+        const gap = 8.0;
+        final raw = (width - gap * (actions.length - 1)) / actions.length;
+        final side = math.min(_actionExtent, math.max(0.0, raw));
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            height: side,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < actions.length; i++) ...[
+                  if (i > 0) const SizedBox(width: gap),
+                  _SquareActionButton(action: actions[i], side: side),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WideUpgradeButton extends StatelessWidget {
+  const _WideUpgradeButton({required this.action});
+
+  final _YardAction action;
 
   @override
   Widget build(BuildContext context) {
     return FilledButton(
-      key: const ValueKey('house-upgrade-button'),
+      key: action.buttonKey,
       style: FilledButton.styleFrom(
         backgroundColor: const Color(0xFF6B3E24),
         foregroundColor: _goldSoft,
@@ -182,12 +420,60 @@ class _UpgradeButton extends StatelessWidget {
           side: BorderSide(color: _goldLine.withValues(alpha: 0.75)),
         ),
       ),
-      onPressed: onPressed,
+      onPressed: action.onPressed,
       child: Text(
-        label,
+        action.label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+      ),
+    );
+  }
+}
+
+class _SquareActionButton extends StatelessWidget {
+  const _SquareActionButton({required this.action, required this.side});
+
+  final _YardAction action;
+  final double side;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    final painted = ((side - 10) / (3 * 1.05)).clamp(9.0, 12.0);
+    final fontSize = painted / scale;
+    return SizedBox(
+      width: side,
+      height: side,
+      child: FilledButton(
+        key: action.buttonKey,
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF6B3E24),
+          foregroundColor: _goldSoft,
+          disabledBackgroundColor: const Color(0xFF3A2012),
+          disabledForegroundColor: const Color(0x88E8C96A),
+          minimumSize: Size(side, side),
+          maximumSize: Size(side, side),
+          fixedSize: Size(side, side),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: _goldLine.withValues(alpha: 0.75)),
+          ),
+        ),
+        onPressed: action.onPressed,
+        child: Text(
+          action.label,
+          textAlign: TextAlign.center,
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: fontSize,
+            height: 1.05,
+          ),
+        ),
       ),
     );
   }
@@ -228,12 +514,20 @@ class _UpgradeDetails extends StatelessWidget {
     required this.price,
     required this.shortfall,
     required this.maxed,
+    required this.showSeeds,
+    required this.seedBatch,
+    required this.seeds,
+    required this.garden,
   });
 
   final int state;
   final int price;
   final int shortfall;
   final bool maxed;
+  final bool showSeeds;
+  final SeedBatch? seedBatch;
+  final List<SeedInstance> seeds;
+  final GardenSnapshot? garden;
 
   @override
   Widget build(BuildContext context) {
@@ -292,9 +586,213 @@ class _UpgradeDetails extends StatelessWidget {
             ),
           ],
         ],
+        if (showSeeds || garden != null) ...[
+          const SizedBox(height: 10),
+          const DecoratedBox(
+            decoration: BoxDecoration(color: Color(0x55D4AF37)),
+            child: SizedBox(height: 1),
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (showSeeds)
+          _CurtainBlock(
+            blockKey: const ValueKey('yard-curtain-seeds'),
+            title: l10n.featureTitle(MetaFeature.seeds),
+            children: _seedLines(l10n),
+          ),
+        if (garden != null) ...[
+          if (showSeeds) const SizedBox(height: 10),
+          _CurtainBlock(
+            blockKey: const ValueKey('yard-curtain-warehouse'),
+            title: l10n.featureTitle(MetaFeature.warehouse),
+            children: _warehouseLines(l10n, garden!),
+          ),
+          const SizedBox(height: 10),
+          _CurtainBlock(
+            blockKey: const ValueKey('yard-curtain-garden'),
+            title: l10n.featureTitle(MetaFeature.garden),
+            children: _gardenLines(l10n, garden!),
+          ),
+        ],
       ],
     );
   }
+
+  List<Widget> _seedLines(AppLocalizations l10n) {
+    final now = DateTime.now();
+    final phase = phaseOf(seedBatch, now);
+    final offer = SeedCatalog.offerFor(state);
+    final stacks = stackSeeds(seeds);
+    return [
+      _DetailLine(l10n.featureBody(MetaFeature.seeds)),
+      switch (phase) {
+        SeedPhase.idle => _DetailLine(
+          l10n.produceSeedFor(offer.cost),
+          lineKey: const ValueKey('yard-seed-offer'),
+        ),
+        SeedPhase.producing => _DetailLine(
+          l10n.seedBadgeProducing(
+            formatSeedCountdown(seedBatch?.remaining(now) ?? Duration.zero),
+          ),
+          lineKey: const ValueKey('yard-seed-producing'),
+        ),
+        SeedPhase.ready => _DetailLine(
+          '${l10n.seedName(seedBatch!.species)} · ${l10n.seedBadgeReady}',
+          lineKey: const ValueKey('yard-seed-ready'),
+        ),
+      },
+      if (phase == SeedPhase.idle) ...[
+        _DetailLine(l10n.catalogDuration(offer.duration)),
+        _DetailLine(
+          l10n.seedChanceStep(l10n.seedChanceSummary(offer.chances)),
+          lineKey: const ValueKey('yard-seed-chances'),
+        ),
+      ],
+      if (stacks.isEmpty)
+        _DetailLine(l10n.seedsEmptyBody)
+      else
+        for (final stack in stacks)
+          _DetailLine(
+            _stackLabel(
+              l10n,
+              species: stack.species,
+              count: stack.count,
+              trait: stack.trait,
+              food: stack.power,
+            ),
+            lineKey: ValueKey(
+              'yard-seed-stack-${stack.species.name}-${stack.power}',
+            ),
+          ),
+    ];
+  }
+
+  List<Widget> _warehouseLines(AppLocalizations l10n, GardenSnapshot garden) {
+    final stacks = stackPlants(garden.warehouse);
+    return [
+      _DetailLine(l10n.featureBody(MetaFeature.warehouse)),
+      if (stacks.isEmpty)
+        _DetailLine(l10n.warehouseEmptyBody)
+      else
+        for (final stack in stacks)
+          _DetailLine(
+            _stackLabel(
+              l10n,
+              species: stack.species,
+              count: stack.count,
+              trait: stack.trait,
+              food: stack.power,
+            ),
+            lineKey: ValueKey(
+              'yard-plant-stack-${stack.species.name}-${stack.power}',
+            ),
+          ),
+    ];
+  }
+
+  List<Widget> _gardenLines(AppLocalizations l10n, GardenSnapshot garden) {
+    final now = DateTime.now();
+    return [
+      _DetailLine(l10n.featureBody(MetaFeature.garden)),
+      for (var index = 0; index < garden.beds.length; index++)
+        _DetailLine(
+          _bedLine(l10n, index, garden.beds[index], now),
+          lineKey: ValueKey('yard-bed-$index'),
+        ),
+    ];
+  }
+}
+
+double _curtainCap(BuildContext context) {
+  final view = View.of(context);
+  final height = view.physicalSize.height / view.devicePixelRatio;
+  if (height <= 0) return double.infinity;
+  return height * 0.46;
+}
+
+const _detailBody = TextStyle(
+  color: _ivory,
+  fontSize: 12,
+  height: 1.3,
+  fontWeight: FontWeight.w600,
+);
+
+class _CurtainBlock extends StatelessWidget {
+  const _CurtainBlock({
+    required this.blockKey,
+    required this.title,
+    required this.children,
+  });
+
+  final Key blockKey;
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: blockKey,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: _goldSoft,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 2),
+        ...children,
+      ],
+    );
+  }
+}
+
+class _DetailLine extends StatelessWidget {
+  const _DetailLine(this.text, {this.lineKey});
+
+  final String text;
+  final Key? lineKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, key: lineKey, style: _detailBody);
+  }
+}
+
+String _stackLabel(
+  AppLocalizations l10n, {
+  required SeedSpecies species,
+  required int count,
+  required PlantTrait? trait,
+  required int food,
+}) {
+  final parts = <String>[
+    '${l10n.seedName(species)} ${l10n.seedGroupCount(count)}',
+    l10n.plantPower(food),
+  ];
+  if (trait != null) parts.add(l10n.plantTraitLabel(trait));
+  return parts.join(' · ');
+}
+
+String _bedLine(
+  AppLocalizations l10n,
+  int index,
+  Planting? planting,
+  DateTime now,
+) {
+  final number = index + 1;
+  if (planting == null) return l10n.gardenBedEmpty(number);
+  final name = l10n.seedName(planting.species);
+  if (planting.isReady(now)) return l10n.gardenBedReady(number, name);
+  return l10n.gardenBedGrowing(
+    number,
+    name,
+    l10n.growthStage(stageOf(planting, now)),
+    formatSeedCountdown(planting.remaining(now)),
+  );
 }
 
 class _SeedUpgradeBenefit extends StatelessWidget {
@@ -390,8 +888,8 @@ class _NextHouseArtState extends State<_NextHouseArt>
       child: Image.asset(
         PlotStages.assetOf(PlotKind.house, widget.frame),
         key: const ValueKey('next-house-image'),
-        width: 72,
-        height: 72,
+        width: _actionExtent,
+        height: _actionExtent,
         fit: BoxFit.contain,
         excludeFromSemantics: true,
       ),

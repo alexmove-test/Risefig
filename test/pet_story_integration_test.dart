@@ -90,7 +90,7 @@ void main() {
   });
 
   testWidgets(
-    'pending story badge remains available when invitation is hidden',
+    'a pending story stays off the yard invitation',
     (tester) async {
       final pets = await PetStore.open();
       await pets.adopt(PetKind.fox);
@@ -104,16 +104,12 @@ void main() {
           home: Scaffold(
             body: Align(
               alignment: Alignment.centerRight,
-              child: CourtyardPetInvite(
-                pets: pets,
-                adventure: story,
-                onTap: () {},
-              ),
+              child: CourtyardPetInvite(pets: pets, onTap: () {}),
             ),
           ),
         ),
       );
-      expect(find.text('Story ready · 1/3'), findsOneWidget);
+      expect(find.text('Story ready · 1/3'), findsNothing);
       await tester.drag(
         find.byKey(const ValueKey('courtyard-pets')),
         const Offset(180, 0),
@@ -122,7 +118,7 @@ void main() {
       expect(find.byKey(const ValueKey('courtyard-pets-tab')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('courtyard-pets-tab')));
       await tester.pump();
-      expect(find.text('Story ready · 1/3'), findsOneWidget);
+      expect(find.text('Story ready · 1/3'), findsNothing);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

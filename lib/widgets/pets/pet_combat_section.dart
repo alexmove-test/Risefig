@@ -5,9 +5,7 @@ import '../../models/pet.dart';
 import '../../models/pet_combat.dart';
 import '../../models/pet_roster.dart';
 import '../../services/points_controller.dart';
-import 'gear_art.dart';
 import 'pet_feed_sheet.dart';
-import 'pet_gear_sheet.dart';
 
 const _ivory = Color(0xFFF8F1DE);
 const _gold = Color(0xFFE8C96A);
@@ -39,22 +37,17 @@ class _PetCombatSectionState extends State<PetCombatSection> {
     final l10n = AppLocalizations.of(context);
     final role = PetCombatRules.roleOf(widget.kind);
     final record =
-        points.roster.recordOf(widget.kind) ?? PetCombatRecord.fresh(widget.kind);
+        points.roster.recordOf(widget.kind) ??
+        PetCombatRecord.fresh(widget.kind);
     final progress = PetLevelProgress.of(record.level, record.xp);
-    final main = points.roster.defOf(record.mainItemId);
-    final accessory = points.roster.defOf(record.accessoryItemId);
-    final strength = PetStrength.of(
-      level: progress.level,
-      main: main,
-      accessory: accessory,
-    );
+    final strength = PetStrength.of(level: progress.level);
     final stat = l10n.petStat(role);
     final assigned = role == PetRole.defender
         ? points.roster.defender == widget.kind
         : points.roster.raider == widget.kind;
     final pointless = progress.maxed && widget.hunger >= 1;
-    final canFeed =
-        points.garden.warehouse.isNotEmpty && !pointless && !points.gearBusy;
+    final busy = points.feedBusy || points.assignBusy;
+    final canFeed = points.garden.warehouse.isNotEmpty && !pointless && !busy;
     return Semantics(
       label: l10n.petBadgeLabel(role, progress.level),
       child: Column(
@@ -100,13 +93,7 @@ class _PetCombatSectionState extends State<PetCombatSection> {
           ),
           const SizedBox(height: 8),
           Text(
-            l10n.petStrengthLine(
-              stat: stat,
-              total: strength.total,
-              base: strength.base,
-              main: strength.main,
-              accessory: strength.accessory,
-            ),
+            l10n.petStrengthLine(stat: stat, total: strength.total),
             key: ValueKey('pet-strength-${widget.kind.name}'),
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -134,45 +121,9 @@ class _PetCombatSectionState extends State<PetCombatSection> {
             ),
           ],
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _SlotButton(
-                  slot: GearSlot.main,
-                  kind: widget.kind,
-                  def: main,
-                  onPressed: points.gearBusy
-                      ? null
-                      : () => showPetGearSheet(
-                          context,
-                          kind: widget.kind,
-                          slot: GearSlot.main,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SlotButton(
-                  slot: GearSlot.accessory,
-                  kind: widget.kind,
-                  def: accessory,
-                  onPressed: points.gearBusy
-                      ? null
-                      : () => showPetGearSheet(
-                          context,
-                          kind: widget.kind,
-                          slot: GearSlot.accessory,
-                        ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
           FilledButton(
             key: ValueKey('pet-feed-${widget.kind.name}'),
-            onPressed: canFeed
-                ? () => _feed(points)
-                : null,
+            onPressed: canFeed ? () => _feed(points) : null,
             child: Text(
               pointless
                   ? l10n.petFeedPointless
@@ -184,7 +135,7 @@ class _PetCombatSectionState extends State<PetCombatSection> {
           const SizedBox(height: 4),
           OutlinedButton(
             key: ValueKey('pet-assign-${widget.kind.name}'),
-            onPressed: points.gearBusy ? null : () => _assign(points, assigned),
+            onPressed: busy ? null : () => _assign(points, assigned),
             child: Text(
               role == PetRole.defender
                   ? (assigned ? l10n.petStopGuard : l10n.petGuardAction)
@@ -197,10 +148,7 @@ class _PetCombatSectionState extends State<PetCombatSection> {
               _reaction!,
               key: ValueKey('pet-feed-reaction-${widget.kind.name}'),
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: _gold,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(color: _gold, fontWeight: FontWeight.w800),
             ),
           ],
         ],
@@ -220,7 +168,9 @@ class _PetCombatSectionState extends State<PetCombatSection> {
       final l10n = AppLocalizations.of(context);
       final lines = <String>[l10n.petFedReaction(l10n.petName(widget.kind))];
       if (preview.leveled) {
-        lines.add(l10n.petLevelChange(preview.before.level, preview.after.level));
+        lines.add(
+          l10n.petLevelChange(preview.before.level, preview.after.level),
+        );
       }
       if (preview.strengthChanged) {
         lines.add(
@@ -242,42 +192,5 @@ class _PetCombatSectionState extends State<PetCombatSection> {
   Future<void> _assign(PointsController points, bool assigned) async {
     await points.assignPet(kind: widget.kind, active: !assigned);
     widget.onChanged?.call();
-  }
-}
-
-class _SlotButton extends StatelessWidget {
-  const _SlotButton({
-    required this.slot,
-    required this.kind,
-    required this.def,
-    required this.onPressed,
-  });
-
-  final GearSlot slot;
-  final PetKind kind;
-  final GearDef? def;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return OutlinedButton(
-      key: ValueKey('pet-slot-${slot.name}-${kind.name}'),
-      onPressed: onPressed,
-      child: Column(
-        children: [
-          if (def != null) GearArt(def: def!, size: 28),
-          Text(
-            def == null ? l10n.petSlotEmpty : l10n.gearName(def!.id),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
-          ),
-          Text(
-            l10n.petSlot(slot),
-            style: const TextStyle(fontSize: 11, color: _gold),
-          ),
-        ],
-      ),
-    );
   }
 }

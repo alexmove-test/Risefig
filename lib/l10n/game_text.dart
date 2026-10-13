@@ -2,9 +2,12 @@ import 'package:mahjong/l10n/app_localizations.dart';
 import 'package:mahjong/l10n/catalog_text.dart';
 import 'package:mahjong/l10n/format_text.dart';
 import 'package:mahjong/models/garden.dart';
+import 'package:mahjong/models/plant_cross.dart';
 import 'package:mahjong/models/hub_goal.dart';
 import 'package:mahjong/models/level_challenge.dart';
 import 'package:mahjong/models/levels.dart';
+import 'package:mahjong/models/meta_features.dart';
+import 'package:mahjong/models/tutorial_step.dart';
 import 'package:mahjong/models/pet.dart';
 import 'package:mahjong/models/pet_combat.dart';
 import 'package:mahjong/models/plot_kind.dart';
@@ -103,6 +106,10 @@ extension GameText on AppLocalizations {
             ? hubStarsUntilReward(goal.remaining)
             : hubQuestRemaining(goal.quest!),
       HubGoalKind.questClaim => hubQuestRewardReady,
+      HubGoalKind.featureUnlock => featureUnlockGoal(
+        goal.remaining,
+        featureTitle(goal.feature ?? MetaFeature.house),
+      ),
       HubGoalKind.petUnlock => hubLevelUnlocksPet(
         goal.levelId ?? Levels.plotStartId(PlotKind.pets),
       ),
@@ -148,6 +155,39 @@ extension GameText on AppLocalizations {
     'tapFree' => coachTapFree,
     'matchPair' => coachMatchPair,
     _ => coachTrayLimit,
+  };
+
+  String tutorialText(TutorialStep step) => switch (step) {
+    TutorialStep.collect => tutorialCollect,
+    TutorialStep.match => tutorialMatch,
+    TutorialStep.layers => tutorialLayers,
+    TutorialStep.boosts => tutorialBoosts,
+  };
+
+  String featureTitle(MetaFeature feature) => switch (feature) {
+    MetaFeature.house => featureTitleHouse,
+    MetaFeature.points => pointsShopTitle,
+    MetaFeature.garden => featureTitleGarden,
+    MetaFeature.warehouse => warehouseTitle,
+    MetaFeature.seeds => featureTitleSeeds,
+    MetaFeature.cross => crossTitle,
+    MetaFeature.neighbors => neighborsTitle,
+    MetaFeature.showcase => showcaseTitle,
+    MetaFeature.leaderboard => leaderboard,
+    MetaFeature.pets => pets,
+  };
+
+  String featureBody(MetaFeature feature) => switch (feature) {
+    MetaFeature.house => featureBodyHouse,
+    MetaFeature.points => featureBodyPoints,
+    MetaFeature.garden => featureBodyGarden,
+    MetaFeature.warehouse => featureBodyWarehouse,
+    MetaFeature.seeds => featureBodySeeds,
+    MetaFeature.cross => featureBodyCross,
+    MetaFeature.neighbors => featureBodyNeighbors,
+    MetaFeature.showcase => featureBodyShowcase,
+    MetaFeature.leaderboard => featureBodyLeaderboard,
+    MetaFeature.pets => featureBodyPets,
   };
 
   String difficulty(LevelDef level) {
@@ -273,16 +313,6 @@ extension GameText on AppLocalizations {
     PetRole.attacker => petStatAttack,
     PetRole.defender => petStatDefense,
   };
-
-  String petSlot(GearSlot slot) => switch (slot) {
-    GearSlot.main => gearSlotMain,
-    GearSlot.accessory => gearSlotAccessory,
-  };
-
-  String gearName(String id) => gearItemName(id);
-
-  String gearOfferLabel({required PetRole role, required GearSlot slot}) =>
-      gearOfferText(petRole(role), petSlot(slot));
 
   String petBadgeLabel(PetRole role, int level) =>
       petBadgeText(petRole(role), petLevelLabel(level));
@@ -470,6 +500,24 @@ extension GameText on AppLocalizations {
     SeedSpecies.starbamboo => seedStarbamboo,
   };
 
+  String get openPlantCard {
+    final code = localeName.split('_').first;
+    return switch (code) {
+      'ru' => 'Открыть карточку',
+      'uk' => 'Відкрити картку',
+      _ => 'Open the card',
+    };
+  }
+
+  String get plantKeepsakeLine {
+    final code = localeName.split('_').first;
+    return switch (code) {
+      'ru' => 'Эта карточка — растение на Solana.',
+      'uk' => 'Ця картка — рослина на Solana.',
+      _ => 'This card is the Solana keepsake.',
+    };
+  }
+
   String seedBlurb(SeedSpecies species) => switch (species) {
     SeedSpecies.amberbell => seedBlurbAmberbell,
     SeedSpecies.mistfern => seedBlurbMistfern,
@@ -522,8 +570,16 @@ extension GameText on AppLocalizations {
 
   String plantOrigin(String source) {
     if (source == 'house_production') return plantOriginHouse;
+    if (source == 'cross') return plantOriginCross;
+    if (source == 'raid') return plantOriginRaid;
     return plantOriginOther(source);
   }
+
+  String plantTraitLabel(PlantTrait trait) => switch (trait) {
+    PlantTrait.attack => crossTraitAttack,
+    PlantTrait.defense => crossTraitDefense,
+    PlantTrait.bloom => crossTraitBloom,
+  };
 
   String foxGoal(int stage) => switch (stage) {
     0 => foxGoal0,

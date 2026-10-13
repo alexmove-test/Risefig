@@ -103,11 +103,14 @@ class PlayerProfileStore {
       case 'uk':
       case 'en':
       case 'th':
+      case 'de':
         return _prefs.getString(_kLanguagePref)!;
       default:
         final code = PlatformDispatcher.instance.locale.languageCode
             .toLowerCase();
-        if (code == 'ru' || code == 'uk' || code == 'th') return code;
+        if (code == 'ru' || code == 'uk' || code == 'th' || code == 'de') {
+          return code;
+        }
         return 'en';
     }
   }

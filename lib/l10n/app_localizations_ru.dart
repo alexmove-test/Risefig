@@ -104,6 +104,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hubThreeStarUntilReward => '3★ откроет награду';
 
   @override
+  String hubNeighborEvent(String name, String text) {
+    return '$name: $text';
+  }
+
+  @override
+  String hubHarvestReady(String plant) {
+    return 'Урожай готов: $plant — соберите';
+  }
+
+  @override
+  String get hubBedFree => 'Грядка свободна — посадите семя';
+
+  @override
   String get today => 'Сегодня';
 
   @override
@@ -431,6 +444,105 @@ class AppLocalizationsRu extends AppLocalizations {
   String get coachTrayLimit => 'Лоток на 4 — если забьётся, партия проиграна';
 
   @override
+  String get tutorialCollect =>
+      'Нажмите свободную плитку — она попадёт в лоток';
+
+  @override
+  String get tutorialMatch =>
+      'Соберите две одинаковые — пара исчезнет. В лотке всего 4 места.';
+
+  @override
+  String get tutorialLayers => 'Нижнюю нельзя взять, пока она закрыта сверху.';
+
+  @override
+  String get tutorialBoosts =>
+      'Подсказка подсветит ход, магнит соберёт пару, отмена вернёт ход.';
+
+  @override
+  String get tutorialSkip => 'Пропустить';
+
+  @override
+  String get featureGotIt => 'Понятно';
+
+  @override
+  String get featureNewBadge => 'НОВОЕ';
+
+  @override
+  String get featureNewGarden =>
+      'Новое: грядки во дворе — нажмите на грядку, чтобы посадить семя';
+
+  @override
+  String featureUnlockGoal(int count, String feature) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ещё $count уровня',
+      many: 'Ещё $count уровней',
+      few: 'Ещё $count уровня',
+      one: 'Ещё $count уровень',
+    );
+    return '$_temp0 — откроется: $feature';
+  }
+
+  @override
+  String get winPointsHint => 'Тратьте баллы на дом во дворе';
+
+  @override
+  String get replayTips => 'Показать подсказки снова';
+
+  @override
+  String get replayTipsDone => 'Подсказки покажутся снова';
+
+  @override
+  String get featureTitleHouse => 'Дом';
+
+  @override
+  String get featureTitleGarden => 'Огород';
+
+  @override
+  String get featureTitleSeeds => 'Семена';
+
+  @override
+  String get featureBodyHouse =>
+      'За уровни дают баллы. Тратьте их здесь на улучшение дома — он же производит семена для огорода.';
+
+  @override
+  String get featureBodyPoints =>
+      'Баллы приходят за каждый пройденный уровень. Ими платят за улучшение дома и посадку.';
+
+  @override
+  String get featureBodyGarden =>
+      'Посадите семя на грядку, подождите и соберите растение. Растениями кормят питомцев, их можно показать соседям.';
+
+  @override
+  String get featureBodyWarehouse =>
+      'Здесь хранятся собранные растения. Кормите ими питомцев, скрещивайте два в одно или выставляйте на витрину.';
+
+  @override
+  String get featureBodySeeds =>
+      'Здесь лежат семена, которые произвёл дом. Сажайте их на грядки огорода.';
+
+  @override
+  String get featureBodyCross =>
+      'Два растения превращаются в одно новое семя. Сильный или редкий результат — шанс, а не обещание.';
+
+  @override
+  String get featureBodyNeighbors =>
+      'На холмах живут игроки рядом с вами в рейтинге. Пишите им и объединяйтесь для скрещивания и защиты.';
+
+  @override
+  String get featureBodyShowcase =>
+      'Покажите всем лучшие растения и посмотрите, что выращивают другие игроки.';
+
+  @override
+  String get featureBodyLeaderboard =>
+      'Звёзды и победы за неделю поднимают вас в рейтинге среди других игроков.';
+
+  @override
+  String get featureBodyPets =>
+      'Питомец живёт во дворе. Кормите его растениями с огорода.';
+
+  @override
   String get easy => 'Легко';
 
   @override
@@ -690,14 +802,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String petStrengthLineText(
-    String stat,
-    int total,
-    int base,
-    int main,
-    int accessory,
-  ) {
-    return '$stat $total = основа $base + предмет $main + аксессуар $accessory';
+  String petStrengthLineText(String stat, int total) {
+    return '$stat $total';
   }
 
   @override
@@ -745,9 +851,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get petFeedMissing => 'Этого растения уже нет на складе.';
 
   @override
-  String get petSlotEmpty => 'Пусто';
-
-  @override
   String get petGuardAction => 'Охранять огород';
 
   @override
@@ -764,48 +867,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get petStopRaid => 'Снять выбор набега';
-
-  @override
-  String gearBonus(int bonus) {
-    return '+$bonus к силе';
-  }
-
-  @override
-  String gearPriceText(String price) {
-    return '$price поинтов';
-  }
-
-  @override
-  String gearLevelRequired(int level) {
-    return 'Нужен уровень $level';
-  }
-
-  @override
-  String gearIfEquipped(String stat, int from, int to) {
-    return 'Если надеть: $stat $from → $to';
-  }
-
-  @override
-  String get gearBuy => 'Купить';
-
-  @override
-  String get gearEquip => 'Надеть';
-
-  @override
-  String get gearUnequip => 'Снять';
-
-  @override
-  String gearWornBy(String name) {
-    return 'Надето на $name';
-  }
-
-  @override
-  String gearShortfallText(String shortfall) {
-    return 'Не хватает $shortfall поинтов';
-  }
-
-  @override
-  String get gearBuyFailed => 'Не удалось сохранить. Поинты не списаны.';
 
   @override
   String gardenGuardLabel(String name, int power) {
@@ -911,6 +972,30 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String produceSeedForText(String price) {
     return 'Произвести семя · $price поинтов';
+  }
+
+  @override
+  String yardSeedOfferText(String price) {
+    return 'Произвести\nсемя\n$price';
+  }
+
+  @override
+  String yardSeedTimerText(String time) {
+    return 'Семя\n$time';
+  }
+
+  @override
+  String get yardGrowPlant => 'Вырастить растение';
+
+  @override
+  String get watchAdHarvest => 'Ролик · собрать сейчас';
+
+  @override
+  String get plantAdUsed => 'Сегодня ролик уже собирал растение';
+
+  @override
+  String speedUpForText(String price) {
+    return 'Ускорить · $price поинтов';
   }
 
   @override
@@ -1097,6 +1182,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get languageThai => 'ไทย';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get languageUkrainian => 'Українська';
 
   @override
   String get challengeCompactTower => 'Башня: разберите все слои';
@@ -1399,12 +1490,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get petStatDefense => 'Защита';
 
   @override
-  String get gearSlotMain => 'Основной предмет';
-
-  @override
-  String get gearSlotAccessory => 'Аксессуар';
-
-  @override
   String get growthSown => 'Семя посажено';
 
   @override
@@ -1622,11 +1707,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String gearOfferText(String role, String slot) {
-    return '$role · $slot';
-  }
-
-  @override
   String petBadgeText(String role, String level) {
     return '$role, $level';
   }
@@ -1821,42 +1901,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get familyWinter => 'Зима';
-
-  @override
-  String get gearAttackerMain1 => 'Шёлковый пояс';
-
-  @override
-  String get gearAttackerMain2 => 'Ночной коготь';
-
-  @override
-  String get gearAttackerMain3 => 'Фонарь набега';
-
-  @override
-  String get gearAttackerAccessory1 => 'Колокольчик разведчика';
-
-  @override
-  String get gearAttackerAccessory2 => 'Сумка следопыта';
-
-  @override
-  String get gearAttackerAccessory3 => 'Лунный оберег';
-
-  @override
-  String get gearDefenderMain1 => 'Мягкий жилет';
-
-  @override
-  String get gearDefenderMain2 => 'Жилет стража';
-
-  @override
-  String get gearDefenderMain3 => 'Пластина фонаря';
-
-  @override
-  String get gearDefenderAccessory1 => 'Кожаный ошейник';
-
-  @override
-  String get gearDefenderAccessory2 => 'Повязка дозора';
-
-  @override
-  String get gearDefenderAccessory3 => 'Оберег калитки';
 
   @override
   String get storyCampaign0 => 'Росток';
@@ -2778,4 +2822,1008 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get petItemCampfire => 'Костёр';
+
+  @override
+  String get neighborsTitle => 'Соседи';
+
+  @override
+  String get neighborsClose => 'Закрыть';
+
+  @override
+  String get neighborsTabAll => 'Все игроки';
+
+  @override
+  String get neighborsTabSaved => 'Избранные';
+
+  @override
+  String get neighborsSearchHint => 'Поиск по началу имени';
+
+  @override
+  String get neighborsForYou => 'Для тебя';
+
+  @override
+  String neighborsUpdates(int count) {
+    return 'Обновления: $count';
+  }
+
+  @override
+  String get neighborsShowLess => 'Свернуть';
+
+  @override
+  String get neighborsEmptySaved => 'Здесь будут игроки, которых вы сохраните.';
+
+  @override
+  String get neighborsBrowsePlayers => 'Открыть всех игроков';
+
+  @override
+  String get neighborsEmptySearch => 'Нет имени с таким началом.';
+
+  @override
+  String get neighborsEmptyPlayers => 'В этом списке нет других игроков.';
+
+  @override
+  String get neighborsOffline =>
+      'Нет связи. Здесь остаются ранее загруженные игроки.';
+
+  @override
+  String get neighborsLoadFailed => 'Не удалось загрузить игроков.';
+
+  @override
+  String get neighborsRetry => 'Повторить';
+
+  @override
+  String get neighborsLoading => 'Загрузка игроков';
+
+  @override
+  String get neighborsLoadingMore => 'Загрузка ещё';
+
+  @override
+  String neighborsLevel(int level) {
+    return 'уровень $level';
+  }
+
+  @override
+  String get neighborsAdd => 'Добавить в избранные';
+
+  @override
+  String get neighborsRemove => 'Убрать из избранных';
+
+  @override
+  String neighborsSaved(String name) {
+    return '$name в списке «Избранные».';
+  }
+
+  @override
+  String neighborsRemoved(String name) {
+    return '$name убран из избранных.';
+  }
+
+  @override
+  String get neighborsFindAgain => 'Найти в избранных';
+
+  @override
+  String get neighborsBack => 'К списку';
+
+  @override
+  String get neighborsSavedHint =>
+      'Сохраните игрока, чтобы снова найти его в «Избранных».';
+
+  @override
+  String get neighborsSignalAsksHelp => 'Просит помощи';
+
+  @override
+  String get neighborsSignalSeeksDefense => 'Ищет защиту';
+
+  @override
+  String get neighborsSignalOffersCross => 'Предлагает скрещивание';
+
+  @override
+  String get neighborsSignalAwaitsReply => 'Ждёт ответа';
+
+  @override
+  String get neighborsSignalHelpedYou => 'Помог тебе';
+
+  @override
+  String neighborsUnseen(int count) {
+    return 'новых: $count';
+  }
+
+  @override
+  String get neighborsHistory => 'Ваши действия';
+
+  @override
+  String get neighborsBlock => 'Заблокировать';
+
+  @override
+  String neighborsBlocked(String name) {
+    return '$name заблокирован и скрыт.';
+  }
+
+  @override
+  String get neighborsWaiting => 'Ожидаем ответа';
+
+  @override
+  String get neighborsUnavailable => 'Это действие недоступно.';
+
+  @override
+  String get neighborsFailed => 'Не получилось. Можно повторить.';
+
+  @override
+  String get neighborsEnded => 'Это предложение завершилось.';
+
+  @override
+  String get neighborsDeclined => 'Предложение отклонено.';
+
+  @override
+  String get neighborsCancelled => 'Предложение отменено.';
+
+  @override
+  String get neighborsInProgress => 'Выполняется';
+
+  @override
+  String get neighborsDone => 'Завершено';
+
+  @override
+  String get neighborsReply => 'Ответить';
+
+  @override
+  String get neighborsViewOffer => 'Посмотреть предложение';
+
+  @override
+  String get neighborsPeaceful => 'Мирные действия';
+
+  @override
+  String get neighborsAttackSection => 'Нападение';
+
+  @override
+  String get neighborsAttackExplain =>
+      'Это запускает нападение на этого игрока.';
+
+  @override
+  String get neighborsConfirm => 'Подтвердить';
+
+  @override
+  String get neighborsThank => 'Поблагодарить';
+
+  @override
+  String neighborsThankSent(String name) {
+    return 'Благодарность отправлена игроку $name.';
+  }
+
+  @override
+  String get neighborsOfferAgain => 'Предложить ещё раз';
+
+  @override
+  String neighborsCost(String cost) {
+    return 'Будет потрачено: $cost';
+  }
+
+  @override
+  String neighborsOutcome(String outcome) {
+    return 'После подтверждения: $outcome';
+  }
+
+  @override
+  String get neighborsHelpAction => 'Помочь';
+
+  @override
+  String get neighborsDefenseAction => 'Защитить';
+
+  @override
+  String get neighborsCrossDecline => 'Отклонить';
+
+  @override
+  String neighborsUsesPlant(String plant) {
+    return 'Растение: $plant';
+  }
+
+  @override
+  String get neighborsPlantStays => 'Это растение остаётся у владельца.';
+
+  @override
+  String get neighborsPlantLeaves => 'Это растение расходуется.';
+
+  @override
+  String neighborsMemoryHelped(String name) {
+    return '$name помог твоему растению.';
+  }
+
+  @override
+  String neighborsMemoryDefended(String name) {
+    return 'Питомец $name защитил огород.';
+  }
+
+  @override
+  String neighborsMemoryCrossed(String name) {
+    return 'Вы и $name получили новое растение.';
+  }
+
+  @override
+  String neighborsMemoryThanked(String name) {
+    return 'Вы поблагодарили $name.';
+  }
+
+  @override
+  String neighborsMemoryRaid(String name) {
+    return 'Отчёт о нападении с $name.';
+  }
+
+  @override
+  String get neighborsReasonUnsupported =>
+      'Совместное действие пока недоступно.';
+
+  @override
+  String get neighborsReasonNotAllowed =>
+      'Для этого игрока действие недоступно.';
+
+  @override
+  String get neighborsReasonMissingPet => 'Нужен защищающий питомец.';
+
+  @override
+  String get neighborsReasonMissingPlant =>
+      'Нужно растение для этого действия.';
+
+  @override
+  String neighborsProtector(String name) {
+    return 'Защитник: $name';
+  }
+
+  @override
+  String neighborsUntil(String time) {
+    return 'До $time';
+  }
+
+  @override
+  String neighborsAttackPower(int value) {
+    return 'Атака $value';
+  }
+
+  @override
+  String neighborsDefensePower(int value) {
+    return 'Защита $value';
+  }
+
+  @override
+  String neighborsLoot(int count) {
+    return 'Возможная эссенция: $count';
+  }
+
+  @override
+  String get showcaseTitle => 'Витрина растений';
+
+  @override
+  String get showcaseAll => 'Все растения';
+
+  @override
+  String get showcaseMine => 'Мои растения';
+
+  @override
+  String get showcaseManage => 'Выставить свои растения';
+
+  @override
+  String get showcaseRefresh => 'Обновить витрину';
+
+  @override
+  String get showcaseIntro =>
+      'Знакомься с растениями других игроков. На каждой карточке указан владелец.';
+
+  @override
+  String get showcaseMyIntro =>
+      'Выбери собранное растение: его и твоё игровое имя увидят другие игроки. Растение останется на складе. Пока оно на витрине, его нельзя скормить питомцу.';
+
+  @override
+  String get showcaseEmpty =>
+      'На витрине пока нет растений. Ты можешь выставить первое.';
+
+  @override
+  String get showcaseChoose => 'Выбрать растение';
+
+  @override
+  String get showcaseNoPlants =>
+      'Собери растение с грядки, чтобы выставить его на витрину.';
+
+  @override
+  String get showcasePublish => 'Выставить';
+
+  @override
+  String get showcaseWithdraw => 'Снять с витрины';
+
+  @override
+  String get showcasePublished => 'На общей витрине';
+
+  @override
+  String get showcasePrivate => 'Видно только тебе';
+
+  @override
+  String get showcaseUnconfirmed =>
+      'Публикация не подтверждена. Повтори её или сними растение с витрины.';
+
+  @override
+  String get showcasePublishedNotice =>
+      'Твоё растение теперь на общей витрине.';
+
+  @override
+  String get showcaseRemovedNotice =>
+      'Растение снято с витрины. Его снова можно использовать.';
+
+  @override
+  String get showcaseUnavailable =>
+      'Общая витрина сейчас недоступна. Твои растения сохранены.';
+
+  @override
+  String get showcaseLoadFailed =>
+      'Не удалось обновить витрину. Проверь соединение и попробуй ещё раз.';
+
+  @override
+  String get showcaseOperationFailed =>
+      'Не удалось подтвердить действие. Растение защищено; повтори попытку при наличии связи.';
+
+  @override
+  String get showcaseMissingLocal =>
+      'Это растение выставлено, но его нет на складе этого устройства.';
+
+  @override
+  String get showcaseMore => 'Загрузить ещё';
+
+  @override
+  String showcaseSpecimen(int number) {
+    return 'Растение №$number';
+  }
+
+  @override
+  String get showcaseFeedLocked =>
+      'Растения на витрине нельзя скормить питомцам. Сначала сними их с витрины.';
+
+  @override
+  String get crossOpen => 'Скрестить растения';
+
+  @override
+  String get crossTitle => 'Скрещивание';
+
+  @override
+  String get crossNeedTwo => 'Выбери два собранных растения.';
+
+  @override
+  String get crossAimCombat => 'Боевой корм';
+
+  @override
+  String get crossAimGarden => 'Огород';
+
+  @override
+  String get crossAimSeeds => 'Семена на выбор';
+
+  @override
+  String crossOdds(int ordinary, int raised, int rare) {
+    return 'Обычный исход $ordinary%. Сильнее $raised%. Редкое $rare%.';
+  }
+
+  @override
+  String get crossConfirm => 'Скрестить';
+
+  @override
+  String get crossFailed => 'Скрещивание не сохранилось. Попробуй ещё раз.';
+
+  @override
+  String get crossListed => 'Сначала сними растение с витрины.';
+
+  @override
+  String get crossWaiting => 'Сначала заверши текущее скрещивание.';
+
+  @override
+  String get crossChooseTrait => 'Выбери атаку или защиту для этого корма.';
+
+  @override
+  String get crossAttack => 'Атака';
+
+  @override
+  String get crossDefense => 'Защита';
+
+  @override
+  String get crossChooseSpecies => 'Выбери семя.';
+
+  @override
+  String get crossOrdinary =>
+      'Скрещивание осталось обычным. Обычное семя добавлено в запас.';
+
+  @override
+  String get crossGranted => 'Семя от скрещивания лежит в запасе семян.';
+
+  @override
+  String get crossTraitAttack => 'Корм атаки';
+
+  @override
+  String get crossTraitDefense => 'Корм защиты';
+
+  @override
+  String get crossTraitBloom => 'Растёт быстрее';
+
+  @override
+  String get plantOriginCross => 'Происхождение: скрещивание';
+
+  @override
+  String get neighborsActions => 'Действия';
+
+  @override
+  String get neighborsActionMessage => 'Написать';
+
+  @override
+  String get neighborsActionDefend => 'Защитить';
+
+  @override
+  String get neighborsActionCross => 'Предложить скрещивание';
+
+  @override
+  String get neighborsActionRaid => 'Напасть';
+
+  @override
+  String get neighborsActionsOffline =>
+      'Для действий с игроками нужен интернет.';
+
+  @override
+  String get neighborsNeedGuard =>
+      'Сначала назначь питомца-защитника во дворе питомцев.';
+
+  @override
+  String get neighborsNeedRaider =>
+      'Сначала назначь питомца для набегов во дворе питомцев.';
+
+  @override
+  String get neighborsNeedPlant => 'Нужно собранное растение на складе.';
+
+  @override
+  String get neighborsChoosePhrase => 'Выбери фразу';
+
+  @override
+  String get neighborsChoosePlant => 'Выбери растение, которое отдашь';
+
+  @override
+  String get neighborsSend => 'Отправить';
+
+  @override
+  String neighborsSent(String name) {
+    return 'Отправлено: $name.';
+  }
+
+  @override
+  String get neighborsAlreadyOpen =>
+      'С этим игроком уже есть открытый запрос такого вида.';
+
+  @override
+  String get neighborsRequestClosed => 'Этот запрос уже закрыт.';
+
+  @override
+  String get neighborsSendFailed =>
+      'Не получилось. Проверь интернет и попробуй ещё раз.';
+
+  @override
+  String neighborsDefendExplain(String name, int value) {
+    return 'Когда $name примет помощь, твой питомец 24 часа помогает охранять его двор. Защита $value.';
+  }
+
+  @override
+  String neighborsRaidExplain(String name, int value) {
+    return 'У $name есть сутки, чтобы выставить защитника. Двор устоит, только если защитник сильнее твоей атаки $value. Иначе одно растение сгорит, а другое ты заберёшь себе.';
+  }
+
+  @override
+  String get neighborsCrossExplain =>
+      'Каждый отдаёт одно растение и получает одно семя результата. Твоё растение списывается, только когда забираешь семя.';
+
+  @override
+  String get neighborsMessages => 'Сообщения и запросы';
+
+  @override
+  String get neighborsPhraseHello => 'Привет, сосед!';
+
+  @override
+  String get neighborsPhraseGoodLuck => 'Удачи!';
+
+  @override
+  String get neighborsPhraseThanks => 'Спасибо!';
+
+  @override
+  String get neighborsPhraseNiceGarden => 'Отличный сад!';
+
+  @override
+  String get neighborsPhraseLetsCross => 'Давай вырастим что-нибудь редкое.';
+
+  @override
+  String get neighborsPhraseIWillGuard => 'Пригляжу за твоим двором.';
+
+  @override
+  String get neighborsPhraseReadyForRaid => 'Готовься, иду в набег!';
+
+  @override
+  String get neighborsPhraseWellPlayed => 'Хорошая игра!';
+
+  @override
+  String neighborsInMessage(String name) {
+    return '$name пишет тебе';
+  }
+
+  @override
+  String neighborsInDefense(String name, int value) {
+    return '$name предлагает 24 часа охранять твой двор. Защита $value.';
+  }
+
+  @override
+  String neighborsInCross(String name, String plant) {
+    return '$name предлагает скрестить своё растение «$plant» с твоим.';
+  }
+
+  @override
+  String neighborsInRaid(String name, int value) {
+    return '$name нападает на твой двор. Атака $value.';
+  }
+
+  @override
+  String get neighborsOutMessage => 'Ты написал';
+
+  @override
+  String neighborsOutDefense(int value) {
+    return 'Ты предложил защиту. Защита $value.';
+  }
+
+  @override
+  String neighborsOutCross(String plant) {
+    return 'Ты предложил для скрещивания растение «$plant».';
+  }
+
+  @override
+  String neighborsOutRaid(int value) {
+    return 'Ты напал на этот двор. Атака $value.';
+  }
+
+  @override
+  String neighborsQuote(String name, String text) {
+    return '$name: «$text»';
+  }
+
+  @override
+  String get neighborsYou => 'Ты';
+
+  @override
+  String get neighborsAcceptDefense => 'Принять защиту';
+
+  @override
+  String get neighborsChooseCrossPlant => 'Выбрать своё растение';
+
+  @override
+  String get neighborsRepel => 'Отбиться';
+
+  @override
+  String get neighborsCancelRequest => 'Отменить запрос';
+
+  @override
+  String get neighborsClaimSeed => 'Забрать семя';
+
+  @override
+  String neighborsRaidWon(int attack, int defense) {
+    return 'Набег удался: атака $attack против защиты $defense.';
+  }
+
+  @override
+  String neighborsRaidRepelled(int attack, int defense) {
+    return 'Двор устоял: атака $attack против защиты $defense.';
+  }
+
+  @override
+  String neighborsGuarding(String time) {
+    return 'Защита действует до $time.';
+  }
+
+  @override
+  String get neighborsGuardEnded => 'Защита закончилась.';
+
+  @override
+  String neighborsCrossResult(String plant) {
+    return 'Итог скрещивания: семя «$plant».';
+  }
+
+  @override
+  String get neighborsSeedClaimed => 'Семя лежит в запасе семян.';
+
+  @override
+  String neighborsSeedMissing(String plant) {
+    return 'Чтобы забрать семя, нужно растение «$plant» на складе.';
+  }
+
+  @override
+  String neighborsYourDefense(int value) {
+    return 'Защита твоего двора: $value';
+  }
+
+  @override
+  String get neighborsReplied => 'Ответ отправлен.';
+
+  @override
+  String get neighborsSignalMessage => 'Новое сообщение';
+
+  @override
+  String get neighborsSignalDefense => 'Предлагает защиту';
+
+  @override
+  String get neighborsSignalRaid => 'Нападает на твой двор';
+
+  @override
+  String get neighborsSignalResult => 'Пришёл ответ';
+
+  @override
+  String get socialFriends => 'Друзья';
+
+  @override
+  String get socialFriend => 'Вы друзья';
+
+  @override
+  String get socialFriendsEmpty =>
+      'Пока нет друзей. Откройте карточку соседа и пригласите его. После принятия приглашения он появится здесь.';
+
+  @override
+  String get socialIncoming => 'Приглашение в друзья';
+
+  @override
+  String get socialWaiting => 'Ожидает принятия';
+
+  @override
+  String get socialUnavailable =>
+      'Не удалось подключиться. Проверьте соединение и повторите.';
+
+  @override
+  String get socialChat => 'Переписка';
+
+  @override
+  String get socialRemoveFriend => 'Удалить из друзей';
+
+  @override
+  String get socialFriendConsent =>
+      'Принятие дружбы разрешает вам обоим отправлять личные сообщения.';
+
+  @override
+  String get socialAccept => 'Принять дружбу';
+
+  @override
+  String get socialInvite => 'Пригласить в друзья';
+
+  @override
+  String get socialInvitesClosed =>
+      'Игрок пока не принимает приглашения в друзья.';
+
+  @override
+  String get socialMyProfile => 'Мой профиль';
+
+  @override
+  String get socialProfilePublic =>
+      'Эти сведения необязательны и видны другим игрокам.';
+
+  @override
+  String get socialAbout => 'О себе';
+
+  @override
+  String get socialLanguage => 'Языки общения';
+
+  @override
+  String get socialInterests => 'Интересы';
+
+  @override
+  String get socialGoal => 'Что ищу в игре';
+
+  @override
+  String get socialPicAboutFriendly => 'Дружелюбный';
+
+  @override
+  String get socialPicAboutCalm => 'Спокойный';
+
+  @override
+  String get socialPicAboutCheerful => 'Весёлый';
+
+  @override
+  String get socialPicAboutGentle => 'Нежный';
+
+  @override
+  String get socialPicAboutNight => 'По вечерам';
+
+  @override
+  String get socialPicAboutCurious => 'Любопытный';
+
+  @override
+  String get socialPicInterestGarden => 'Сад';
+
+  @override
+  String get socialPicInterestPets => 'Питомцы';
+
+  @override
+  String get socialPicInterestMahjong => 'Маджонг';
+
+  @override
+  String get socialPicInterestCourtyard => 'Двор';
+
+  @override
+  String get socialPicInterestSeeds => 'Семена';
+
+  @override
+  String get socialPicInterestStars => 'Звёзды';
+
+  @override
+  String get socialPicGoalFlower => 'Редкий цветок';
+
+  @override
+  String get socialPicGoalHouse => 'Дом красивее';
+
+  @override
+  String get socialPicGoalFriends => 'Друзья';
+
+  @override
+  String get socialPicGoalLevels => 'Проходить уровни';
+
+  @override
+  String get socialPicGoalChat => 'Общение';
+
+  @override
+  String get socialPicGoalCross => 'Скрещивание';
+
+  @override
+  String get socialOpenInvites => 'Принимать новые приглашения в друзья';
+
+  @override
+  String get socialSave => 'Сохранить профиль';
+
+  @override
+  String get socialProfileHeading => 'Профиль';
+
+  @override
+  String get socialNotChosen => 'Не выбрано';
+
+  @override
+  String get socialInvitesOpen => 'Принимает приглашения в друзья';
+
+  @override
+  String get socialBadgesTitle => 'Значки в списке соседей';
+
+  @override
+  String get socialBadgesExplain =>
+      'За поинты соседи на время увидят ваш аватар и значки профиля рядом с именем.';
+
+  @override
+  String socialBadgesActive(String time) {
+    return 'Видны соседям до $time';
+  }
+
+  @override
+  String get socialBadgesOff => 'Сейчас в списке видно только имя.';
+
+  @override
+  String socialBadgesOffer(int days, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days дня',
+      many: '$days дней',
+      few: '$days дня',
+      one: '$days день',
+    );
+    return '$_temp0 · $price поинтов';
+  }
+
+  @override
+  String get socialBadgesTooLong =>
+      'Показ можно продлить не дальше чем на 30 дней вперёд.';
+
+  @override
+  String get socialBadgesFailed =>
+      'Не удалось включить значки. Поинты возвращены.';
+
+  @override
+  String get socialBadgesNotListed =>
+      'Вас пока нет в списке соседей. Проверьте сеть и попробуйте ещё раз. Поинты не списаны.';
+
+  @override
+  String get socialChatEmpty =>
+      'Поздоровайтесь или поблагодарите друга за помощь!';
+
+  @override
+  String get socialReportMessage => 'Пожаловаться на сообщение';
+
+  @override
+  String get socialOlderMessages => 'Предыдущие сообщения';
+
+  @override
+  String get socialSendFailed =>
+      'Отправка не подтверждена. Повторите или вернитесь в карточку, чтобы проверить статус дружбы.';
+
+  @override
+  String get socialMessageHint => 'Напишите сообщение';
+
+  @override
+  String get socialGrownTogether => 'Вырастили вместе с';
+
+  @override
+  String get socialHistoryEmpty => 'Здесь появятся ваши совместные события.';
+
+  @override
+  String get socialHistory => 'Общая история';
+
+  @override
+  String get socialProfileReport => 'Пожаловаться на профиль';
+
+  @override
+  String neighborsRaidDeadline(String time) {
+    return 'Если не ответить до $time, двор защитит назначенный защитник.';
+  }
+
+  @override
+  String get neighborsRaidDefendTitle => 'Кто защищает двор?';
+
+  @override
+  String neighborsRaidDefendRule(int value) {
+    return 'Атака $value. Двор устоит только с более сильным защитником.';
+  }
+
+  @override
+  String neighborsRaidOptionOwn(String pet, int value) {
+    return '$pet · защита $value';
+  }
+
+  @override
+  String neighborsRaidOptionGuard(String name, int value) {
+    return 'Охранник от $name · защита $value';
+  }
+
+  @override
+  String neighborsRaidOptionHelp(String name, int value) {
+    return '$name откликнулся на зов · защита $value';
+  }
+
+  @override
+  String get neighborsRaidOptionNone => 'Не защищаться';
+
+  @override
+  String get neighborsRaidHolds => 'Устоит';
+
+  @override
+  String get neighborsRaidFalls => 'Слабее атаки';
+
+  @override
+  String get neighborsRaidNoDefenders =>
+      'У тебя нет питомцев-защитников, и на зов пока никто не откликнулся. Без защитника набег удастся.';
+
+  @override
+  String get neighborsRaidChooseLoss =>
+      'Двор не устоит. Выбери, какое растение сгорит; налётчик заберёт случайное из остальных.';
+
+  @override
+  String neighborsRaidOnlyPlant(String plant) {
+    return 'Единственное растение, $plant, уйдёт налётчику.';
+  }
+
+  @override
+  String get neighborsRaidEmptyStorage =>
+      'Склад пуст — налётчику нечего забрать.';
+
+  @override
+  String get neighborsRaidAcceptLoss => 'Принять потерю';
+
+  @override
+  String neighborsRaidDestroyed(String plant) {
+    return 'Сгорело: $plant.';
+  }
+
+  @override
+  String neighborsRaidStolen(String plant) {
+    return 'Налётчик забрал: $plant.';
+  }
+
+  @override
+  String neighborsRaidLoot(String plant) {
+    return 'Твоя добыча: $plant.';
+  }
+
+  @override
+  String get neighborsRaidNoLoot => 'На складе нечего было забрать.';
+
+  @override
+  String get neighborsRaidAutoDefended =>
+      'Ответа не было, поэтому защищал назначенный защитник.';
+
+  @override
+  String neighborsRaidDefendedBy(String name) {
+    return 'Защищал питомец от $name.';
+  }
+
+  @override
+  String get neighborsRaidTakeLoot => 'Забрать растение';
+
+  @override
+  String neighborsRaidLootTaken(String plant) {
+    return '$plant — на твоём складе.';
+  }
+
+  @override
+  String get neighborsRaidTooSoon =>
+      'Этот двор отдыхает после набега. Попробуй позже.';
+
+  @override
+  String get neighborsHelpTitle => 'Зовут на помощь';
+
+  @override
+  String neighborsHelpExplain(int price) {
+    return 'Друзья видят зов бесплатно. Зов всем игрокам стоит $price поинтов. Откликнувшиеся защитники появятся в списке защиты.';
+  }
+
+  @override
+  String get neighborsHelpAskFriends => 'Позвать друзей на помощь';
+
+  @override
+  String neighborsHelpAskEveryone(int price) {
+    return 'Позвать всех · $price поинтов';
+  }
+
+  @override
+  String get neighborsHelpAskedFriends => 'Друзья видят твой зов о помощи.';
+
+  @override
+  String get neighborsHelpAskedEveryone =>
+      'Все игроки видят твой зов о помощи.';
+
+  @override
+  String get neighborsHelpNoFriends =>
+      'Пока некого позвать: у тебя нет друзей.';
+
+  @override
+  String neighborsHelpArrived(int count) {
+    return 'Откликнулись защитников: $count';
+  }
+
+  @override
+  String get neighborsHelpFailed =>
+      'Зов о помощи не отправлен. Списанные поинты возвращены.';
+
+  @override
+  String neighborsHelpCallLine(String name, int attack) {
+    return 'На $name напали · атака $attack';
+  }
+
+  @override
+  String neighborsHelpUntil(String time) {
+    return 'Открыт до $time';
+  }
+
+  @override
+  String neighborsHelpSend(int value) {
+    return 'Отправить защитника · защита $value';
+  }
+
+  @override
+  String neighborsHelpSent(String name) {
+    return 'Твой защитник готов защищать $name.';
+  }
+
+  @override
+  String get neighborsHelpOffered => 'Твой защитник предложен.';
+
+  @override
+  String get neighborsHelpNeedGuard =>
+      'Назначь питомца-защитника, чтобы помогать.';
+
+  @override
+  String get plantOriginRaid => 'Добыто в набеге';
+
+  @override
+  String get deleteAccount => 'Удалить аккаунт и данные';
+
+  @override
+  String get deleteAccountTitle => 'Удалить аккаунт и данные?';
+
+  @override
+  String get deleteAccountBody =>
+      'Это сотрёт двор, прогресс и настройки на этом устройстве. Если устройство вошло в сеть, удалится и этот анонимный аккаунт: запись в рейтинге, профиль, дружба, переписка, действия с соседями, зовы о помощи и карточки витрины. Общий разговор или заявка исчезнут и у другого игрока. Жалобы, которые отправили другие, остаются до конца проверки. Это нельзя отменить.';
+
+  @override
+  String get deleteAccountConfirm => 'Удалить';
+
+  @override
+  String get deleteAccountFailed =>
+      'Не удалось завершить удаление. Проверьте соединение и повторите или напишите на myevidentsuccess@gmail.com.';
+
+  @override
+  String get deleteAccountWorking => 'Удаляем…';
 }

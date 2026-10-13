@@ -16,6 +16,7 @@ import '../models/tile.dart';
 import '../models/tutorial_step.dart';
 import '../services/ad_bootstrap.dart';
 import '../services/courtyard_reward_store.dart';
+import '../services/feature_intro_store.dart';
 import '../services/game_sfx.dart';
 import '../services/play_telemetry.dart';
 import '../services/progress_store.dart';
@@ -487,6 +488,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final store = _tutorial ?? await TutorialStore.open();
     _tutorial = store;
     await store.reset();
+    await (await FeatureIntroStore.open()).reset();
     _blockedTap = false;
     if (mounted) _syncTutorial();
   }

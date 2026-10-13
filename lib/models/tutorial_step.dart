@@ -60,40 +60,31 @@ class TutorialSnapshot {
   }
 }
 
-/// Один показ: текст + куда смотреть.
+/// Один показ: шаг + куда смотреть. Текст берётся из локализации по [step].
 class TutorialLesson {
-  const TutorialLesson({
-    required this.step,
-    required this.anchor,
-    required this.text,
-  });
+  const TutorialLesson({required this.step, required this.anchor});
 
   final TutorialStep step;
   final TutorialAnchor anchor;
-  final String text;
 
   static const collect = TutorialLesson(
     step: TutorialStep.collect,
     anchor: TutorialAnchor.tileHint,
-    text: 'Нажмите свободную плитку — она попадёт в лоток',
   );
 
   static const match = TutorialLesson(
     step: TutorialStep.match,
     anchor: TutorialAnchor.tray,
-    text: 'Соберите две одинаковые — пара исчезнет. В лотке всего 4 места.',
   );
 
   static const layers = TutorialLesson(
     step: TutorialStep.layers,
     anchor: TutorialAnchor.tileHint,
-    text: 'Нижнюю нельзя взять, пока она закрыта сверху.',
   );
 
   static const boosts = TutorialLesson(
     step: TutorialStep.boosts,
     anchor: TutorialAnchor.actions,
-    text: 'Подсказка подсветит ход, магнит соберёт пару, отмена вернёт ход.',
   );
 
   static TutorialLesson of(TutorialStep step) {

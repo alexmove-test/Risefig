@@ -103,6 +103,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String get hubThreeStarUntilReward => 'ผ่านด้วย 3★ จะได้รางวัล';
 
   @override
+  String hubNeighborEvent(String name, String text) {
+    return '$name: $text';
+  }
+
+  @override
+  String hubHarvestReady(String plant) {
+    return '$plant สุกแล้ว — แตะเพื่อเก็บเกี่ยว';
+  }
+
+  @override
+  String get hubBedFree => 'แปลงว่างอยู่ — ปลูกเมล็ดกันเถอะ';
+
+  @override
   String get today => 'วันนี้';
 
   @override
@@ -427,6 +440,101 @@ class AppLocalizationsTh extends AppLocalizations {
   String get coachTrayLimit => 'ถาดใส่ได้ 4 ใบ — เต็มโดยไม่มีคู่แล้วจะแพ้';
 
   @override
+  String get tutorialCollect => 'แตะไพ่ที่ว่าง — ไพ่จะเข้าไปในถาด';
+
+  @override
+  String get tutorialMatch =>
+      'เก็บไพ่ที่เหมือนกันสองใบ — คู่จะหายไป ถาดมีแค่ 4 ช่อง';
+
+  @override
+  String get tutorialLayers => 'ไพ่ที่ถูกทับหยิบไม่ได้จนกว่าไพ่ด้านบนจะหายไป';
+
+  @override
+  String get tutorialBoosts =>
+      'คำใบ้แสดงตาเดิน แม่เหล็กเก็บคู่ ย้อนกลับคืนตาเดิน';
+
+  @override
+  String get tutorialSkip => 'ข้าม';
+
+  @override
+  String get featureGotIt => 'เข้าใจแล้ว';
+
+  @override
+  String get featureNewBadge => 'ใหม่';
+
+  @override
+  String get featureNewGarden => 'ใหม่: แปลงปลูกในลาน — แตะแปลงเพื่อปลูกเมล็ด';
+
+  @override
+  String featureUnlockGoal(int count, String feature) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อีก $count ด่าน',
+      one: 'อีก $count ด่าน',
+    );
+    return '$_temp0 จะปลดล็อก: $feature';
+  }
+
+  @override
+  String get winPointsHint => 'ใช้แต้มอัปเกรดบ้านในลาน';
+
+  @override
+  String get replayTips => 'แสดงคำแนะนำอีกครั้ง';
+
+  @override
+  String get replayTipsDone => 'คำแนะนำจะแสดงอีกครั้ง';
+
+  @override
+  String get featureTitleHouse => 'บ้าน';
+
+  @override
+  String get featureTitleGarden => 'สวน';
+
+  @override
+  String get featureTitleSeeds => 'เมล็ด';
+
+  @override
+  String get featureBodyHouse =>
+      'ผ่านด่านได้แต้ม ใช้แต้มที่นี่เพื่ออัปเกรดบ้าน — บ้านยังผลิตเมล็ดสำหรับสวนด้วย';
+
+  @override
+  String get featureBodyPoints =>
+      'ได้แต้มจากทุกด่านที่ผ่าน ใช้จ่ายค่าอัปเกรดบ้านและการปลูก';
+
+  @override
+  String get featureBodyGarden =>
+      'ปลูกเมล็ดในแปลง รอ แล้วเก็บเกี่ยวพืช พืชใช้เลี้ยงสัตว์และอวดเพื่อนบ้านได้';
+
+  @override
+  String get featureBodyWarehouse =>
+      'พืชที่เก็บเกี่ยวอยู่ที่นี่ ใช้เลี้ยงสัตว์ ผสมสองต้น หรือนำขึ้นตู้แสดง';
+
+  @override
+  String get featureBodySeeds =>
+      'เมล็ดที่บ้านผลิตเก็บไว้ที่นี่ นำไปปลูกในแปลงสวน';
+
+  @override
+  String get featureBodyCross =>
+      'ใช้พืชสองต้นแลกเมล็ดใหม่หนึ่งเมล็ด ผลที่แรงหรือหายากเป็นโอกาส ไม่ใช่สัญญา';
+
+  @override
+  String get featureBodyNeighbors =>
+      'ผู้เล่นที่อันดับใกล้คุณอยู่บนเนินเขา ส่งข้อความและร่วมมือกันผสมพืชและป้องกัน';
+
+  @override
+  String get featureBodyShowcase =>
+      'อวดพืชที่ดีที่สุดให้ทุกคนเห็น และดูว่าผู้เล่นอื่นปลูกอะไร';
+
+  @override
+  String get featureBodyLeaderboard =>
+      'ดาวและชัยชนะในสัปดาห์นี้ช่วยให้อันดับของคุณสูงขึ้น';
+
+  @override
+  String get featureBodyPets =>
+      'สัตว์เลี้ยงของคุณอยู่ในลาน ให้อาหารด้วยพืชจากสวน';
+
+  @override
   String get easy => 'ง่าย';
 
   @override
@@ -685,14 +793,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String petStrengthLineText(
-    String stat,
-    int total,
-    int base,
-    int main,
-    int accessory,
-  ) {
-    return '$stat $total = พื้นฐาน $base + ของ $main + เครื่องประดับ $accessory';
+  String petStrengthLineText(String stat, int total) {
+    return '$stat $total';
   }
 
   @override
@@ -740,9 +842,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get petFeedMissing => 'พืชนั้นไม่อยู่ในคลังแล้ว';
 
   @override
-  String get petSlotEmpty => 'ว่าง';
-
-  @override
   String get petGuardAction => 'เฝ้าสวน';
 
   @override
@@ -759,48 +858,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get petStopRaid => 'ยกเลิกการเลือกบุก';
-
-  @override
-  String gearBonus(int bonus) {
-    return '+$bonus พลัง';
-  }
-
-  @override
-  String gearPriceText(String price) {
-    return '$price แต้ม';
-  }
-
-  @override
-  String gearLevelRequired(int level) {
-    return 'ต้องมีระดับ $level';
-  }
-
-  @override
-  String gearIfEquipped(String stat, int from, int to) {
-    return 'ถ้าสวม: $stat $from → $to';
-  }
-
-  @override
-  String get gearBuy => 'ซื้อ';
-
-  @override
-  String get gearEquip => 'สวม';
-
-  @override
-  String get gearUnequip => 'ถอด';
-
-  @override
-  String gearWornBy(String name) {
-    return '$name สวมอยู่';
-  }
-
-  @override
-  String gearShortfallText(String shortfall) {
-    return 'ต้องการอีก $shortfall แต้ม';
-  }
-
-  @override
-  String get gearBuyFailed => 'บันทึกไม่ได้ แต้มไม่ได้ถูกใช้';
 
   @override
   String gardenGuardLabel(String name, int power) {
@@ -906,6 +963,30 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String produceSeedForText(String price) {
     return 'ผลิตเมล็ด · $price แต้ม';
+  }
+
+  @override
+  String yardSeedOfferText(String price) {
+    return 'ผลิต\nเมล็ด\n$price';
+  }
+
+  @override
+  String yardSeedTimerText(String time) {
+    return 'เมล็ด\n$time';
+  }
+
+  @override
+  String get yardGrowPlant => 'ปลูกพืช';
+
+  @override
+  String get watchAdHarvest => 'ดูโฆษณา · เก็บเลย';
+
+  @override
+  String get plantAdUsed => 'วันนี้เก็บด้วยโฆษณาไปแล้ว';
+
+  @override
+  String speedUpForText(String price) {
+    return 'เร่ง · $price แต้ม';
   }
 
   @override
@@ -1092,6 +1173,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get languageThai => 'ไทย';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get languageUkrainian => 'Українська';
 
   @override
   String get challengeCompactTower => 'หอคอย: เก็บทุกชั้นให้หมด';
@@ -1378,12 +1465,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get petStatDefense => 'พลังป้องกัน';
 
   @override
-  String get gearSlotMain => 'ของหลัก';
-
-  @override
-  String get gearSlotAccessory => 'เครื่องประดับ';
-
-  @override
   String get growthSown => 'เพาะเมล็ดแล้ว';
 
   @override
@@ -1598,11 +1679,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String gearOfferText(String role, String slot) {
-    return '$role · $slot';
-  }
-
-  @override
   String petBadgeText(String role, String level) {
     return '$role, $level';
   }
@@ -1794,42 +1870,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get familyWinter => 'ฤดูหนาว';
-
-  @override
-  String get gearAttackerMain1 => 'สายสะพายไหม';
-
-  @override
-  String get gearAttackerMain2 => 'กรงเล็บราตรี';
-
-  @override
-  String get gearAttackerMain3 => 'โคมบุก';
-
-  @override
-  String get gearAttackerAccessory1 => 'ระฆังสอดแนม';
-
-  @override
-  String get gearAttackerAccessory2 => 'ถุงย่อง';
-
-  @override
-  String get gearAttackerAccessory3 => 'เครื่องรางจันทร์';
-
-  @override
-  String get gearDefenderMain1 => 'เสื้อเกราะนวม';
-
-  @override
-  String get gearDefenderMain2 => 'เสื้อยาม';
-
-  @override
-  String get gearDefenderMain3 => 'แผ่นโคม';
-
-  @override
-  String get gearDefenderAccessory1 => 'ปลอกคอหนัง';
-
-  @override
-  String get gearDefenderAccessory2 => 'สายรัดเฝ้ายาม';
-
-  @override
-  String get gearDefenderAccessory3 => 'เครื่องรางประตู';
 
   @override
   String get storyCampaign0 => 'ต้นอ่อน';
@@ -2730,4 +2770,991 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get petItemCampfire => 'กองไฟ';
+
+  @override
+  String get neighborsTitle => 'เพื่อนบ้าน';
+
+  @override
+  String get neighborsClose => 'ปิด';
+
+  @override
+  String get neighborsTabAll => 'ผู้เล่นทั้งหมด';
+
+  @override
+  String get neighborsTabSaved => 'รายการโปรด';
+
+  @override
+  String get neighborsSearchHint => 'ค้นจากต้นชื่อ';
+
+  @override
+  String get neighborsForYou => 'สำหรับคุณ';
+
+  @override
+  String neighborsUpdates(int count) {
+    return 'อัปเดต $count รายการ';
+  }
+
+  @override
+  String get neighborsShowLess => 'ย่อ';
+
+  @override
+  String get neighborsEmptySaved => 'คนที่คุณบันทึกไว้จะอยู่ที่นี่';
+
+  @override
+  String get neighborsBrowsePlayers => 'ดูผู้เล่นทั้งหมด';
+
+  @override
+  String get neighborsEmptySearch => 'ไม่มีชื่อที่ขึ้นต้นแบบนี้';
+
+  @override
+  String get neighborsEmptyPlayers => 'ไม่มีผู้เล่นคนอื่นในรายการนี้';
+
+  @override
+  String get neighborsOffline =>
+      'ไม่มีการเชื่อมต่อ รายชื่อที่โหลดไว้แล้วยังอยู่';
+
+  @override
+  String get neighborsLoadFailed => 'โหลดผู้เล่นไม่สำเร็จ';
+
+  @override
+  String get neighborsRetry => 'ลองอีกครั้ง';
+
+  @override
+  String get neighborsLoading => 'กำลังโหลดผู้เล่น';
+
+  @override
+  String get neighborsLoadingMore => 'กำลังโหลดเพิ่ม';
+
+  @override
+  String neighborsLevel(int level) {
+    return 'ระดับ $level';
+  }
+
+  @override
+  String get neighborsAdd => 'เพิ่มในรายการโปรด';
+
+  @override
+  String get neighborsRemove => 'เอาออกจากรายการโปรด';
+
+  @override
+  String neighborsSaved(String name) {
+    return '$name อยู่ในรายการโปรดแล้ว';
+  }
+
+  @override
+  String neighborsRemoved(String name) {
+    return 'เอา $name ออกจากรายการโปรดแล้ว';
+  }
+
+  @override
+  String get neighborsFindAgain => 'หาในรายการโปรด';
+
+  @override
+  String get neighborsBack => 'กลับไปรายชื่อ';
+
+  @override
+  String get neighborsSavedHint =>
+      'บันทึกผู้เล่นนี้ไว้ แล้วเปิดอีกครั้งจากรายการโปรด';
+
+  @override
+  String get neighborsSignalAsksHelp => 'ขอความช่วยเหลือ';
+
+  @override
+  String get neighborsSignalSeeksDefense => 'หาคนปกป้อง';
+
+  @override
+  String get neighborsSignalOffersCross => 'เสนอผสมพันธุ์พืช';
+
+  @override
+  String get neighborsSignalAwaitsReply => 'รอคำตอบ';
+
+  @override
+  String get neighborsSignalHelpedYou => 'ช่วยคุณแล้ว';
+
+  @override
+  String neighborsUnseen(int count) {
+    return 'ใหม่ $count';
+  }
+
+  @override
+  String get neighborsHistory => 'สิ่งที่ทำร่วมกัน';
+
+  @override
+  String get neighborsBlock => 'บล็อก';
+
+  @override
+  String neighborsBlocked(String name) {
+    return 'บล็อก $name แล้ว และซ่อนจากรายการ';
+  }
+
+  @override
+  String get neighborsWaiting => 'กำลังรอคำตอบ';
+
+  @override
+  String get neighborsUnavailable => 'การกระทำนี้ใช้ไม่ได้';
+
+  @override
+  String get neighborsFailed => 'ยังไม่สำเร็จ ลองอีกครั้งได้';
+
+  @override
+  String get neighborsEnded => 'ข้อเสนอนี้จบแล้ว';
+
+  @override
+  String get neighborsDeclined => 'ข้อเสนอถูกปฏิเสธ';
+
+  @override
+  String get neighborsCancelled => 'ข้อเสนอถูกยกเลิก';
+
+  @override
+  String get neighborsInProgress => 'กำลังทำ';
+
+  @override
+  String get neighborsDone => 'เสร็จแล้ว';
+
+  @override
+  String get neighborsReply => 'ตอบ';
+
+  @override
+  String get neighborsViewOffer => 'ดูข้อเสนอ';
+
+  @override
+  String get neighborsPeaceful => 'การกระทำที่เป็นมิตร';
+
+  @override
+  String get neighborsAttackSection => 'โจมตี';
+
+  @override
+  String get neighborsAttackExplain => 'นี่จะเริ่มการโจมตีผู้เล่นนี้';
+
+  @override
+  String get neighborsConfirm => 'ยืนยัน';
+
+  @override
+  String get neighborsThank => 'ขอบคุณ';
+
+  @override
+  String neighborsThankSent(String name) {
+    return 'ส่งคำขอบคุณถึง $name แล้ว';
+  }
+
+  @override
+  String get neighborsOfferAgain => 'เสนออีกครั้ง';
+
+  @override
+  String neighborsCost(String cost) {
+    return 'จะใช้: $cost';
+  }
+
+  @override
+  String neighborsOutcome(String outcome) {
+    return 'หลังยืนยัน: $outcome';
+  }
+
+  @override
+  String get neighborsHelpAction => 'ช่วย';
+
+  @override
+  String get neighborsDefenseAction => 'ปกป้อง';
+
+  @override
+  String get neighborsCrossDecline => 'ปฏิเสธ';
+
+  @override
+  String neighborsUsesPlant(String plant) {
+    return 'พืช: $plant';
+  }
+
+  @override
+  String get neighborsPlantStays => 'พืชนี้ยังอยู่กับเจ้าของ';
+
+  @override
+  String get neighborsPlantLeaves => 'พืชนี้ถูกใช้ไป';
+
+  @override
+  String neighborsMemoryHelped(String name) {
+    return '$name ช่วยพืชของคุณ';
+  }
+
+  @override
+  String neighborsMemoryDefended(String name) {
+    return 'สัตว์เลี้ยงของ $name ปกป้องสวน';
+  }
+
+  @override
+  String neighborsMemoryCrossed(String name) {
+    return 'คุณและ $name ได้พืชใหม่';
+  }
+
+  @override
+  String neighborsMemoryThanked(String name) {
+    return 'คุณขอบคุณ $name';
+  }
+
+  @override
+  String neighborsMemoryRaid(String name) {
+    return 'รายงานการโจมตีกับ $name';
+  }
+
+  @override
+  String get neighborsReasonUnsupported => 'การกระทำร่วมกันยังใช้ไม่ได้';
+
+  @override
+  String get neighborsReasonNotAllowed => 'การกระทำนี้ใช้กับผู้เล่นนี้ไม่ได้';
+
+  @override
+  String get neighborsReasonMissingPet => 'ต้องมีสัตว์เลี้ยงที่ปกป้องได้';
+
+  @override
+  String get neighborsReasonMissingPlant => 'ต้องมีพืชสำหรับการกระทำนี้';
+
+  @override
+  String neighborsProtector(String name) {
+    return 'ผู้ปกป้อง: $name';
+  }
+
+  @override
+  String neighborsUntil(String time) {
+    return 'จนถึง $time';
+  }
+
+  @override
+  String neighborsAttackPower(int value) {
+    return 'โจมตี $value';
+  }
+
+  @override
+  String neighborsDefensePower(int value) {
+    return 'ป้องกัน $value';
+  }
+
+  @override
+  String neighborsLoot(int count) {
+    return 'เอสเซนส์ที่เป็นไปได้: $count';
+  }
+
+  @override
+  String get showcaseTitle => 'ตู้แสดงพืช';
+
+  @override
+  String get showcaseAll => 'พืชทั้งหมด';
+
+  @override
+  String get showcaseMine => 'พืชของฉัน';
+
+  @override
+  String get showcaseManage => 'นำพืชของฉันมาแสดง';
+
+  @override
+  String get showcaseRefresh => 'รีเฟรชตู้แสดงพืช';
+
+  @override
+  String get showcaseIntro =>
+      'ชมพืชที่ผู้เล่นคนอื่นปลูก แต่ละการ์ดจะแสดงชื่อเจ้าของ';
+
+  @override
+  String get showcaseMyIntro =>
+      'เลือกพืชที่เก็บเกี่ยวแล้วเพื่อแสดงพร้อมชื่อผู้เล่นของคุณ พืชยังอยู่ในคลัง แต่จะใช้ให้อาหารสัตว์เลี้ยงไม่ได้จนกว่าจะนำออกจากตู้แสดง';
+
+  @override
+  String get showcaseEmpty =>
+      'ยังไม่มีพืชในตู้แสดง คุณสามารถนำพืชต้นแรกมาแสดงได้';
+
+  @override
+  String get showcaseChoose => 'เลือกพืช';
+
+  @override
+  String get showcaseNoPlants => 'เก็บเกี่ยวพืชจากแปลงเพื่อนำมาแสดง';
+
+  @override
+  String get showcasePublish => 'นำมาแสดง';
+
+  @override
+  String get showcaseWithdraw => 'นำออกจากตู้แสดง';
+
+  @override
+  String get showcasePublished => 'กำลังแสดงให้ทุกคนเห็น';
+
+  @override
+  String get showcasePrivate => 'มีเพียงคุณที่เห็นพืชนี้';
+
+  @override
+  String get showcaseUnconfirmed =>
+      'ยังยืนยันการแสดงไม่ได้ ลองอีกครั้งหรือนำออกจากตู้แสดง';
+
+  @override
+  String get showcasePublishedNotice => 'พืชของคุณอยู่ในตู้แสดงสาธารณะแล้ว';
+
+  @override
+  String get showcaseRemovedNotice =>
+      'นำพืชออกจากตู้แสดงแล้ว คุณใช้พืชนี้ได้อีกครั้ง';
+
+  @override
+  String get showcaseUnavailable =>
+      'ตู้แสดงออนไลน์ยังไม่พร้อมใช้งาน พืชของคุณยังอยู่';
+
+  @override
+  String get showcaseLoadFailed =>
+      'รีเฟรชตู้แสดงไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง';
+
+  @override
+  String get showcaseOperationFailed =>
+      'ยังยืนยันการดำเนินการไม่ได้ พืชของคุณได้รับการป้องกัน ลองอีกครั้งเมื่อเชื่อมต่อ';
+
+  @override
+  String get showcaseMissingLocal => 'พืชที่แสดงนี้ไม่อยู่ในคลังของอุปกรณ์นี้';
+
+  @override
+  String get showcaseMore => 'โหลดพืชเพิ่มเติม';
+
+  @override
+  String showcaseSpecimen(int number) {
+    return 'พืชหมายเลข $number';
+  }
+
+  @override
+  String get showcaseFeedLocked =>
+      'พืชที่แสดงอยู่ใช้ให้อาหารสัตว์เลี้ยงไม่ได้ กรุณานำออกจากตู้แสดงก่อน';
+
+  @override
+  String get crossOpen => 'ผสมพืช';
+
+  @override
+  String get crossTitle => 'การผสมพืช';
+
+  @override
+  String get crossNeedTwo => 'เลือกพืชที่เก็บเกี่ยวแล้วสองต้น';
+
+  @override
+  String get crossAimCombat => 'อาหารต่อสู้';
+
+  @override
+  String get crossAimGarden => 'สวนที่งอกเร็ว';
+
+  @override
+  String get crossAimSeeds => 'เลือกเมล็ด';
+
+  @override
+  String crossOdds(int ordinary, int raised, int rare) {
+    return 'ธรรมดา $ordinary% แข็งแรงขึ้น $raised% หายาก $rare%';
+  }
+
+  @override
+  String get crossConfirm => 'ผสม';
+
+  @override
+  String get crossFailed => 'บันทึกการผสมไม่ได้ ลองอีกครั้ง';
+
+  @override
+  String get crossListed => 'นำพืชออกจากตู้แสดงก่อน';
+
+  @override
+  String get crossWaiting => 'จบการผสมที่ค้างอยู่ก่อน';
+
+  @override
+  String get crossChooseTrait => 'เลือกโจมตีหรือป้องกันสำหรับอาหารนี้';
+
+  @override
+  String get crossAttack => 'โจมตี';
+
+  @override
+  String get crossDefense => 'ป้องกัน';
+
+  @override
+  String get crossChooseSpecies => 'เลือกเมล็ด';
+
+  @override
+  String get crossOrdinary => 'การผสมได้ผลธรรมดา เพิ่มเมล็ดธรรมดาแล้ว';
+
+  @override
+  String get crossGranted => 'เมล็ดจากการผสมอยู่ในคลังเมล็ด';
+
+  @override
+  String get crossTraitAttack => 'อาหารโจมตี';
+
+  @override
+  String get crossTraitDefense => 'อาหารป้องกัน';
+
+  @override
+  String get crossTraitBloom => 'โตเร็วขึ้น';
+
+  @override
+  String get plantOriginCross => 'ที่มา: การผสม';
+
+  @override
+  String get neighborsActions => 'การกระทำ';
+
+  @override
+  String get neighborsActionMessage => 'ส่งข้อความ';
+
+  @override
+  String get neighborsActionDefend => 'ปกป้อง';
+
+  @override
+  String get neighborsActionCross => 'เสนอการผสม';
+
+  @override
+  String get neighborsActionRaid => 'โจมตี';
+
+  @override
+  String get neighborsActionsOffline => 'การกระทำกับผู้เล่นต้องใช้อินเทอร์เน็ต';
+
+  @override
+  String get neighborsNeedGuard =>
+      'กำหนดสัตว์เลี้ยงผู้พิทักษ์ในลานสัตว์เลี้ยงก่อน';
+
+  @override
+  String get neighborsNeedRaider =>
+      'กำหนดสัตว์เลี้ยงจู่โจมในลานสัตว์เลี้ยงก่อน';
+
+  @override
+  String get neighborsNeedPlant => 'ต้องมีพืชที่เก็บเกี่ยวแล้วในคลัง';
+
+  @override
+  String get neighborsChoosePhrase => 'เลือกข้อความ';
+
+  @override
+  String get neighborsChoosePlant => 'เลือกพืชที่จะมอบให้';
+
+  @override
+  String get neighborsSend => 'ส่ง';
+
+  @override
+  String neighborsSent(String name) {
+    return 'ส่งถึง $name แล้ว';
+  }
+
+  @override
+  String get neighborsAlreadyOpen =>
+      'คุณมีคำขอประเภทนี้ที่ยังเปิดอยู่กับผู้เล่นนี้แล้ว';
+
+  @override
+  String get neighborsRequestClosed => 'คำขอนี้ปิดไปแล้ว';
+
+  @override
+  String get neighborsSendFailed =>
+      'ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง';
+
+  @override
+  String neighborsDefendExplain(String name, int value) {
+    return 'เมื่อ $name ตอบรับ สัตว์เลี้ยงของคุณจะช่วยเฝ้าลานของเขา 24 ชั่วโมง ป้องกัน $value';
+  }
+
+  @override
+  String neighborsRaidExplain(String name, int value) {
+    return '$name มีเวลา 24 ชั่วโมงในการส่งสัตว์เฝ้ายาม ลานจะรอดก็ต่อเมื่อผู้เฝ้ายามแรงกว่าพลังโจมตี $value ของคุณ ไม่เช่นนั้นพืชหนึ่งต้นจะถูกเผา และคุณจะได้อีกต้นไป';
+  }
+
+  @override
+  String get neighborsCrossExplain =>
+      'แต่ละคนให้พืชหนึ่งต้นและได้เมล็ดผลลัพธ์หนึ่งเมล็ด พืชของคุณจะถูกใช้เมื่อคุณรับเมล็ดเท่านั้น';
+
+  @override
+  String get neighborsMessages => 'ข้อความและคำขอ';
+
+  @override
+  String get neighborsPhraseHello => 'สวัสดีเพื่อนบ้าน!';
+
+  @override
+  String get neighborsPhraseGoodLuck => 'โชคดีนะ!';
+
+  @override
+  String get neighborsPhraseThanks => 'ขอบคุณ!';
+
+  @override
+  String get neighborsPhraseNiceGarden => 'สวนสวยมาก!';
+
+  @override
+  String get neighborsPhraseLetsCross => 'มาปลูกอะไรหายากด้วยกันเถอะ';
+
+  @override
+  String get neighborsPhraseIWillGuard => 'ฉันจะช่วยดูลานของคุณเอง';
+
+  @override
+  String get neighborsPhraseReadyForRaid => 'พร้อมไหม? ฉันจะบุกลานของคุณแล้ว!';
+
+  @override
+  String get neighborsPhraseWellPlayed => 'เล่นได้ดีมาก!';
+
+  @override
+  String neighborsInMessage(String name) {
+    return '$name ส่งข้อความถึงคุณ';
+  }
+
+  @override
+  String neighborsInDefense(String name, int value) {
+    return '$name เสนอช่วยเฝ้าลานของคุณ 24 ชั่วโมง ป้องกัน $value';
+  }
+
+  @override
+  String neighborsInCross(String name, String plant) {
+    return '$name เสนอผสม $plant ของเขากับพืชของคุณ';
+  }
+
+  @override
+  String neighborsInRaid(String name, int value) {
+    return '$name กำลังจู่โจมลานของคุณ โจมตี $value';
+  }
+
+  @override
+  String get neighborsOutMessage => 'คุณส่งข้อความ';
+
+  @override
+  String neighborsOutDefense(int value) {
+    return 'คุณเสนอการปกป้อง ป้องกัน $value';
+  }
+
+  @override
+  String neighborsOutCross(String plant) {
+    return 'คุณเสนอ $plant สำหรับการผสม';
+  }
+
+  @override
+  String neighborsOutRaid(int value) {
+    return 'คุณจู่โจมลานนี้ โจมตี $value';
+  }
+
+  @override
+  String neighborsQuote(String name, String text) {
+    return '$name: “$text”';
+  }
+
+  @override
+  String get neighborsYou => 'คุณ';
+
+  @override
+  String get neighborsAcceptDefense => 'รับการปกป้อง';
+
+  @override
+  String get neighborsChooseCrossPlant => 'เลือกพืชของคุณ';
+
+  @override
+  String get neighborsRepel => 'ป้องกันลาน';
+
+  @override
+  String get neighborsCancelRequest => 'ยกเลิกคำขอ';
+
+  @override
+  String get neighborsClaimSeed => 'รับเมล็ด';
+
+  @override
+  String neighborsRaidWon(int attack, int defense) {
+    return 'การจู่โจมสำเร็จ: โจมตี $attack ต่อป้องกัน $defense';
+  }
+
+  @override
+  String neighborsRaidRepelled(int attack, int defense) {
+    return 'ลานต้านไว้ได้: โจมตี $attack ต่อป้องกัน $defense';
+  }
+
+  @override
+  String neighborsGuarding(String time) {
+    return 'การปกป้องมีผลถึง $time';
+  }
+
+  @override
+  String get neighborsGuardEnded => 'การปกป้องสิ้นสุดแล้ว';
+
+  @override
+  String neighborsCrossResult(String plant) {
+    return 'ผลการผสม: เมล็ด $plant';
+  }
+
+  @override
+  String get neighborsSeedClaimed => 'เมล็ดอยู่ในคลังเมล็ดของคุณแล้ว';
+
+  @override
+  String neighborsSeedMissing(String plant) {
+    return 'ต้องมี $plant ในคลังจึงจะรับเมล็ดได้';
+  }
+
+  @override
+  String neighborsYourDefense(int value) {
+    return 'การป้องกันลานของคุณ: $value';
+  }
+
+  @override
+  String get neighborsReplied => 'ส่งคำตอบแล้ว';
+
+  @override
+  String get neighborsSignalMessage => 'ข้อความใหม่';
+
+  @override
+  String get neighborsSignalDefense => 'เสนอการปกป้อง';
+
+  @override
+  String get neighborsSignalRaid => 'กำลังจู่โจมลานของคุณ';
+
+  @override
+  String get neighborsSignalResult => 'ได้รับคำตอบแล้ว';
+
+  @override
+  String get socialFriends => 'เพื่อน';
+
+  @override
+  String get socialFriend => 'คุณเป็นเพื่อนกันแล้ว';
+
+  @override
+  String get socialFriendsEmpty =>
+      'ยังไม่มีเพื่อน เปิดโปรไฟล์เพื่อนบ้านแล้วส่งคำเชิญ เมื่อยอมรับแล้วจะปรากฏที่นี่';
+
+  @override
+  String get socialIncoming => 'คำเชิญเป็นเพื่อน';
+
+  @override
+  String get socialWaiting => 'รอการตอบรับ';
+
+  @override
+  String get socialUnavailable =>
+      'เชื่อมต่อไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง';
+
+  @override
+  String get socialChat => 'การสนทนา';
+
+  @override
+  String get socialRemoveFriend => 'ลบเพื่อน';
+
+  @override
+  String get socialFriendConsent =>
+      'การยอมรับเป็นเพื่อนอนุญาตให้ทั้งสองคนส่งข้อความส่วนตัวได้';
+
+  @override
+  String get socialAccept => 'ยอมรับเป็นเพื่อน';
+
+  @override
+  String get socialInvite => 'เชิญเป็นเพื่อน';
+
+  @override
+  String get socialInvitesClosed => 'ผู้เล่นนี้ยังไม่รับคำเชิญเป็นเพื่อน';
+
+  @override
+  String get socialMyProfile => 'โปรไฟล์ของฉัน';
+
+  @override
+  String get socialProfilePublic =>
+      'ข้อมูลเหล่านี้ไม่จำเป็นต้องกรอกและผู้เล่นอื่นมองเห็นได้';
+
+  @override
+  String get socialAbout => 'เกี่ยวกับฉัน';
+
+  @override
+  String get socialLanguage => 'ภาษาที่ใช้สนทนา';
+
+  @override
+  String get socialInterests => 'ความสนใจ';
+
+  @override
+  String get socialGoal => 'สิ่งที่มองหาในเกม';
+
+  @override
+  String get socialPicAboutFriendly => 'เป็นมิตร';
+
+  @override
+  String get socialPicAboutCalm => 'สงบ';
+
+  @override
+  String get socialPicAboutCheerful => 'ร่าเริง';
+
+  @override
+  String get socialPicAboutGentle => 'อ่อนโยน';
+
+  @override
+  String get socialPicAboutNight => 'ตอนเย็น';
+
+  @override
+  String get socialPicAboutCurious => 'อยากรู้';
+
+  @override
+  String get socialPicInterestGarden => 'สวน';
+
+  @override
+  String get socialPicInterestPets => 'สัตว์เลี้ยง';
+
+  @override
+  String get socialPicInterestMahjong => 'ไพ่นกกระจอก';
+
+  @override
+  String get socialPicInterestCourtyard => 'ลานบ้าน';
+
+  @override
+  String get socialPicInterestSeeds => 'เมล็ด';
+
+  @override
+  String get socialPicInterestStars => 'ดาว';
+
+  @override
+  String get socialPicGoalFlower => 'ดอกไม้หายาก';
+
+  @override
+  String get socialPicGoalHouse => 'บ้านที่สวยขึ้น';
+
+  @override
+  String get socialPicGoalFriends => 'เพื่อน';
+
+  @override
+  String get socialPicGoalLevels => 'ผ่านด่าน';
+
+  @override
+  String get socialPicGoalChat => 'คุยกัน';
+
+  @override
+  String get socialPicGoalCross => 'ผสมพันธุ์';
+
+  @override
+  String get socialOpenInvites => 'รับคำเชิญเป็นเพื่อนใหม่';
+
+  @override
+  String get socialSave => 'บันทึกโปรไฟล์';
+
+  @override
+  String get socialProfileHeading => 'โปรไฟล์';
+
+  @override
+  String get socialNotChosen => 'ยังไม่ได้เลือก';
+
+  @override
+  String get socialInvitesOpen => 'รับคำเชิญเป็นเพื่อน';
+
+  @override
+  String get socialBadgesTitle => 'ป้ายในรายชื่อเพื่อนบ้าน';
+
+  @override
+  String get socialBadgesExplain =>
+      'ใช้แต้มเพื่อแสดงอวาตาร์และป้ายโปรไฟล์ข้างชื่อของคุณชั่วคราว';
+
+  @override
+  String socialBadgesActive(String time) {
+    return 'เพื่อนบ้านมองเห็นถึง $time';
+  }
+
+  @override
+  String get socialBadgesOff => 'ตอนนี้รายชื่อแสดงเฉพาะชื่อของคุณ';
+
+  @override
+  String socialBadgesOffer(int days, String price) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days วัน',
+    );
+    return '$_temp0 · $price แต้ม';
+  }
+
+  @override
+  String get socialBadgesTooLong => 'ต่อเวลาได้ไม่เกิน 30 วันล่วงหน้า';
+
+  @override
+  String get socialBadgesFailed => 'เปิดป้ายไม่สำเร็จ คืนแต้มให้แล้ว';
+
+  @override
+  String get socialBadgesNotListed =>
+      'คุณยังไม่อยู่ในรายชื่อเพื่อนบ้าน ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง ยังไม่มีการหักแต้ม';
+
+  @override
+  String get socialChatEmpty => 'ทักทายหรือขอบคุณเพื่อนที่ช่วยเหลือ!';
+
+  @override
+  String get socialReportMessage => 'รายงานข้อความ';
+
+  @override
+  String get socialOlderMessages => 'ข้อความก่อนหน้า';
+
+  @override
+  String get socialSendFailed =>
+      'ยังไม่ยืนยันการส่ง ลองอีกครั้งหรือกลับไปที่โปรไฟล์เพื่อตรวจสอบสถานะเพื่อน';
+
+  @override
+  String get socialMessageHint => 'เขียนข้อความ';
+
+  @override
+  String get socialGrownTogether => 'ปลูกร่วมกับ';
+
+  @override
+  String get socialHistoryEmpty => 'ช่วงเวลาร่วมกันจะปรากฏที่นี่';
+
+  @override
+  String get socialHistory => 'ประวัติร่วมกัน';
+
+  @override
+  String get socialProfileReport => 'รายงานโปรไฟล์';
+
+  @override
+  String neighborsRaidDeadline(String time) {
+    return 'หากไม่ตอบภายใน $time ผู้เฝ้ายามที่กำหนดไว้จะป้องกันเอง';
+  }
+
+  @override
+  String get neighborsRaidDefendTitle => 'ใครจะป้องกันลาน?';
+
+  @override
+  String neighborsRaidDefendRule(int value) {
+    return 'พลังโจมตี $value ลานจะรอดก็ต่อเมื่อผู้ป้องกันแรงกว่า';
+  }
+
+  @override
+  String neighborsRaidOptionOwn(String pet, int value) {
+    return '$pet · ป้องกัน $value';
+  }
+
+  @override
+  String neighborsRaidOptionGuard(String name, int value) {
+    return 'ผู้เฝ้ายามจาก $name · ป้องกัน $value';
+  }
+
+  @override
+  String neighborsRaidOptionHelp(String name, int value) {
+    return '$name ตอบรับคำขอ · ป้องกัน $value';
+  }
+
+  @override
+  String get neighborsRaidOptionNone => 'ไม่ป้องกัน';
+
+  @override
+  String get neighborsRaidHolds => 'รอด';
+
+  @override
+  String get neighborsRaidFalls => 'อ่อนกว่า';
+
+  @override
+  String get neighborsRaidNoDefenders =>
+      'คุณไม่มีสัตว์เฝ้ายาม และยังไม่มีใครตอบรับคำขอ หากไม่มีผู้ป้องกัน การจู่โจมจะสำเร็จ';
+
+  @override
+  String get neighborsRaidChooseLoss =>
+      'ลานจะไม่รอด เลือกพืชที่จะถูกเผา ผู้จู่โจมจะสุ่มเอาหนึ่งต้นจากที่เหลือ';
+
+  @override
+  String neighborsRaidOnlyPlant(String plant) {
+    return 'พืชต้นเดียวของคุณ $plant จะตกเป็นของผู้จู่โจม';
+  }
+
+  @override
+  String get neighborsRaidEmptyStorage =>
+      'คลังว่างเปล่า ผู้จู่โจมจึงไม่ได้อะไรไป';
+
+  @override
+  String get neighborsRaidAcceptLoss => 'ยอมรับความสูญเสีย';
+
+  @override
+  String neighborsRaidDestroyed(String plant) {
+    return 'ถูกเผา: $plant';
+  }
+
+  @override
+  String neighborsRaidStolen(String plant) {
+    return 'ผู้จู่โจมเอาไป: $plant';
+  }
+
+  @override
+  String neighborsRaidLoot(String plant) {
+    return 'ของที่ได้: $plant';
+  }
+
+  @override
+  String get neighborsRaidNoLoot => 'ในคลังไม่มีอะไรให้เอาไป';
+
+  @override
+  String get neighborsRaidAutoDefended =>
+      'ไม่มีใครตอบทันเวลา ผู้เฝ้ายามที่กำหนดไว้จึงป้องกันเอง';
+
+  @override
+  String neighborsRaidDefendedBy(String name) {
+    return 'ป้องกันโดยสัตว์ของ $name';
+  }
+
+  @override
+  String get neighborsRaidTakeLoot => 'รับพืช';
+
+  @override
+  String neighborsRaidLootTaken(String plant) {
+    return '$plant อยู่ในคลังของคุณแล้ว';
+  }
+
+  @override
+  String get neighborsRaidTooSoon =>
+      'ลานนี้กำลังพักหลังการจู่โจม ลองใหม่ภายหลัง';
+
+  @override
+  String get neighborsHelpTitle => 'คำขอความช่วยเหลือ';
+
+  @override
+  String neighborsHelpExplain(int price) {
+    return 'เพื่อนเห็นคำขอได้ฟรี การขอจากผู้เล่นทุกคนใช้ $price พอยต์ ผู้เฝ้ายามที่ตอบรับจะปรากฏในรายการป้องกัน';
+  }
+
+  @override
+  String get neighborsHelpAskFriends => 'ขอความช่วยเหลือจากเพื่อน';
+
+  @override
+  String neighborsHelpAskEveryone(int price) {
+    return 'ขอจากผู้เล่นทุกคน · $price พอยต์';
+  }
+
+  @override
+  String get neighborsHelpAskedFriends =>
+      'เพื่อนของคุณเห็นคำขอความช่วยเหลือแล้ว';
+
+  @override
+  String get neighborsHelpAskedEveryone =>
+      'ผู้เล่นทุกคนเห็นคำขอความช่วยเหลือแล้ว';
+
+  @override
+  String get neighborsHelpNoFriends => 'คุณยังไม่มีเพื่อนให้ขอความช่วยเหลือ';
+
+  @override
+  String neighborsHelpArrived(int count) {
+    return 'ผู้ป้องกันที่ตอบรับ: $count';
+  }
+
+  @override
+  String get neighborsHelpFailed =>
+      'ส่งคำขอความช่วยเหลือไม่สำเร็จ คืนพอยต์ที่ใช้ไปแล้ว';
+
+  @override
+  String neighborsHelpCallLine(String name, int attack) {
+    return '$name ถูกจู่โจม · โจมตี $attack';
+  }
+
+  @override
+  String neighborsHelpUntil(String time) {
+    return 'เปิดถึง $time';
+  }
+
+  @override
+  String neighborsHelpSend(int value) {
+    return 'ส่งผู้เฝ้ายามของฉัน · ป้องกัน $value';
+  }
+
+  @override
+  String neighborsHelpSent(String name) {
+    return 'ผู้เฝ้ายามของคุณพร้อมป้องกัน $name แล้ว';
+  }
+
+  @override
+  String get neighborsHelpOffered => 'เสนอผู้เฝ้ายามของคุณแล้ว';
+
+  @override
+  String get neighborsHelpNeedGuard => 'กำหนดสัตว์เฝ้ายามก่อนจึงจะช่วยได้';
+
+  @override
+  String get plantOriginRaid => 'ได้มาจากการจู่โจม';
+
+  @override
+  String get deleteAccount => 'ลบบัญชีและข้อมูล';
+
+  @override
+  String get deleteAccountTitle => 'ลบบัญชีและข้อมูล?';
+
+  @override
+  String get deleteAccountBody =>
+      'การทำนี้จะลบสนามหญ้า ความคืบหน้า และการตั้งค่าบนอุปกรณ์นี้ หากอุปกรณ์ลงชื่อเข้าใช้แล้ว บัญชีนิรนามนี้จะถูกลบด้วย ได้แก่ อันดับ โปรไฟล์ มิตรภาพ ข้อความ การกระทำกับเพื่อนบ้าน เสียงเรียกช่วยเหลือ และการ์ดโชว์ต้นไม้ บทสนทนาหรือคำขอที่ใช้ร่วมกันจะหายไปของอีกฝ่ายด้วย รายงานที่ผู้เล่นคนอื่นส่งไว้จะคงอยู่จนกว่าการตรวจสอบจะจบ การลบนี้ย้อนกลับไม่ได้';
+
+  @override
+  String get deleteAccountConfirm => 'ลบ';
+
+  @override
+  String get deleteAccountFailed =>
+      'ลบไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง หรืออีเมล myevidentsuccess@gmail.com';
+
+  @override
+  String get deleteAccountWorking => 'กำลังลบ…';
 }

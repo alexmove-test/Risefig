@@ -1,4 +1,4 @@
-# Release-подпись Android (Mahjong Rise)
+# Release-подпись Android (Rise Fig)
 
 ## Файлы (не коммитить в git)
 

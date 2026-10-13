@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import '../models/board.dart';
 import '../models/level_tile.dart';
 
-/// Грузит JSON-раскладку из `assets/levels/` в [Board] Mahjong Rise.
+/// Грузит JSON-раскладку из `assets/levels/` в [Board] Rise Fig.
 class LevelLoader {
   LevelLoader._();
 

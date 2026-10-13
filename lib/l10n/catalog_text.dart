@@ -447,20 +447,4 @@ extension CatalogText on AppLocalizations {
       PetStoryItem.tent => petItemTent,
       PetStoryItem.campfire => petItemCampfire,
   };
-
-  String gearItemName(String id) => switch (id) {
-      'attacker_main_1' => gearAttackerMain1,
-      'attacker_main_2' => gearAttackerMain2,
-      'attacker_main_3' => gearAttackerMain3,
-      'attacker_accessory_1' => gearAttackerAccessory1,
-      'attacker_accessory_2' => gearAttackerAccessory2,
-      'attacker_accessory_3' => gearAttackerAccessory3,
-      'defender_main_1' => gearDefenderMain1,
-      'defender_main_2' => gearDefenderMain2,
-      'defender_main_3' => gearDefenderMain3,
-      'defender_accessory_1' => gearDefenderAccessory1,
-      'defender_accessory_2' => gearDefenderAccessory2,
-      'defender_accessory_3' => gearDefenderAccessory3,
-    _ => id,
-  };
 }

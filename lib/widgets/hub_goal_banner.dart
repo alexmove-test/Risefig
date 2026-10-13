@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../l10n/l10n.dart';
+import '../models/hub_event.dart';
 import '../models/hub_goal.dart';
+import '../models/neighbor_request.dart';
 import '../models/plot_kind.dart';
 
 const hubGoalBannerKey = ValueKey('hub-goal-banner');
@@ -11,16 +12,21 @@ const _goldSoft = Color(0xFFE8C96A);
 const _ivory = Color(0xFFF8F1DE);
 const _wood = Color(0xE63A2012);
 
-/// Одна ближайшая цель мета-игры над кнопкой «Продолжить».
+/// Плашка над кнопкой «Продолжить»: последнее событие двора или ближайшая цель.
 class HubGoalBanner extends StatelessWidget {
-  const HubGoalBanner({super.key, required this.goal, this.onTap});
+  const HubGoalBanner({
+    super.key,
+    required this.icon,
+    required this.text,
+    this.onTap,
+  });
 
-  final HubGoal goal;
+  final IconData icon;
+  final String text;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final text = AppLocalizations.of(context).hubGoalText(goal);
     final child = DecoratedBox(
       decoration: BoxDecoration(
         color: _wood,
@@ -38,7 +44,7 @@ class HubGoalBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         child: Row(
           children: [
-            Icon(_icon, color: _goldSoft, size: 18),
+            Icon(icon, color: _goldSoft, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -70,13 +76,28 @@ class HubGoalBanner extends StatelessWidget {
     );
   }
 
-  IconData get _icon {
-    return switch (goal.kind) {
-      HubGoalKind.plotUnlock => (goal.plot ?? PlotKind.house).emblem,
-      HubGoalKind.plotLook => (goal.plot ?? PlotKind.house).emblem,
-      HubGoalKind.dailyReward => Icons.wb_sunny_rounded,
-      HubGoalKind.questRemain || HubGoalKind.questClaim => Icons.flag_rounded,
-      HubGoalKind.petUnlock => Icons.pets_rounded,
-    };
-  }
+}
+
+IconData hubGoalIcon(HubGoal goal) {
+  return switch (goal.kind) {
+    HubGoalKind.plotUnlock => (goal.plot ?? PlotKind.house).emblem,
+    HubGoalKind.plotLook => (goal.plot ?? PlotKind.house).emblem,
+    HubGoalKind.dailyReward => Icons.wb_sunny_rounded,
+    HubGoalKind.questRemain || HubGoalKind.questClaim => Icons.flag_rounded,
+    HubGoalKind.petUnlock => Icons.pets_rounded,
+    HubGoalKind.featureUnlock => Icons.lock_open_rounded,
+  };
+}
+
+IconData hubEventIcon(HubEvent event) {
+  return switch (event.kind) {
+    HubEventKind.neighbor => switch (event.request!.kind) {
+      NeighborRequestKind.message => Icons.mail_rounded,
+      NeighborRequestKind.defense => Icons.shield_rounded,
+      NeighborRequestKind.cross => Icons.call_split_rounded,
+      NeighborRequestKind.raid => Icons.flash_on_rounded,
+    },
+    HubEventKind.harvestReady => Icons.local_florist_rounded,
+    HubEventKind.bedFree => Icons.spa_rounded,
+  };
 }

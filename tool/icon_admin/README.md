@@ -1,6 +1,6 @@
 # icon_admin
 
-Icon curator for Mahjong Rise
+Icon curator for Rise Fig
 
 ## Getting Started
 

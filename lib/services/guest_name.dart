@@ -109,6 +109,32 @@ class GuestName {
     'ไผ่',
   ];
 
+  static const _deAdjectives = [
+    'Still',
+    'Gold',
+    'Mutig',
+    'Flink',
+    'Hell',
+    'Ruhig',
+    'Warm',
+    'Klar',
+    'Froh',
+    'Sanft',
+  ];
+
+  static const _deNouns = [
+    'Koi',
+    'Fuchs',
+    'Kran',
+    'Lotus',
+    'Pinie',
+    'Wind',
+    'Gipfel',
+    'Lampe',
+    'Garten',
+    'Drache',
+  ];
+
   /// Имя для Firestore: 1–20 единиц `size()`, иначе правила отклоняют запись.
   static String clamp(String name) {
     final trimmed = name.trim();
@@ -136,12 +162,14 @@ class GuestName {
       'ru' => _ruAdjectives,
       'uk' => _ukAdjectives,
       'th' => _thAdjectives,
+      'de' => _deAdjectives,
       _ => _enAdjectives,
     };
     final nouns = switch (lang) {
       'ru' => _ruNouns,
       'uk' => _ukNouns,
       'th' => _thNouns,
+      'de' => _deNouns,
       _ => _enNouns,
     };
     final adjective = adjectives[rng.nextInt(adjectives.length)];

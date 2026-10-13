@@ -121,6 +121,26 @@
   },
   "hubQuestRewardReady": "Награда недели ждёт",
   "hubThreeStarUntilReward": "3★ откроет награду",
+  "hubNeighborEvent": "{name}: {text}",
+  "@hubNeighborEvent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "hubHarvestReady": "Урожай готов: {plant} — соберите",
+  "@hubHarvestReady": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "hubBedFree": "Грядка свободна — посадите семя",
   "today": "Сегодня",
   "@today": {
     "description": "Label of the daily table."
@@ -504,6 +524,42 @@
   "coachTapFree": "Бери свободную: сверху и сбоку открыта",
   "coachMatchPair": "Пара в лотке снимается",
   "coachTrayLimit": "Лоток на 4 — если забьётся, партия проиграна",
+  "tutorialCollect": "Нажмите свободную плитку — она попадёт в лоток",
+  "tutorialMatch": "Соберите две одинаковые — пара исчезнет. В лотке всего 4 места.",
+  "tutorialLayers": "Нижнюю нельзя взять, пока она закрыта сверху.",
+  "tutorialBoosts": "Подсказка подсветит ход, магнит соберёт пару, отмена вернёт ход.",
+  "tutorialSkip": "Пропустить",
+  "featureGotIt": "Понятно",
+  "featureNewBadge": "НОВОЕ",
+  "featureNewGarden": "Новое: грядки во дворе — нажмите на грядку, чтобы посадить семя",
+  "featureUnlockGoal": "{count, plural, one{Ещё {count} уровень} few{Ещё {count} уровня} many{Ещё {count} уровней} other{Ещё {count} уровня}} — откроется: {feature}",
+  "@featureUnlockGoal": {
+    "description": "Hub goal: how many campaign levels until a meta feature appears.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "feature": {
+        "type": "String"
+      }
+    }
+  },
+  "winPointsHint": "Тратьте баллы на дом во дворе",
+  "replayTips": "Показать подсказки снова",
+  "replayTipsDone": "Подсказки покажутся снова",
+  "featureTitleHouse": "Дом",
+  "featureTitleGarden": "Огород",
+  "featureTitleSeeds": "Семена",
+  "featureBodyHouse": "За уровни дают баллы. Тратьте их здесь на улучшение дома — он же производит семена для огорода.",
+  "featureBodyPoints": "Баллы приходят за каждый пройденный уровень. Ими платят за улучшение дома и посадку.",
+  "featureBodyGarden": "Посадите семя на грядку, подождите и соберите растение. Растениями кормят питомцев, их можно показать соседям.",
+  "featureBodyWarehouse": "Здесь хранятся собранные растения. Кормите ими питомцев, скрещивайте два в одно или выставляйте на витрину.",
+  "featureBodySeeds": "Здесь лежат семена, которые произвёл дом. Сажайте их на грядки огорода.",
+  "featureBodyCross": "Два растения превращаются в одно новое семя. Сильный или редкий результат — шанс, а не обещание.",
+  "featureBodyNeighbors": "На холмах живут игроки рядом с вами в рейтинге. Пишите им и объединяйтесь для скрещивания и защиты.",
+  "featureBodyShowcase": "Покажите всем лучшие растения и посмотрите, что выращивают другие игроки.",
+  "featureBodyLeaderboard": "Звёзды и победы за неделю поднимают вас в рейтинге среди других игроков.",
+  "featureBodyPets": "Питомец живёт во дворе. Кормите его растениями с огорода.",
   "easy": "Легко",
   "@easy": {
     "description": "Difficulty label for the first campaign levels."
@@ -782,22 +838,13 @@
       }
     }
   },
-  "petStrengthLineText": "{stat} {total} = основа {base} + предмет {main} + аксессуар {accessory}",
+  "petStrengthLineText": "{stat} {total}",
   "@petStrengthLineText": {
     "placeholders": {
       "stat": {
         "type": "String"
       },
       "total": {
-        "type": "int"
-      },
-      "base": {
-        "type": "int"
-      },
-      "main": {
-        "type": "int"
-      },
-      "accessory": {
         "type": "int"
       }
     }
@@ -860,10 +907,6 @@
   },
   "petFeedFailed": "Не удалось сохранить. Растение не потрачено.",
   "petFeedMissing": "Этого растения уже нет на складе.",
-  "petSlotEmpty": "Пусто",
-  "@petSlotEmpty": {
-    "description": "Short interface label: Empty"
-  },
   "petGuardAction": "Охранять огород",
   "@petGuardAction": {
     "description": "Short interface label: Guard the garden"
@@ -882,73 +925,6 @@
     "description": "Short interface label: Chosen for raids"
   },
   "petStopRaid": "Снять выбор набега",
-  "gearBonus": "+{bonus} к силе",
-  "@gearBonus": {
-    "placeholders": {
-      "bonus": {
-        "type": "int"
-      }
-    }
-  },
-  "gearPriceText": "{price} поинтов",
-  "@gearPriceText": {
-    "placeholders": {
-      "price": {
-        "type": "String"
-      }
-    }
-  },
-  "gearLevelRequired": "Нужен уровень {level}",
-  "@gearLevelRequired": {
-    "placeholders": {
-      "level": {
-        "type": "int"
-      }
-    }
-  },
-  "gearIfEquipped": "Если надеть: {stat} {from} → {to}",
-  "@gearIfEquipped": {
-    "placeholders": {
-      "stat": {
-        "type": "String"
-      },
-      "from": {
-        "type": "int"
-      },
-      "to": {
-        "type": "int"
-      }
-    }
-  },
-  "gearBuy": "Купить",
-  "@gearBuy": {
-    "description": "Buys a pet item."
-  },
-  "gearEquip": "Надеть",
-  "@gearEquip": {
-    "description": "Equips an owned pet item."
-  },
-  "gearUnequip": "Снять",
-  "@gearUnequip": {
-    "description": "Removes an equipped pet item."
-  },
-  "gearWornBy": "Надето на {name}",
-  "@gearWornBy": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "gearShortfallText": "Не хватает {shortfall} поинтов",
-  "@gearShortfallText": {
-    "placeholders": {
-      "shortfall": {
-        "type": "String"
-      }
-    }
-  },
-  "gearBuyFailed": "Не удалось сохранить. Поинты не списаны.",
   "gardenGuardLabel": "{name} охраняет огород. Защита {power}",
   "@gardenGuardLabel": {
     "placeholders": {
@@ -1118,6 +1094,45 @@
   },
   "produceSeedForText": "Произвести семя · {price} поинтов",
   "@produceSeedForText": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "yardSeedOfferText": "Произвести\nсемя\n{price}",
+  "@yardSeedOfferText": {
+    "description": "Square button that starts seed production. Price is on its own line.",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "yardSeedTimerText": "Семя\n{time}",
+  "@yardSeedTimerText": {
+    "description": "Square button while a seed is being produced. Time is mm:ss.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "yardGrowPlant": "Вырастить растение",
+  "@yardGrowPlant": {
+    "description": "Square button that opens a garden bed to plant a seed."
+  },
+  "watchAdHarvest": "Ролик · собрать сейчас",
+  "@watchAdHarvest": {
+    "description": "Optional rewarded ad that harvests one growing plant immediately. Offered once per day beside the points speed-up."
+  },
+  "plantAdUsed": "Сегодня ролик уже собирал растение",
+  "@plantAdUsed": {
+    "description": "Shown if the once-a-day garden ad harvest was already used."
+  },
+  "speedUpForText": "Ускорить · {price} поинтов",
+  "@speedUpForText": {
+    "description": "Button that finishes the remaining seed or plant timer for a point price.",
     "placeholders": {
       "price": {
         "type": "String"
@@ -1374,6 +1389,14 @@
   "languageThai": "ไทย",
   "@languageThai": {
     "description": "Language name shown in the picker. Stays Thai in every locale."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language name shown in the picker. Stays German in every locale."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language name shown in the picker. Stays Ukrainian in every locale."
   },
   "challengeCompactTower": "Башня: разберите все слои",
   "@challengeCompactTower": {
@@ -1715,14 +1738,6 @@
   "petStatDefense": "Защита",
   "@petStatDefense": {
     "description": "Defense stat name."
-  },
-  "gearSlotMain": "Основной предмет",
-  "@gearSlotMain": {
-    "description": "Primary gear slot."
-  },
-  "gearSlotAccessory": "Аксессуар",
-  "@gearSlotAccessory": {
-    "description": "Secondary gear slot."
   },
   "growthSown": "Семя посажено",
   "@growthSown": {
@@ -2093,18 +2108,6 @@
       }
     }
   },
-  "gearOfferText": "{role} · {slot}",
-  "@gearOfferText": {
-    "description": "Gear shop line joining the role and the slot.",
-    "placeholders": {
-      "role": {
-        "type": "String"
-      },
-      "slot": {
-        "type": "String"
-      }
-    }
-  },
   "petBadgeText": "{role}, {level}",
   "@petBadgeText": {
     "description": "Compact pet badge joining role and level.",
@@ -2364,54 +2367,6 @@
   "familyWinter": "Зима",
   "@familyWinter": {
     "description": "Season on a tile."
-  },
-  "gearAttackerMain1": "Шёлковый пояс",
-  "@gearAttackerMain1": {
-    "description": "Pet item name for id attacker_main_1."
-  },
-  "gearAttackerMain2": "Ночной коготь",
-  "@gearAttackerMain2": {
-    "description": "Pet item name for id attacker_main_2."
-  },
-  "gearAttackerMain3": "Фонарь набега",
-  "@gearAttackerMain3": {
-    "description": "Pet item name for id attacker_main_3."
-  },
-  "gearAttackerAccessory1": "Колокольчик разведчика",
-  "@gearAttackerAccessory1": {
-    "description": "Pet item name for id attacker_accessory_1."
-  },
-  "gearAttackerAccessory2": "Сумка следопыта",
-  "@gearAttackerAccessory2": {
-    "description": "Pet item name for id attacker_accessory_2."
-  },
-  "gearAttackerAccessory3": "Лунный оберег",
-  "@gearAttackerAccessory3": {
-    "description": "Pet item name for id attacker_accessory_3."
-  },
-  "gearDefenderMain1": "Мягкий жилет",
-  "@gearDefenderMain1": {
-    "description": "Pet item name for id defender_main_1."
-  },
-  "gearDefenderMain2": "Жилет стража",
-  "@gearDefenderMain2": {
-    "description": "Pet item name for id defender_main_2."
-  },
-  "gearDefenderMain3": "Пластина фонаря",
-  "@gearDefenderMain3": {
-    "description": "Pet item name for id defender_main_3."
-  },
-  "gearDefenderAccessory1": "Кожаный ошейник",
-  "@gearDefenderAccessory1": {
-    "description": "Pet item name for id defender_accessory_1."
-  },
-  "gearDefenderAccessory2": "Повязка дозора",
-  "@gearDefenderAccessory2": {
-    "description": "Pet item name for id defender_accessory_2."
-  },
-  "gearDefenderAccessory3": "Оберег калитки",
-  "@gearDefenderAccessory3": {
-    "description": "Pet item name for id defender_accessory_3."
   },
   "storyCampaign0": "Росток",
   "@storyCampaign0": {
@@ -3604,5 +3559,628 @@
   "petItemCampfire": "Костёр",
   "@petItemCampfire": {
     "description": "Collectible name for campfire."
-  }
+  },
+  "neighborsTitle": "Соседи",
+  "neighborsClose": "Закрыть",
+  "neighborsTabAll": "Все игроки",
+  "neighborsTabSaved": "Избранные",
+  "neighborsSearchHint": "Поиск по началу имени",
+  "neighborsForYou": "Для тебя",
+  "neighborsUpdates": "Обновления: {count}",
+  "@neighborsUpdates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsShowLess": "Свернуть",
+  "neighborsEmptySaved": "Здесь будут игроки, которых вы сохраните.",
+  "neighborsBrowsePlayers": "Открыть всех игроков",
+  "neighborsEmptySearch": "Нет имени с таким началом.",
+  "neighborsEmptyPlayers": "В этом списке нет других игроков.",
+  "neighborsOffline": "Нет связи. Здесь остаются ранее загруженные игроки.",
+  "neighborsLoadFailed": "Не удалось загрузить игроков.",
+  "neighborsRetry": "Повторить",
+  "neighborsLoading": "Загрузка игроков",
+  "neighborsLoadingMore": "Загрузка ещё",
+  "neighborsLevel": "уровень {level}",
+  "@neighborsLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsAdd": "Добавить в избранные",
+  "neighborsRemove": "Убрать из избранных",
+  "neighborsSaved": "{name} в списке «Избранные».",
+  "@neighborsSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsRemoved": "{name} убран из избранных.",
+  "@neighborsRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsFindAgain": "Найти в избранных",
+  "neighborsBack": "К списку",
+  "neighborsSavedHint": "Сохраните игрока, чтобы снова найти его в «Избранных».",
+  "neighborsSignalAsksHelp": "Просит помощи",
+  "neighborsSignalSeeksDefense": "Ищет защиту",
+  "neighborsSignalOffersCross": "Предлагает скрещивание",
+  "neighborsSignalAwaitsReply": "Ждёт ответа",
+  "neighborsSignalHelpedYou": "Помог тебе",
+  "neighborsUnseen": "новых: {count}",
+  "@neighborsUnseen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsHistory": "Ваши действия",
+  "neighborsBlock": "Заблокировать",
+  "neighborsBlocked": "{name} заблокирован и скрыт.",
+  "@neighborsBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsWaiting": "Ожидаем ответа",
+  "neighborsUnavailable": "Это действие недоступно.",
+  "neighborsFailed": "Не получилось. Можно повторить.",
+  "neighborsEnded": "Это предложение завершилось.",
+  "neighborsDeclined": "Предложение отклонено.",
+  "neighborsCancelled": "Предложение отменено.",
+  "neighborsInProgress": "Выполняется",
+  "neighborsDone": "Завершено",
+  "neighborsReply": "Ответить",
+  "neighborsViewOffer": "Посмотреть предложение",
+  "neighborsPeaceful": "Мирные действия",
+  "neighborsAttackSection": "Нападение",
+  "neighborsAttackExplain": "Это запускает нападение на этого игрока.",
+  "neighborsConfirm": "Подтвердить",
+  "neighborsThank": "Поблагодарить",
+  "neighborsThankSent": "Благодарность отправлена игроку {name}.",
+  "@neighborsThankSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOfferAgain": "Предложить ещё раз",
+  "neighborsCost": "Будет потрачено: {cost}",
+  "@neighborsCost": {
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOutcome": "После подтверждения: {outcome}",
+  "@neighborsOutcome": {
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsHelpAction": "Помочь",
+  "neighborsDefenseAction": "Защитить",
+  "neighborsCrossDecline": "Отклонить",
+  "neighborsUsesPlant": "Растение: {plant}",
+  "@neighborsUsesPlant": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsPlantStays": "Это растение остаётся у владельца.",
+  "neighborsPlantLeaves": "Это растение расходуется.",
+  "neighborsMemoryHelped": "{name} помог твоему растению.",
+  "@neighborsMemoryHelped": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryDefended": "Питомец {name} защитил огород.",
+  "@neighborsMemoryDefended": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryCrossed": "Вы и {name} получили новое растение.",
+  "@neighborsMemoryCrossed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryThanked": "Вы поблагодарили {name}.",
+  "@neighborsMemoryThanked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsMemoryRaid": "Отчёт о нападении с {name}.",
+  "@neighborsMemoryRaid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsReasonUnsupported": "Совместное действие пока недоступно.",
+  "neighborsReasonNotAllowed": "Для этого игрока действие недоступно.",
+  "neighborsReasonMissingPet": "Нужен защищающий питомец.",
+  "neighborsReasonMissingPlant": "Нужно растение для этого действия.",
+  "neighborsProtector": "Защитник: {name}",
+  "@neighborsProtector": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsUntil": "До {time}",
+  "@neighborsUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsAttackPower": "Атака {value}",
+  "@neighborsAttackPower": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsDefensePower": "Защита {value}",
+  "@neighborsDefensePower": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsLoot": "Возможная эссенция: {count}",
+  "@neighborsLoot": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showcaseTitle": "Витрина растений",
+  "showcaseAll": "Все растения",
+  "showcaseMine": "Мои растения",
+  "showcaseManage": "Выставить свои растения",
+  "showcaseRefresh": "Обновить витрину",
+  "showcaseIntro": "Знакомься с растениями других игроков. На каждой карточке указан владелец.",
+  "showcaseMyIntro": "Выбери собранное растение: его и твоё игровое имя увидят другие игроки. Растение останется на складе. Пока оно на витрине, его нельзя скормить питомцу.",
+  "showcaseEmpty": "На витрине пока нет растений. Ты можешь выставить первое.",
+  "showcaseChoose": "Выбрать растение",
+  "showcaseNoPlants": "Собери растение с грядки, чтобы выставить его на витрину.",
+  "showcasePublish": "Выставить",
+  "showcaseWithdraw": "Снять с витрины",
+  "showcasePublished": "На общей витрине",
+  "showcasePrivate": "Видно только тебе",
+  "showcaseUnconfirmed": "Публикация не подтверждена. Повтори её или сними растение с витрины.",
+  "showcasePublishedNotice": "Твоё растение теперь на общей витрине.",
+  "showcaseRemovedNotice": "Растение снято с витрины. Его снова можно использовать.",
+  "showcaseUnavailable": "Общая витрина сейчас недоступна. Твои растения сохранены.",
+  "showcaseLoadFailed": "Не удалось обновить витрину. Проверь соединение и попробуй ещё раз.",
+  "showcaseOperationFailed": "Не удалось подтвердить действие. Растение защищено; повтори попытку при наличии связи.",
+  "showcaseMissingLocal": "Это растение выставлено, но его нет на складе этого устройства.",
+  "showcaseMore": "Загрузить ещё",
+  "showcaseSpecimen": "Растение №{number}",
+  "showcaseFeedLocked": "Растения на витрине нельзя скормить питомцам. Сначала сними их с витрины.",
+  "@showcaseSpecimen": {
+    "description": "Identifies a harvested plant in the player's inventory.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "crossOpen": "Скрестить растения",
+  "@crossOpen": {
+    "description": "Short interface label: Cross plants"
+  },
+  "crossTitle": "Скрещивание",
+  "@crossTitle": {
+    "description": "Short interface label: Cross plants"
+  },
+  "crossNeedTwo": "Выбери два собранных растения.",
+  "crossAimCombat": "Боевой корм",
+  "@crossAimCombat": {
+    "description": "Short interface label: Combat feed"
+  },
+  "crossAimGarden": "Огород",
+  "@crossAimGarden": {
+    "description": "Short interface label: Richer garden"
+  },
+  "crossAimSeeds": "Семена на выбор",
+  "@crossAimSeeds": {
+    "description": "Short interface label: Choose a seed"
+  },
+  "crossOdds": "Обычный исход {ordinary}%. Сильнее {raised}%. Редкое {rare}%.",
+  "@crossOdds": {
+    "placeholders": {
+      "ordinary": {
+        "type": "int"
+      },
+      "raised": {
+        "type": "int"
+      },
+      "rare": {
+        "type": "int"
+      }
+    }
+  },
+  "crossConfirm": "Скрестить",
+  "@crossConfirm": {
+    "description": "Short interface label: Cross"
+  },
+  "crossFailed": "Скрещивание не сохранилось. Попробуй ещё раз.",
+  "crossListed": "Сначала сними растение с витрины.",
+  "crossWaiting": "Сначала заверши текущее скрещивание.",
+  "crossChooseTrait": "Выбери атаку или защиту для этого корма.",
+  "crossAttack": "Атака",
+  "@crossAttack": {
+    "description": "Short interface label: Attack"
+  },
+  "crossDefense": "Защита",
+  "@crossDefense": {
+    "description": "Short interface label: Defense"
+  },
+  "crossChooseSpecies": "Выбери семя.",
+  "crossOrdinary": "Скрещивание осталось обычным. Обычное семя добавлено в запас.",
+  "crossGranted": "Семя от скрещивания лежит в запасе семян.",
+  "crossTraitAttack": "Корм атаки",
+  "crossTraitDefense": "Корм защиты",
+  "crossTraitBloom": "Растёт быстрее",
+  "plantOriginCross": "Происхождение: скрещивание",
+  "neighborsActions": "Действия",
+  "neighborsActionMessage": "Написать",
+  "neighborsActionDefend": "Защитить",
+  "neighborsActionCross": "Предложить скрещивание",
+  "neighborsActionRaid": "Напасть",
+  "neighborsActionsOffline": "Для действий с игроками нужен интернет.",
+  "neighborsNeedGuard": "Сначала назначь питомца-защитника во дворе питомцев.",
+  "neighborsNeedRaider": "Сначала назначь питомца для набегов во дворе питомцев.",
+  "neighborsNeedPlant": "Нужно собранное растение на складе.",
+  "neighborsChoosePhrase": "Выбери фразу",
+  "neighborsChoosePlant": "Выбери растение, которое отдашь",
+  "neighborsSend": "Отправить",
+  "neighborsSent": "Отправлено: {name}.",
+  "@neighborsSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsAlreadyOpen": "С этим игроком уже есть открытый запрос такого вида.",
+  "neighborsRequestClosed": "Этот запрос уже закрыт.",
+  "neighborsSendFailed": "Не получилось. Проверь интернет и попробуй ещё раз.",
+  "neighborsDefendExplain": "Когда {name} примет помощь, твой питомец 24 часа помогает охранять его двор. Защита {value}.",
+  "@neighborsDefendExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidExplain": "У {name} есть сутки, чтобы выставить защитника. Двор устоит, только если защитник сильнее твоей атаки {value}. Иначе одно растение сгорит, а другое ты заберёшь себе.",
+  "@neighborsRaidExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsCrossExplain": "Каждый отдаёт одно растение и получает одно семя результата. Твоё растение списывается, только когда забираешь семя.",
+  "neighborsMessages": "Сообщения и запросы",
+  "neighborsPhraseHello": "Привет, сосед!",
+  "neighborsPhraseGoodLuck": "Удачи!",
+  "neighborsPhraseThanks": "Спасибо!",
+  "neighborsPhraseNiceGarden": "Отличный сад!",
+  "neighborsPhraseLetsCross": "Давай вырастим что-нибудь редкое.",
+  "neighborsPhraseIWillGuard": "Пригляжу за твоим двором.",
+  "neighborsPhraseReadyForRaid": "Готовься, иду в набег!",
+  "neighborsPhraseWellPlayed": "Хорошая игра!",
+  "neighborsInMessage": "{name} пишет тебе",
+  "@neighborsInMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsInDefense": "{name} предлагает 24 часа охранять твой двор. Защита {value}.",
+  "@neighborsInDefense": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsInCross": "{name} предлагает скрестить своё растение «{plant}» с твоим.",
+  "@neighborsInCross": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsInRaid": "{name} нападает на твой двор. Атака {value}.",
+  "@neighborsInRaid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsOutMessage": "Ты написал",
+  "neighborsOutDefense": "Ты предложил защиту. Защита {value}.",
+  "@neighborsOutDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsOutCross": "Ты предложил для скрещивания растение «{plant}».",
+  "@neighborsOutCross": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsOutRaid": "Ты напал на этот двор. Атака {value}.",
+  "@neighborsOutRaid": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsQuote": "{name}: «{text}»",
+  "@neighborsQuote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsYou": "Ты",
+  "neighborsAcceptDefense": "Принять защиту",
+  "neighborsChooseCrossPlant": "Выбрать своё растение",
+  "neighborsRepel": "Отбиться",
+  "neighborsCancelRequest": "Отменить запрос",
+  "neighborsClaimSeed": "Забрать семя",
+  "neighborsRaidWon": "Набег удался: атака {attack} против защиты {defense}.",
+  "@neighborsRaidWon": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsRaidRepelled": "Двор устоял: атака {attack} против защиты {defense}.",
+  "@neighborsRaidRepelled": {
+    "placeholders": {
+      "attack": {
+        "type": "int"
+      },
+      "defense": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsGuarding": "Защита действует до {time}.",
+  "@neighborsGuarding": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsGuardEnded": "Защита закончилась.",
+  "neighborsCrossResult": "Итог скрещивания: семя «{plant}».",
+  "@neighborsCrossResult": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsSeedClaimed": "Семя лежит в запасе семян.",
+  "neighborsSeedMissing": "Чтобы забрать семя, нужно растение «{plant}» на складе.",
+  "@neighborsSeedMissing": {
+    "placeholders": {
+      "plant": {
+        "type": "String"
+      }
+    }
+  },
+  "neighborsYourDefense": "Защита твоего двора: {value}",
+  "@neighborsYourDefense": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "neighborsReplied": "Ответ отправлен.",
+  "neighborsSignalMessage": "Новое сообщение",
+  "neighborsSignalDefense": "Предлагает защиту",
+  "neighborsSignalRaid": "Нападает на твой двор",
+  "neighborsSignalResult": "Пришёл ответ",
+  "socialFriends": "Друзья",
+  "socialFriend": "Вы друзья",
+  "socialFriendsEmpty": "Пока нет друзей. Откройте карточку соседа и пригласите его. После принятия приглашения он появится здесь.",
+  "socialIncoming": "Приглашение в друзья",
+  "socialWaiting": "Ожидает принятия",
+  "socialUnavailable": "Не удалось подключиться. Проверьте соединение и повторите.",
+  "socialChat": "Переписка",
+  "socialRemoveFriend": "Удалить из друзей",
+  "socialFriendConsent": "Принятие дружбы разрешает вам обоим отправлять личные сообщения.",
+  "socialAccept": "Принять дружбу",
+  "socialInvite": "Пригласить в друзья",
+  "socialInvitesClosed": "Игрок пока не принимает приглашения в друзья.",
+  "socialMyProfile": "Мой профиль",
+  "socialProfilePublic": "Эти сведения необязательны и видны другим игрокам.",
+  "socialAbout": "О себе",
+  "socialLanguage": "Языки общения",
+  "socialInterests": "Интересы",
+  "socialGoal": "Что ищу в игре",
+  "socialPicAboutFriendly": "Дружелюбный",
+  "socialPicAboutCalm": "Спокойный",
+  "socialPicAboutCheerful": "Весёлый",
+  "socialPicAboutGentle": "Нежный",
+  "socialPicAboutNight": "По вечерам",
+  "socialPicAboutCurious": "Любопытный",
+  "socialPicInterestGarden": "Сад",
+  "socialPicInterestPets": "Питомцы",
+  "socialPicInterestMahjong": "Маджонг",
+  "socialPicInterestCourtyard": "Двор",
+  "socialPicInterestSeeds": "Семена",
+  "socialPicInterestStars": "Звёзды",
+  "socialPicGoalFlower": "Редкий цветок",
+  "socialPicGoalHouse": "Дом красивее",
+  "socialPicGoalFriends": "Друзья",
+  "socialPicGoalLevels": "Проходить уровни",
+  "socialPicGoalChat": "Общение",
+  "socialPicGoalCross": "Скрещивание",
+  "socialOpenInvites": "Принимать новые приглашения в друзья",
+  "socialSave": "Сохранить профиль",
+  "socialProfileHeading": "Профиль",
+  "socialNotChosen": "Не выбрано",
+  "socialInvitesOpen": "Принимает приглашения в друзья",
+  "socialBadgesTitle": "Значки в списке соседей",
+  "socialBadgesExplain": "За поинты соседи на время увидят ваш аватар и значки профиля рядом с именем.",
+  "socialBadgesActive": "Видны соседям до {time}",
+  "@socialBadgesActive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "socialBadgesOff": "Сейчас в списке видно только имя.",
+  "socialBadgesOffer": "{days, plural, one{{days} день} few{{days} дня} many{{days} дней} other{{days} дня}} · {price} поинтов",
+  "@socialBadgesOffer": {
+    "description": "Button that buys showing profile badges in the neighbor list for a number of days.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "socialBadgesTooLong": "Показ можно продлить не дальше чем на 30 дней вперёд.",
+  "socialBadgesFailed": "Не удалось включить значки. Поинты возвращены.",
+  "socialBadgesNotListed": "Вас пока нет в списке соседей. Проверьте сеть и попробуйте ещё раз. Поинты не списаны.",
+  "socialChatEmpty": "Поздоровайтесь или поблагодарите друга за помощь!",
+  "socialReportMessage": "Пожаловаться на сообщение",
+  "socialOlderMessages": "Предыдущие сообщения",
+  "socialSendFailed": "Отправка не подтверждена. Повторите или вернитесь в карточку, чтобы проверить статус дружбы.",
+  "socialMessageHint": "Напишите сообщение",
+  "socialGrownTogether": "Вырастили вместе с",
+  "socialHistoryEmpty": "Здесь появятся ваши совместные события.",
+  "socialHistory": "Общая история",
+  "socialProfileReport": "Пожаловаться на профиль",
+  "neighborsRaidDeadline": "Если не ответить до {time}, двор защитит назначенный защитник.",
+  "neighborsRaidDefendTitle": "Кто защищает двор?",
+  "neighborsRaidDefendRule": "Атака {value}. Двор устоит только с более сильным защитником.",
+  "neighborsRaidOptionOwn": "{pet} · защита {value}",
+  "neighborsRaidOptionGuard": "Охранник от {name} · защита {value}",
+  "neighborsRaidOptionHelp": "{name} откликнулся на зов · защита {value}",
+  "neighborsRaidOptionNone": "Не защищаться",
+  "neighborsRaidHolds": "Устоит",
+  "neighborsRaidFalls": "Слабее атаки",
+  "neighborsRaidNoDefenders": "У тебя нет питомцев-защитников, и на зов пока никто не откликнулся. Без защитника набег удастся.",
+  "neighborsRaidChooseLoss": "Двор не устоит. Выбери, какое растение сгорит; налётчик заберёт случайное из остальных.",
+  "neighborsRaidOnlyPlant": "Единственное растение, {plant}, уйдёт налётчику.",
+  "neighborsRaidEmptyStorage": "Склад пуст — налётчику нечего забрать.",
+  "neighborsRaidAcceptLoss": "Принять потерю",
+  "neighborsRaidDestroyed": "Сгорело: {plant}.",
+  "neighborsRaidStolen": "Налётчик забрал: {plant}.",
+  "neighborsRaidLoot": "Твоя добыча: {plant}.",
+  "neighborsRaidNoLoot": "На складе нечего было забрать.",
+  "neighborsRaidAutoDefended": "Ответа не было, поэтому защищал назначенный защитник.",
+  "neighborsRaidDefendedBy": "Защищал питомец от {name}.",
+  "neighborsRaidTakeLoot": "Забрать растение",
+  "neighborsRaidLootTaken": "{plant} — на твоём складе.",
+  "neighborsRaidTooSoon": "Этот двор отдыхает после набега. Попробуй позже.",
+  "neighborsHelpTitle": "Зовут на помощь",
+  "neighborsHelpExplain": "Друзья видят зов бесплатно. Зов всем игрокам стоит {price} поинтов. Откликнувшиеся защитники появятся в списке защиты.",
+  "neighborsHelpAskFriends": "Позвать друзей на помощь",
+  "neighborsHelpAskEveryone": "Позвать всех · {price} поинтов",
+  "neighborsHelpAskedFriends": "Друзья видят твой зов о помощи.",
+  "neighborsHelpAskedEveryone": "Все игроки видят твой зов о помощи.",
+  "neighborsHelpNoFriends": "Пока некого позвать: у тебя нет друзей.",
+  "neighborsHelpArrived": "Откликнулись защитников: {count}",
+  "neighborsHelpFailed": "Зов о помощи не отправлен. Списанные поинты возвращены.",
+  "neighborsHelpCallLine": "На {name} напали · атака {attack}",
+  "neighborsHelpUntil": "Открыт до {time}",
+  "neighborsHelpSend": "Отправить защитника · защита {value}",
+  "neighborsHelpSent": "Твой защитник готов защищать {name}.",
+  "neighborsHelpOffered": "Твой защитник предложен.",
+  "neighborsHelpNeedGuard": "Назначь питомца-защитника, чтобы помогать.",
+  "plantOriginRaid": "Добыто в набеге",
+  "deleteAccount": "Удалить аккаунт и данные",
+  "deleteAccountTitle": "Удалить аккаунт и данные?",
+  "deleteAccountBody": "Это сотрёт двор, прогресс и настройки на этом устройстве. Если устройство вошло в сеть, удалится и этот анонимный аккаунт: запись в рейтинге, профиль, дружба, переписка, действия с соседями, зовы о помощи и карточки витрины. Общий разговор или заявка исчезнут и у другого игрока. Жалобы, которые отправили другие, остаются до конца проверки. Это нельзя отменить.",
+  "deleteAccountConfirm": "Удалить",
+  "deleteAccountFailed": "Не удалось завершить удаление. Проверьте соединение и повторите или напишите на myevidentsuccess@gmail.com.",
+  "deleteAccountWorking": "Удаляем…"
 }

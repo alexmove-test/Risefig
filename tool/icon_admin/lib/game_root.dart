@@ -1,6 +1,6 @@
 import 'dart:io';
 
-/// Корень игры Mahjong Rise (`assets/titles` + `lib/utils/tile_icons.dart`).
+/// Корень игры Rise Fig (`assets/titles` + `lib/utils/tile_icons.dart`).
 Directory? findGameRoot() {
   final starts = <Directory>{
     Directory.current,

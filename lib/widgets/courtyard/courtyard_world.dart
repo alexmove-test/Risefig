@@ -6,20 +6,14 @@ import '../../l10n/l10n.dart';
 import '../../models/courtyard_reward.dart';
 import '../../models/garden.dart';
 import '../../models/pet.dart';
-import '../../models/pet_combat.dart';
-import '../../models/pet_roster.dart';
 import '../../models/plot_kind.dart';
-import '../../models/seed_batch.dart';
 import '../../services/fox_adventure_store.dart';
-import '../../services/pet_story_store.dart';
 import '../pets/pet_portrait.dart';
-import '../pets/pet_story_section.dart';
 import 'courtyard_estate.dart';
 import 'courtyard_lot_build.dart';
 import 'courtyard_reward_choice.dart';
 import 'courtyard_world_layout.dart';
 import '../garden/plant_art.dart';
-import '../seeds/seed_plot_badge.dart';
 import 'plot_stage_view.dart';
 
 const courtyardHomeKey = ValueKey('courtyard-home');
@@ -45,17 +39,12 @@ class CourtyardWorld extends StatefulWidget {
     this.foxAdventure,
     this.onFoxTap,
     this.pets = const [],
-    this.petStories,
     this.onPetTap,
     this.courtyardRewards = const {},
-    this.showSeedProduction = false,
-    this.seedBatch,
     this.showGarden = false,
     this.garden,
     this.onBedTap,
     this.onWarehouseTap,
-    this.petRoster,
-    this.ownedPetKinds = const [],
   });
 
   final CourtyardEstate to;
@@ -72,21 +61,14 @@ class CourtyardWorld extends StatefulWidget {
   final VoidCallback? onFoxTap;
 
   final List<PetCare> pets;
-  final PetStoryStore? petStories;
   final VoidCallback? onPetTap;
   final Set<CourtyardReward> courtyardRewards;
-
-  /// Знак партии только на своём дворе. Чужие и тестовые кадры его не рисуют.
-  final bool showSeedProduction;
-  final SeedBatch? seedBatch;
 
   /// Огород и склад только на своём дворе.
   final bool showGarden;
   final GardenSnapshot? garden;
   final ValueChanged<int>? onBedTap;
   final VoidCallback? onWarehouseTap;
-  final PetRosterSnapshot? petRoster;
-  final List<PetKind> ownedPetKinds;
 
   static const growDuration = Duration(milliseconds: 2400);
 
@@ -127,6 +109,14 @@ class _CourtyardWorldState extends State<CourtyardWorld>
   void didChangeDependencies() {
     super.didChangeDependencies();
     precacheImage(const AssetImage(CourtyardWorldLayout.countryBase), context);
+    precacheImage(
+      const AssetImage(CourtyardWorldLayout.gardenPlotAsset),
+      context,
+    );
+    precacheImage(
+      const AssetImage(CourtyardWorldLayout.warehouseAsset),
+      context,
+    );
     for (final reward in CourtyardReward.values) {
       precacheImage(AssetImage(reward.asset), context);
     }
@@ -286,6 +276,12 @@ class _CourtyardWorldState extends State<CourtyardWorld>
                               ),
                             ),
                             _homeBuild(homeStage),
+                            _groundPlaque(
+                              CourtyardWorldLayout.mapRect(
+                                CourtyardWorldLayout.homeYard,
+                              ),
+                              AppLocalizations.of(context).houseCardTitle,
+                            ),
                             if (estate.pondStage > 0)
                               _pondBuild(estate.pondStage),
                             ..._rewardViews(hidePondGift: estate.pondStage > 0),
@@ -309,7 +305,6 @@ class _CourtyardWorldState extends State<CourtyardWorld>
                                 ),
                               ),
                             _homeHit(),
-                            if (widget.showSeedProduction) _seedBadge(),
                             if (widget.showGarden) ..._gardenPlots(),
                             for (final yard in widget.neighbors)
                               _neighborHit(yard),
@@ -372,7 +367,47 @@ class _CourtyardWorldState extends State<CourtyardWorld>
 
   List<Widget> _gardenPlots() {
     final garden = widget.garden ?? GardenSnapshot.empty;
+    final plot = CourtyardWorldLayout.mapRect(CourtyardWorldLayout.gardenPlot);
+    final warehouse = CourtyardWorldLayout.mapRect(
+      CourtyardWorldLayout.warehouse,
+    );
     return [
+      Positioned(
+        left: plot.left + plot.width * 0.04,
+        top: plot.bottom - plot.height * 0.16,
+        width: plot.width * 0.92,
+        height: plot.height * 0.2,
+        child: const IgnorePointer(
+          child: CustomPaint(painter: ContactShadowPainter(strength: 0.6)),
+        ),
+      ),
+      Positioned.fromRect(
+        key: const ValueKey('courtyard-garden-plot'),
+        rect: plot,
+        child: const IgnorePointer(
+          child: ClipPath(
+            clipper: _YardOvalClipper(),
+            child: Image(
+              image: AssetImage(CourtyardWorldLayout.gardenPlotAsset),
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.high,
+              gaplessPlayback: true,
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        left: plot.left,
+        width: plot.width * 0.7,
+        top: plot.bottom - plot.height * 0.22,
+        child: IgnorePointer(
+          child: Center(
+            child: CourtyardPlaque(
+              title: AppLocalizations.of(context).featureTitleGarden,
+            ),
+          ),
+        ),
+      ),
       for (var index = 0; index < GardenCatalog.bedCount; index++)
         Positioned.fromRect(
           rect: CourtyardWorldLayout.mapRect(
@@ -386,39 +421,32 @@ class _CourtyardWorldState extends State<CourtyardWorld>
                 : null,
           ),
         ),
+      Positioned(
+        left: warehouse.left + warehouse.width * 0.06,
+        top: warehouse.bottom - warehouse.height * 0.12,
+        width: warehouse.width * 0.9,
+        height: warehouse.height * 0.16,
+        child: const IgnorePointer(
+          child: CustomPaint(painter: ContactShadowPainter()),
+        ),
+      ),
       Positioned.fromRect(
-        rect: CourtyardWorldLayout.mapRect(CourtyardWorldLayout.warehouse),
+        rect: warehouse,
         child: WarehouseBuilding(
           count: garden.plantCount,
           onTap: widget.interactive ? widget.onWarehouseTap : null,
         ),
       ),
-      Positioned(
-        key: const ValueKey('garden-guard'),
-        left: CourtyardWorldLayout.mapRect(
-          CourtyardWorldLayout.gardenBeds.first,
-        ).left,
-        top:
-            CourtyardWorldLayout.mapRect(
-              CourtyardWorldLayout.gardenBeds.first,
-            ).bottom +
-            4,
-        width: 220,
-        height: 34,
-        child: _GardenGuardBadge(
-          roster: widget.petRoster,
-          owned: widget.ownedPetKinds,
-        ),
-      ),
     ];
   }
 
-  Widget _seedBadge() {
-    return Positioned.fromRect(
-      rect: CourtyardWorldLayout.mapRect(CourtyardWorldLayout.seedBadge),
-      child: SeedPlotBadge(
-        batch: widget.seedBatch,
-        onTap: widget.interactive ? _onHouseTap : () {},
+  Widget _groundPlaque(Rect anchor, String title) {
+    return Positioned(
+      left: anchor.left,
+      width: anchor.width,
+      top: anchor.bottom - 10,
+      child: IgnorePointer(
+        child: Center(child: CourtyardPlaque(title: title)),
       ),
     );
   }
@@ -428,8 +456,6 @@ class _CourtyardWorldState extends State<CourtyardWorld>
       rect: CourtyardWorldLayout.mapRect(CourtyardWorldLayout.petYard),
       child: _PetYardArea(
         cares: widget.pets,
-        stories: widget.petStories,
-        roster: widget.petRoster,
         onTap: widget.onPetTap ?? widget.onFoxTap,
       ),
     );
@@ -507,24 +533,6 @@ class _CourtyardWorldState extends State<CourtyardWorld>
   }
 }
 
-PetCare? _featuredYardCare(List<PetCare> cares, PetStoryStore? stories) {
-  if (cares.isEmpty) return null;
-  if (stories != null) {
-    for (final care in cares) {
-      final story = stories.currentFor(care.kind);
-      if (story != null && !stories.isStarted(story)) return care;
-    }
-    for (final care in cares) {
-      if (stories.currentFor(care.kind) != null) return care;
-    }
-  }
-  var chosen = cares.first;
-  for (final care in cares.skip(1)) {
-    if (care.lowest < chosen.lowest) chosen = care;
-  }
-  return chosen;
-}
-
 class _PetYardSlot {
   const _PetYardSlot({
     required this.care,
@@ -554,13 +562,13 @@ List<_PetYardSlot> _yardSlots(List<PetCare> cares, double w, double h) {
       ? w * 0.36
       : w * 0.30;
   final petHeight = n <= 1
-      ? h * 0.54
+      ? h * 0.50
       : n == 2
-      ? h * 0.48
+      ? h * 0.44
       : n == 3
-      ? h * 0.42
-      : h * 0.38;
-  final feet = h * 0.76;
+      ? h * 0.38
+      : h * 0.34;
+  final feet = h * 0.88;
   if (n == 1) {
     return [
       _PetYardSlot(
@@ -587,90 +595,53 @@ List<_PetYardSlot> _yardSlots(List<PetCare> cares, double w, double h) {
   ];
 }
 
-class _PetYardArea extends StatefulWidget {
-  const _PetYardArea({
-    required this.cares,
-    required this.stories,
-    this.roster,
-    this.onTap,
-  });
+class _PetYardArea extends StatelessWidget {
+  const _PetYardArea({required this.cares, this.onTap});
 
   final List<PetCare> cares;
-  final PetStoryStore? stories;
-  final PetRosterSnapshot? roster;
   final VoidCallback? onTap;
-
-  @override
-  State<_PetYardArea> createState() => _PetYardAreaState();
-}
-
-class _PetYardAreaState extends State<_PetYardArea>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _float;
-
-  @override
-  void initState() {
-    super.initState();
-    _float = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    );
-    if (widget.cares.isNotEmpty) _float.repeat(reverse: true);
-  }
-
-  @override
-  void didUpdateWidget(covariant _PetYardArea oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.cares.isEmpty) {
-      _float.stop();
-      _float.reset();
-    } else if (!_float.isAnimating) {
-      _float.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _float.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final accent = Theme.of(context).colorScheme.primary;
-    final cares = widget.cares;
-    final stories = widget.stories;
-    final featured = _featuredYardCare(cares, stories);
-    final story = featured == null ? null : stories?.currentFor(featured.kind);
-    final stage = story == null ? 0 : stories!.progress(story);
-    final inviteLabel = l.petYardVisit;
+    final cares = this.cares;
     final status = cares.isEmpty
         ? l.chooseAPetStatus
         : cares.map((care) => l.petMoodLine(care.kind, care.mood)).join(' ');
     return Semantics(
       button: true,
-      label: '$status $inviteLabel',
+      label: '${l.pets}. $status',
       child: GestureDetector(
         key: const ValueKey('courtyard-pets'),
-        onTap: widget.onTap,
+        onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: LayoutBuilder(
           builder: (context, box) {
             final w = box.maxWidth;
             final h = box.maxHeight;
             final slots = _yardSlots(cares, w, h);
-            final item = w * 0.21;
-            final petTop = slots.isEmpty
-                ? h * 0.22
-                : slots.map((slot) => slot.top).reduce(math.min);
             return SizedBox.expand(
               child: Stack(
                 key: courtyardPetAreaKey,
                 clipBehavior: Clip.none,
                 children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    child: Center(
+                      child: CourtyardPlaque(
+                        key: courtyardPetVisitKey,
+                        title: l.pets,
+                      ),
+                    ),
+                  ),
                   if (cares.isEmpty)
-                    Center(
+                    Positioned(
+                      left: 8,
+                      right: 8,
+                      top: h * 0.34,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -713,64 +684,6 @@ class _PetYardAreaState extends State<_PetYardArea>
                         height: slot.height,
                         child: PetPortrait(kind: slot.care.kind),
                       ),
-                    if (widget.roster != null)
-                      for (final slot in slots)
-                        Positioned(
-                          left: slot.left,
-                          top: slot.top + slot.height * 0.7,
-                          width: slot.width,
-                          height: 18,
-                          child: IgnorePointer(
-                            child: _PetCombatBadge(
-                              kind: slot.care.kind,
-                              roster: widget.roster!,
-                            ),
-                          ),
-                        ),
-                    for (
-                      var index = 0;
-                      story != null && index < story.items.length;
-                      index++
-                    )
-                      Positioned(
-                        left: w * 0.03 + index * item * 1.12,
-                        top: h - item,
-                        width: item,
-                        height: item,
-                        child: Opacity(
-                          opacity: index < stage
-                              ? 1
-                              : index == stage
-                              ? 0.48
-                              : 0.14,
-                          child: PetStoryItemView(
-                            item: story.items[index],
-                            preview: index >= stage,
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      left: -w * 0.28,
-                      right: -w * 0.28,
-                      bottom: h - petTop + 2,
-                      child: AnimatedBuilder(
-                        animation: _float,
-                        builder: (context, child) {
-                          final t = Curves.easeInOut.transform(_float.value);
-                          const lift = -2.5;
-                          return Transform.translate(
-                            offset: Offset(0, lift * t),
-                            child: child,
-                          );
-                        },
-                        child: Center(
-                          child: _PetInviteBubble(
-                            label: inviteLabel,
-                            startAdventure: false,
-                          ),
-                        ),
-                      ),
-                    ),
                     for (final slot in slots)
                       if (slot.care.mood != PetMood.content)
                         Positioned(
@@ -792,230 +705,6 @@ class _PetYardAreaState extends State<_PetYardArea>
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-/// Реплика над фигуркой: начать историю или тихо пригласить в раздел питомца.
-class _PetInviteBubble extends StatelessWidget {
-  const _PetInviteBubble({required this.label, required this.startAdventure});
-
-  final String label;
-  final bool startAdventure;
-
-  static const _gold = Color(0xFFD4AF37);
-  static const _goldSoft = Color(0xFFE8C96A);
-  static const _ivory = Color(0xFFF8F1DE);
-  static const _cream = Color(0xF2FFF6E0);
-  static const _wood = Color(0xE63A2012);
-
-  @override
-  Widget build(BuildContext context) {
-    final fill = startAdventure ? _cream : _wood;
-    final border = startAdventure ? _gold : _goldSoft.withValues(alpha: 0.62);
-    final foreground = startAdventure ? const Color(0xFF3A2012) : _ivory;
-    return Column(
-      key: startAdventure
-          ? courtyardPetStartAdventureKey
-          : courtyardPetVisitKey,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(startAdventure ? 14 : 18),
-            border: Border.all(
-              color: border,
-              width: startAdventure ? 1.4 : 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: startAdventure
-                    ? const Color(0x66D4AF37)
-                    : const Color(0x66000000),
-                blurRadius: startAdventure ? 10 : 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              startAdventure ? 10 : 12,
-              startAdventure ? 6 : 5,
-              startAdventure ? 10 : 10,
-              startAdventure ? 6 : 5,
-            ),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    startAdventure
-                        ? Icons.auto_stories_rounded
-                        : Icons.spa_rounded,
-                    size: startAdventure ? 14 : 12,
-                    color: startAdventure ? const Color(0xFF8A5A18) : _goldSoft,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: foreground,
-                      fontWeight: startAdventure
-                          ? FontWeight.w800
-                          : FontWeight.w600,
-                      fontSize: startAdventure ? 11 : 10,
-                      height: 1.1,
-                      letterSpacing: startAdventure ? 0.1 : 0.35,
-                    ),
-                  ),
-                  if (!startAdventure) ...[
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 14,
-                      color: _goldSoft.withValues(alpha: 0.85),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-        CustomPaint(
-          size: const Size(14, 7),
-          painter: _BubbleTailPainter(fill: fill, border: border),
-        ),
-      ],
-    );
-  }
-}
-
-class _BubbleTailPainter extends CustomPainter {
-  const _BubbleTailPainter({required this.fill, required this.border});
-
-  final Color fill;
-  final Color border;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(1.2, 0)
-      ..lineTo(size.width / 2, size.height - 0.6)
-      ..lineTo(size.width - 1.2, 0);
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, 0)
-        ..lineTo(size.width / 2, size.height)
-        ..lineTo(size.width, 0)
-        ..close(),
-      Paint()..color = fill,
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = border
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) =>
-      oldDelegate.fill != fill || oldDelegate.border != border;
-}
-
-class _GardenGuardBadge extends StatelessWidget {
-  const _GardenGuardBadge({required this.roster, required this.owned});
-
-  final PetRosterSnapshot? roster;
-  final List<PetKind> owned;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final guard = roster?.guarding(owned);
-    final String label;
-    if (guard == null) {
-      label = roster != null && roster!.ownsDefenderSpecies(owned)
-          ? l10n.gardenUnguarded
-          : l10n.gardenNoDefender;
-    } else {
-      final record = roster!.recordOf(guard) ?? PetCombatRecord.fresh(guard);
-      final power = PetStrength.of(
-        level: record.level,
-        main: roster!.defOf(record.mainItemId),
-        accessory: roster!.defOf(record.accessoryItemId),
-      ).total;
-      label = l10n.gardenGuardLabel(l10n.petName(guard), power);
-    }
-    return Semantics(
-      label: label,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xE63A2012),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE8C96A)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFFF8F1DE),
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PetCombatBadge extends StatelessWidget {
-  const _PetCombatBadge({required this.kind, required this.roster});
-
-  final PetKind kind;
-  final PetRosterSnapshot roster;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final role = PetCombatRules.roleOf(kind);
-    final record = roster.recordOf(kind) ?? PetCombatRecord.fresh(kind);
-    final label = '${l10n.petRole(role)} ${l10n.petLevelShort(record.level)}';
-    return Semantics(
-      label: l10n.petBadgeLabel(role, record.level),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xE63A2012),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              key: ValueKey('pet-yard-badge-${kind.name}'),
-              style: const TextStyle(
-                color: Color(0xFFF8F1DE),
-                fontWeight: FontWeight.w800,
-                fontSize: 10,
-              ),
-            ),
-          ),
         ),
       ),
     );
@@ -1167,4 +856,24 @@ class FestivalLanternsPainter extends CustomPainter {
   bool shouldRepaint(covariant FestivalLanternsPainter oldDelegate) {
     return oldDelegate.strength != strength || oldDelegate.t != t;
   }
+}
+
+/// Срезает жёлтый ореол по краю спрайта огорода, чтобы грядки легли на траву.
+class _YardOvalClipper extends CustomClipper<Path> {
+  const _YardOvalClipper();
+
+  @override
+  Path getClip(Size size) {
+    return Path()..addOval(
+      Rect.fromLTWH(
+        size.width * 0.045,
+        size.height * 0.07,
+        size.width * 0.91,
+        size.height * 0.86,
+      ),
+    );
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

@@ -5,9 +5,16 @@ import 'package:flutter/material.dart';
 import '../../l10n/l10n.dart';
 import '../../models/garden.dart';
 import '../../models/seed_batch.dart';
+import '../../models/seed_catalog.dart';
+import '../../screens/plant_showcase_screen.dart';
+import '../../services/ad_bootstrap.dart';
+import '../../services/analytics_service.dart';
 import '../../services/points_controller.dart';
+import '../../services/rewarded_ad_service.dart';
 import '../seeds/seed_glyph.dart';
+import 'cross_sheet.dart';
 import 'plant_art.dart';
+import 'plant_card.dart';
 
 enum SeedPickerResult { planted, produce, play }
 
@@ -353,22 +360,40 @@ Future<HarvestedPlant?> showGardenBed(
   BuildContext context, {
   required int bedIndex,
   DateTime Function()? now,
+  bool? adsLive,
+  Future<RewardedAdShowResult> Function(BuildContext context)? showAd,
 }) {
   return showModalBottomSheet<HarvestedPlant>(
     context: context,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.38),
     builder: (ctx) {
-      return GardenBedSheet(bedIndex: bedIndex, now: now);
+      return GardenBedSheet(
+        bedIndex: bedIndex,
+        now: now,
+        adsLive: adsLive,
+        showAd: showAd,
+      );
     },
   );
 }
 
 class GardenBedSheet extends StatefulWidget {
-  const GardenBedSheet({super.key, required this.bedIndex, this.now});
+  const GardenBedSheet({
+    super.key,
+    required this.bedIndex,
+    this.now,
+    this.adsLive,
+    this.showAd,
+  });
 
   final int bedIndex;
   final DateTime Function()? now;
+
+  /// В тестах кнопка ролика видна, даже если AdMob не инициализирован.
+  final bool? adsLive;
+
+  final Future<RewardedAdShowResult> Function(BuildContext context)? showAd;
 
   @override
   State<GardenBedSheet> createState() => _GardenBedSheetState();
@@ -376,7 +401,14 @@ class GardenBedSheet extends StatefulWidget {
 
 class _GardenBedSheetState extends State<GardenBedSheet> {
   var _busy = false;
+  String? _note;
   Timer? _timer;
+
+  bool get _adsLive => widget.adsLive ?? AdBootstrap.available;
+
+  static Future<RewardedAdShowResult> _showRewarded(BuildContext context) {
+    return RewardedAdService.instance.show(context: context);
+  }
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
@@ -410,79 +442,104 @@ class _GardenBedSheetState extends State<GardenBedSheet> {
           child: Material(
             color: gardenWood,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-            child: Padding(
+            child: ListView(
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              child: planting == null || stage == null
-                  ? Text(
-                      l10n.gardenBedEmpty(widget.bedIndex + 1),
-                      style: const TextStyle(color: gardenIvory),
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _grabber(),
-                        const SizedBox(height: 12),
-                        PlantArt(
+              children: [
+                if (planting == null || stage == null)
+                  Text(
+                    l10n.gardenBedEmpty(widget.bedIndex + 1),
+                    style: const TextStyle(color: gardenIvory),
+                  )
+                else
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _grabber(),
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () => showPlantCard(context, planting.species),
+                        child: PlantArt(
                           species: planting.species,
                           stage: stage,
-                          size: 72,
+                          size: 140,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.seedName(planting.species),
-                          key: const ValueKey('bed-species'),
+                      ),
+                      TextButton(
+                        key: const ValueKey('open-plant-card'),
+                        onPressed: () =>
+                            showPlantCard(context, planting.species),
+                        child: Text(
+                          l10n.openPlantCard,
                           style: const TextStyle(
-                            color: gardenIvory,
+                            color: gardenGoldSoft,
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.seedName(planting.species),
+                        key: const ValueKey('bed-species'),
+                        style: const TextStyle(
+                          color: gardenIvory,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        l10n.bedTitle(widget.bedIndex + 1),
+                        style: const TextStyle(color: gardenGoldSoft),
+                      ),
+                      Text(
+                        l10n.growthStage(stage),
+                        key: const ValueKey('bed-stage'),
+                        style: const TextStyle(color: gardenIvory),
+                      ),
+                      Text(
+                        l10n.plantPower(
+                          GardenCatalog.foodFor(planting.species),
+                        ),
+                        key: const ValueKey('bed-power'),
+                        style: const TextStyle(color: gardenIvory),
+                      ),
+                      if (!planting.isReady(now))
                         Text(
-                          l10n.bedTitle(widget.bedIndex + 1),
+                          l10n.seedTimeLeft(
+                            planting.remaining(now).inMinutes,
+                            planting.remaining(now).inSeconds % 60,
+                          ),
+                          key: const ValueKey('bed-remaining'),
                           style: const TextStyle(color: gardenGoldSoft),
                         ),
-                        Text(
-                          l10n.growthStage(stage),
-                          key: const ValueKey('bed-stage'),
-                          style: const TextStyle(color: gardenIvory),
+                      const SizedBox(height: 12),
+                      if (stage == GrowthStage.ripe)
+                        FilledButton(
+                          key: const ValueKey('harvest-button'),
+                          style: _buttonStyle(),
+                          onPressed: _busy ? null : _harvest,
+                          child: Text(
+                            l10n.harvestAction,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        )
+                      else
+                        _SpeedUpButton(
+                          planting: planting,
+                          now: now,
+                          balance: points.balance,
+                          busy: _busy,
+                          note: _note,
+                          offerAd:
+                              _adsLive &&
+                              points.plantAdOfferAvailable(now: now),
+                          onSpeedUp: _speedUp,
+                          onWatchAd: _watchAd,
                         ),
-                        Text(
-                          l10n.plantPower(
-                            GardenCatalog.foodFor(planting.species),
-                          ),
-                          key: const ValueKey('bed-power'),
-                          style: const TextStyle(color: gardenIvory),
-                        ),
-                        if (!planting.isReady(now))
-                          Text(
-                            l10n.seedTimeLeft(
-                              planting.remaining(now).inMinutes,
-                              planting.remaining(now).inSeconds % 60,
-                            ),
-                            key: const ValueKey('bed-remaining'),
-                            style: const TextStyle(color: gardenGoldSoft),
-                          ),
-                        const SizedBox(height: 12),
-                        if (stage == GrowthStage.ripe)
-                          FilledButton(
-                            key: const ValueKey('harvest-button'),
-                            style: _buttonStyle(),
-                            onPressed: _busy ? null : _harvest,
-                            child: Text(
-                              l10n.harvestAction,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          )
-                        else
-                          Text(
-                            l10n.gardenNotReady,
-                            key: const ValueKey('harvest-locked'),
-                            style: const TextStyle(color: gardenGoldSoft),
-                          ),
-                      ],
-                    ),
+                    ],
+                  ),
+              ],
             ),
           ),
         );
@@ -505,25 +562,192 @@ class _GardenBedSheetState extends State<GardenBedSheet> {
     }
     setState(() => _busy = false);
   }
+
+  Future<void> _speedUp() async {
+    if (_busy) return;
+    final points = PointsScope.of(context);
+    setState(() => _busy = true);
+    final result = await points.speedUpPlant(
+      bedIndex: widget.bedIndex,
+      now: _now(),
+    );
+    if (!mounted) return;
+    if (result.finished) {
+      AnalyticsService.log('plant_speed', <String, Object>{
+        'cost': result.cost,
+        'bed': widget.bedIndex,
+      });
+    }
+    setState(() => _busy = false);
+  }
+
+  Future<void> _watchAd() async {
+    if (_busy) return;
+    final points = PointsScope.of(context);
+    final now = _now();
+    if (!points.plantAdOfferAvailable(now: now)) return;
+    setState(() {
+      _busy = true;
+      _note = null;
+    });
+    try {
+      if (widget.showAd == null && !AdBootstrap.simulation) {
+        if (!AdBootstrap.initFinished || !AdBootstrap.enabled) {
+          await AdBootstrap.prepareForAdRequest();
+        }
+        if (!mounted) return;
+        if (!AdBootstrap.available) {
+          setState(() => _note = AppLocalizations.of(context).adUnavailable);
+          return;
+        }
+      }
+      final result = await (widget.showAd ?? _showRewarded)(context);
+      if (!mounted) return;
+      if (result != RewardedAdShowResult.earned) {
+        setState(() {
+          _note = result == RewardedAdShowResult.skipped
+              ? AppLocalizations.of(context).rewardNotEarned
+              : AppLocalizations.of(context).adUnavailable;
+        });
+        return;
+      }
+      final harvested = await points.collectPlantForAd(
+        bedIndex: widget.bedIndex,
+        now: _now(),
+      );
+      if (!mounted) return;
+      if (harvested.harvested && harvested.plant != null) {
+        unawaited(
+          AnalyticsService.log('plant_ad_harvest', <String, Object>{
+            'bed': widget.bedIndex,
+          }),
+        );
+        Navigator.of(context).pop(harvested.plant);
+        return;
+      }
+      setState(() {
+        _note = harvested.status == HarvestStatus.adUsed
+            ? AppLocalizations.of(context).plantAdUsed
+            : AppLocalizations.of(context).adUnavailable;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _note = AppLocalizations.of(context).adUnavailable);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+class _SpeedUpButton extends StatelessWidget {
+  const _SpeedUpButton({
+    required this.planting,
+    required this.now,
+    required this.balance,
+    required this.busy,
+    required this.offerAd,
+    required this.onSpeedUp,
+    required this.onWatchAd,
+    this.note,
+  });
+
+  final Planting planting;
+  final DateTime now;
+  final int balance;
+  final bool busy;
+  final bool offerAd;
+  final String? note;
+  final VoidCallback onSpeedUp;
+  final VoidCallback onWatchAd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cost = SeedCatalog.speedUpCost(planting.remaining(now));
+    final shortfall = (cost - balance).clamp(0, cost);
+    final canSpeed = !busy && shortfall == 0 && cost > 0;
+    return Column(
+      children: [
+        if (shortfall > 0) ...[
+          Text(
+            l10n.pointsShortfall(shortfall),
+            key: const ValueKey('bed-speed-shortfall'),
+            style: const TextStyle(
+              color: gardenGoldSoft,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        FilledButton(
+          key: const ValueKey('bed-speed-button'),
+          style: _buttonStyle(),
+          onPressed: canSpeed ? onSpeedUp : null,
+          child: Text(
+            l10n.speedUpFor(cost),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+        if (offerAd) ...[
+          const SizedBox(height: 8),
+          OutlinedButton(
+            key: const ValueKey('bed-ad-harvest'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: gardenGoldSoft,
+              side: const BorderSide(color: gardenGoldSoft),
+              minimumSize: const Size.fromHeight(46),
+            ),
+            onPressed: busy ? null : onWatchAd,
+            child: Text(
+              l10n.watchAdHarvest,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+        if (note != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            note!,
+            key: const ValueKey('bed-ad-note'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: gardenGoldSoft,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 /// Склад собранных растений. Семена и растущие грядки сюда не входят.
-Future<bool> showWarehouse(BuildContext context) {
+Future<bool> showWarehouse(BuildContext context, {bool showcase = true}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.38),
     builder: (ctx) {
-      return WarehouseSheet(height: MediaQuery.sizeOf(ctx).height * 0.78);
+      return WarehouseSheet(
+        height: MediaQuery.sizeOf(ctx).height * 0.78,
+        showcase: showcase,
+      );
     },
   ).then((value) => value ?? false);
 }
 
 class WarehouseSheet extends StatefulWidget {
-  const WarehouseSheet({super.key, required this.height});
+  const WarehouseSheet({super.key, required this.height, this.showcase = true});
 
   final double height;
+
+  /// Кнопка витрины появляется вместе с соседями.
+  final bool showcase;
 
   @override
   State<WarehouseSheet> createState() => _WarehouseSheetState();
@@ -576,6 +800,38 @@ class _WarehouseSheetState extends State<WarehouseSheet> {
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextButton.icon(
+                      key: const ValueKey('warehouse-cross'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: gardenGoldSoft,
+                      ),
+                      onPressed:
+                          plants.length >= 2 || points.garden.pending != null
+                          ? () => showPlantCross(context)
+                          : null,
+                      icon: const Icon(Icons.spa_outlined),
+                      label: Text(
+                        points.garden.pending == null
+                            ? l10n.crossOpen
+                            : l10n.crossWaiting,
+                      ),
+                    ),
+                  ),
+                  if (widget.showcase)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextButton.icon(
+                        key: const ValueKey('warehouse-showcase'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: gardenGoldSoft,
+                        ),
+                        onPressed: () => openPlantShowcase(context, mine: true),
+                        icon: const Icon(Icons.public),
+                        label: Text(l10n.showcaseManage),
+                      ),
+                    ),
                   if (plants.isEmpty)
                     Expanded(
                       child: _EmptyWarehouse(
@@ -656,10 +912,13 @@ class _WarehouseSheetState extends State<WarehouseSheet> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              PlantArt(
-                species: plant.species,
-                stage: GrowthStage.ripe,
-                size: 72,
+              GestureDetector(
+                onTap: () => showPlantCard(ctx, plant.species),
+                child: PlantArt(
+                  species: plant.species,
+                  stage: GrowthStage.ripe,
+                  size: 140,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -680,6 +939,12 @@ class _WarehouseSheetState extends State<WarehouseSheet> {
                 l10n.plantPower(GardenCatalog.foodFor(plant.species)),
                 style: const TextStyle(color: gardenIvory),
               ),
+              if (plant.trait != null)
+                Text(
+                  l10n.plantTraitLabel(plant.trait!),
+                  key: const ValueKey('plant-detail-trait'),
+                  style: const TextStyle(color: gardenGoldSoft),
+                ),
               if (plant.variant != null)
                 Text(
                   l10n.plantVariant(plant.variant!),
@@ -687,7 +952,9 @@ class _WarehouseSheetState extends State<WarehouseSheet> {
                   style: const TextStyle(color: gardenIvory),
                 ),
               Text(
-                l10n.plantOrigin(plant.source),
+                plant.lineage == null
+                    ? l10n.plantOrigin(plant.source)
+                    : '${l10n.socialGrownTogether} ${plant.lineage!.partnerName}',
                 key: const ValueKey('plant-detail-origin'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: gardenGoldSoft),
@@ -740,7 +1007,7 @@ class _PlantStackCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           key: ValueKey(
-            'plant-stack-${stack.species.name}-${stack.power}-$variant',
+            'plant-stack-${stack.species.name}-${stack.power}-$variant${stack.trait == null ? '' : '-${stack.trait!.name}'}',
           ),
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),

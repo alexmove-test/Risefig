@@ -180,7 +180,7 @@ Future<void> showAboutGameDialog(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Mahjong Rise',
+              AppLinks.name,
               style: TextStyle(
                 color: TableUi.ivory,
                 fontWeight: FontWeight.w700,

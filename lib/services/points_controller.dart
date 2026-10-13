@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/garden.dart';
+import '../models/plant_cross.dart';
+import '../models/seed_catalog.dart';
 import '../models/house_upgrade.dart';
 import '../models/pet.dart';
-import '../models/pet_combat.dart';
 import '../models/pet_roster.dart';
 import '../models/points_award.dart';
 import '../models/seed_batch.dart';
@@ -34,14 +35,17 @@ class PointsController extends ChangeNotifier {
   Future<HouseBuyResult>? _purchase;
   Future<SeedStartResult>? _seedStart;
   Future<SeedClaimResult>? _seedClaim;
+  Future<SeedSpeedResult>? _seedSpeed;
   Future<PlantResult>? _plant;
+  Future<PlantSpeedResult>? _plantSpeed;
+  int? _plantSpeedBed;
   String? _plantKey;
   Future<HarvestResult>? _harvest;
   int? _harvestBed;
+  Future<HarvestResult>? _adHarvest;
+  Future<CrossResult>? _cross;
   Future<FeedResult>? _feed;
   String? _feedPlantId;
-  Future<GearBuyResult>? _gearBuy;
-  Future<EquipResult>? _equip;
   Future<AssignResult>? _assign;
 
   int get balance => _balance;
@@ -61,6 +65,20 @@ class PointsController extends ChangeNotifier {
 
   GardenSnapshot get garden => _garden;
 
+  Map<String, String> get showcaseReservations => _store.showcaseReservations;
+
+  Future<bool> reserveShowcasePlant(String plantId, String ownerId) async {
+    final saved = await _store.reserveShowcasePlant(plantId, ownerId);
+    notifyListeners();
+    return saved;
+  }
+
+  Future<bool> releaseShowcasePlant(String plantId, String ownerId) async {
+    final saved = await _store.releaseShowcasePlant(plantId, ownerId);
+    notifyListeners();
+    return saved;
+  }
+
   /// Только собранные растения. Растущие на грядках сюда не входят.
   int get plantCount => _garden.plantCount;
 
@@ -70,14 +88,15 @@ class PointsController extends ChangeNotifier {
 
   bool get seedClaimBusy => _seedClaim != null;
 
+  bool get seedSpeedBusy => _seedSpeed != null;
+
   bool get plantBusy => _plant != null;
 
   bool get harvestBusy => _harvest != null;
 
   bool get feedBusy => _feed != null;
 
-  bool get gearBusy =>
-      _gearBuy != null || _equip != null || _assign != null || _feed != null;
+  bool get assignBusy => _assign != null;
 
   /// Размер последнего зачисления — чип подсвечивает именно его.
   int get lastGain => _lastGain;
@@ -244,6 +263,49 @@ class PointsController extends ChangeNotifier {
     return result;
   }
 
+  /// Предложение «собрать растущее растение за ролик» ещё не потрачено сегодня.
+  bool plantAdOfferAvailable({DateTime? now}) =>
+      _store.plantAdOfferAvailable(now: now);
+
+  /// Дозревает грядку и собирает растение без списания поинтов.
+  Future<HarvestResult> collectPlantForAd({
+    required int bedIndex,
+    DateTime? now,
+  }) {
+    final pending = _adHarvest;
+    if (pending != null) return pending;
+    final run = _runAdHarvest(bedIndex: bedIndex, now: now);
+    _adHarvest = run;
+    unawaited(
+      run.whenComplete(() {
+        if (identical(_adHarvest, run)) _adHarvest = null;
+      }),
+    );
+    return run;
+  }
+
+  Future<HarvestResult> _runAdHarvest({
+    required int bedIndex,
+    DateTime? now,
+  }) async {
+    if (!_store.isPersistent) {
+      return HarvestResult.unavailable(
+        balance: _balance,
+        seeds: _seeds,
+        garden: _garden,
+      );
+    }
+    final ticket = ++_revision;
+    final result = await _store.collectPlantForAd(bedIndex: bedIndex, now: now);
+    _publishSeeds(
+      ticket,
+      balance: result.balance,
+      seeds: result.seeds,
+      garden: result.garden,
+    );
+    return result;
+  }
+
   /// Повторный сбор той же грядки не выдаёт второе растение.
   Future<HarvestResult> harvestBed({required int bedIndex, DateTime? now}) {
     final pending = _harvest;
@@ -308,6 +370,73 @@ class PointsController extends ChangeNotifier {
     return result;
   }
 
+  /// Повторное нажатие, пока списание идёт, не платит второй раз.
+  Future<SeedSpeedResult> speedUpSeed({DateTime? now}) {
+    final pending = _seedSpeed;
+    if (pending != null) return pending;
+    final run = _speedUpSeed(now: now);
+    _seedSpeed = run;
+    unawaited(
+      run.whenComplete(() {
+        if (identical(_seedSpeed, run)) _seedSpeed = null;
+      }),
+    );
+    return run;
+  }
+
+  Future<SeedSpeedResult> _speedUpSeed({DateTime? now}) async {
+    if (!_store.isPersistent) {
+      return SeedSpeedResult.unavailable(balance: _balance, seeds: _seeds);
+    }
+    final ticket = ++_revision;
+    final result = await _store.speedUpSeed(now: now);
+    _publishSeeds(ticket, balance: result.balance, seeds: result.seeds);
+    return result;
+  }
+
+  /// Повтор той же грядки не списывает поинты дважды.
+  Future<PlantSpeedResult> speedUpPlant({
+    required int bedIndex,
+    DateTime? now,
+  }) {
+    final pending = _plantSpeed;
+    if (pending != null && _plantSpeedBed == bedIndex) return pending;
+    final run = _runPlantSpeed(bedIndex: bedIndex, now: now);
+    _plantSpeed = run;
+    _plantSpeedBed = bedIndex;
+    unawaited(
+      run.whenComplete(() {
+        if (identical(_plantSpeed, run)) {
+          _plantSpeed = null;
+          _plantSpeedBed = null;
+        }
+      }),
+    );
+    return run;
+  }
+
+  Future<PlantSpeedResult> _runPlantSpeed({
+    required int bedIndex,
+    DateTime? now,
+  }) async {
+    if (!_store.isPersistent) {
+      return PlantSpeedResult.unavailable(
+        balance: _balance,
+        seeds: _seeds,
+        garden: _garden,
+      );
+    }
+    final ticket = ++_revision;
+    final result = await _store.speedUpPlant(bedIndex: bedIndex, now: now);
+    _publishSeeds(
+      ticket,
+      balance: result.balance,
+      seeds: result.seeds,
+      garden: result.garden,
+    );
+    return result;
+  }
+
   void _publishSeeds(
     int ticket, {
     required int balance,
@@ -328,6 +457,160 @@ class PointsController extends ChangeNotifier {
     if (garden != null) _garden = garden;
     if (roster != null) _roster = roster;
     notifyListeners();
+  }
+
+  bool get crossBusy => _cross != null;
+
+  /// Повтор того же скрещивания возвращает прежний жребий и не списывает растения снова.
+  Future<CrossResult> beginCross({
+    required String firstId,
+    required String secondId,
+    required CrossAim aim,
+    required String opId,
+    int Function(int count)? roll,
+    DateTime? now,
+  }) {
+    final pending = _cross;
+    if (pending != null) return pending;
+    final run = _runCross(
+      () => _store.beginCross(
+        firstId: firstId,
+        secondId: secondId,
+        aim: aim,
+        opId: opId,
+        roll: roll,
+        now: now,
+      ),
+    );
+    _cross = run;
+    unawaited(
+      run.whenComplete(() {
+        if (identical(_cross, run)) _cross = null;
+      }),
+    );
+    return run;
+  }
+
+  Future<CrossResult> finishCross({
+    required String opId,
+    PlantTrait? trait,
+    SeedSpecies? species,
+    DateTime? now,
+  }) {
+    final pending = _cross;
+    if (pending != null) return pending;
+    final run = _runCross(
+      () => _store.finishCross(
+        opId: opId,
+        trait: trait,
+        species: species,
+        now: now,
+      ),
+    );
+    _cross = run;
+    unawaited(
+      run.whenComplete(() {
+        if (identical(_cross, run)) _cross = null;
+      }),
+    );
+    return run;
+  }
+
+  /// Семя от скрещивания с соседом. Повтор с тем же [opId] безопасен.
+  Future<CrossResult> claimNeighborCross({
+    required String opId,
+    required SeedSpecies give,
+    required SeedSpecies receive,
+    String? preferPlantId,
+    CrossLineage? lineage,
+  }) {
+    final pending = _cross;
+    if (pending != null) return pending;
+    final run = _runCross(
+      () => _store.claimNeighborCross(
+        opId: opId,
+        give: give,
+        receive: receive,
+        preferPlantId: preferPlantId,
+        lineage: lineage,
+      ),
+    );
+    _cross = run;
+    unawaited(
+      run.whenComplete(() {
+        if (identical(_cross, run)) _cross = null;
+      }),
+    );
+    return run;
+  }
+
+  List<HarvestedPlant> get raidablePlants => _store.raidablePlants;
+
+  /// Списывает потерю набега. Повтор с тем же [opId] безопасен.
+  Future<RaidSettleResult> settleRaidLoss({
+    required String opId,
+    String? destroyId,
+    SeedSpecies? destroySpecies,
+    String? stealId,
+    SeedSpecies? stealSpecies,
+  }) => _runRaid(
+    () => _store.settleRaidLoss(
+      opId: opId,
+      destroyId: destroyId,
+      destroySpecies: destroySpecies,
+      stealId: stealId,
+      stealSpecies: stealSpecies,
+    ),
+  );
+
+  /// Добыча набега на склад. Повтор с тем же [opId] безопасен.
+  Future<RaidSettleResult> takeRaidLoot({
+    required String opId,
+    required SeedSpecies species,
+    PlantTrait? trait,
+  }) => _runRaid(
+    () => _store.takeRaidLoot(opId: opId, species: species, trait: trait),
+  );
+
+  Future<RaidSettleResult> _runRaid(
+    Future<RaidSettleResult> Function() body,
+  ) async {
+    if (!_store.isPersistent) {
+      return RaidSettleResult(
+        status: RaidSettleStatus.unavailable,
+        balance: _balance,
+        seeds: _seeds,
+        garden: _garden,
+      );
+    }
+    final ticket = ++_revision;
+    final result = await body();
+    _publishSeeds(
+      ticket,
+      balance: result.balance,
+      seeds: result.seeds,
+      garden: result.garden,
+    );
+    return result;
+  }
+
+  Future<CrossResult> _runCross(Future<CrossResult> Function() body) async {
+    if (!_store.isPersistent) {
+      return CrossResult.unavailable(
+        balance: _balance,
+        seeds: _seeds,
+        garden: _garden,
+      );
+    }
+    final ticket = ++_revision;
+    final result = await body();
+    _publishSeeds(
+      ticket,
+      balance: result.balance,
+      seeds: result.seeds,
+      garden: result.garden,
+    );
+    return result;
   }
 
   /// Повторный вызов не затирает уже накопленный опыт.
@@ -381,107 +664,6 @@ class PointsController extends ChangeNotifier {
     }
     final ticket = ++_revision;
     final result = await _store.feedPet(kind: kind, plantId: plantId, now: now);
-    _publishSeeds(
-      ticket,
-      balance: result.balance,
-      seeds: result.seeds,
-      garden: result.garden,
-      roster: result.roster,
-    );
-    return result;
-  }
-
-  Future<GearBuyResult> buyGear({
-    required PetKind kind,
-    required String defId,
-  }) {
-    final pending = _gearBuy;
-    if (pending != null) return pending;
-    final run = _runBuyGear(kind: kind, defId: defId);
-    _gearBuy = run;
-    unawaited(
-      run.whenComplete(() {
-        if (identical(_gearBuy, run)) _gearBuy = null;
-      }),
-    );
-    return run;
-  }
-
-  Future<GearBuyResult> _runBuyGear({
-    required PetKind kind,
-    required String defId,
-  }) async {
-    if (!_store.isPersistent) {
-      return GearBuyResult.unavailable(
-        balance: _balance,
-        seeds: _seeds,
-        garden: _garden,
-        roster: _roster,
-      );
-    }
-    final ticket = ++_revision;
-    final result = await _store.buyGear(kind: kind, defId: defId);
-    _publishSeeds(
-      ticket,
-      balance: result.balance,
-      seeds: result.seeds,
-      garden: result.garden,
-      roster: result.roster,
-    );
-    return result;
-  }
-
-  Future<EquipResult> equipGear({
-    required PetKind kind,
-    required String itemId,
-    required GearSlot slot,
-  }) {
-    final pending = _equip;
-    if (pending != null) return pending;
-    final run = _runEquip(kind: kind, itemId: itemId, slot: slot, equip: true);
-    _equip = run;
-    unawaited(
-      run.whenComplete(() {
-        if (identical(_equip, run)) _equip = null;
-      }),
-    );
-    return run;
-  }
-
-  Future<EquipResult> unequipGear({
-    required PetKind kind,
-    required GearSlot slot,
-  }) {
-    final pending = _equip;
-    if (pending != null) return pending;
-    final run = _runEquip(kind: kind, itemId: '', slot: slot, equip: false);
-    _equip = run;
-    unawaited(
-      run.whenComplete(() {
-        if (identical(_equip, run)) _equip = null;
-      }),
-    );
-    return run;
-  }
-
-  Future<EquipResult> _runEquip({
-    required PetKind kind,
-    required String itemId,
-    required GearSlot slot,
-    required bool equip,
-  }) async {
-    if (!_store.isPersistent) {
-      return EquipResult.unavailable(
-        balance: _balance,
-        seeds: _seeds,
-        garden: _garden,
-        roster: _roster,
-      );
-    }
-    final ticket = ++_revision;
-    final result = equip
-        ? await _store.equipGear(kind: kind, itemId: itemId, slot: slot)
-        : await _store.unequipGear(kind: kind, slot: slot);
     _publishSeeds(
       ticket,
       balance: result.balance,
@@ -566,6 +748,28 @@ class PointsController extends ChangeNotifier {
       notifyListeners();
     }
     return result;
+  }
+
+  Future<PointsSpendResult> spend(int amount) async {
+    if (!_store.isPersistent) {
+      return PointsSpendResult(
+        status: PointsSpendStatus.unavailable,
+        balance: _balance,
+      );
+    }
+    ++_revision;
+    final result = await _store.spend(amount);
+    _balance = _store.balance;
+    notifyListeners();
+    return result;
+  }
+
+  Future<void> refund(int amount) async {
+    if (!_store.isPersistent || amount <= 0) return;
+    ++_revision;
+    await _store.refund(amount);
+    _balance = _store.balance;
+    notifyListeners();
   }
 
   Future<void> award(PointsAward award) => earn(award.total);

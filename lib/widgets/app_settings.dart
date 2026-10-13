@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../l10n/locale_controller.dart';
+import '../services/account_deletion.dart';
+import '../services/feature_intro_store.dart';
 import '../services/haptic_controller.dart';
 import '../services/locale_store.dart';
 import '../services/local_reminder_service.dart';
@@ -11,6 +15,7 @@ import '../models/table_look.dart';
 import '../services/reminder_store.dart';
 import '../services/sfx_controller.dart';
 import '../services/table_look_controller.dart';
+import '../services/tutorial_store.dart';
 import 'privacy_options_tile.dart';
 
 const _ivory = Color(0xFFF8F1DE);
@@ -66,7 +71,19 @@ Future<void> showAppSettings(BuildContext context) {
                   LockedTileDimSwitchTile(controller: lockedDim, l10n: l10n),
                   TableLookSection(controller: tableLook, l10n: l10n),
                   const ReminderSwitchTile(),
+                  const ReplayTipsTile(),
                   PrivacyOptionsTile(iconColor: _gold, textColor: _ivory),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_forever_outlined,
+                      color: Color(0xFFE7A0A0),
+                    ),
+                    title: Text(
+                      l10n.deleteAccount,
+                      style: const TextStyle(color: Color(0xFFE7A0A0)),
+                    ),
+                    onTap: () => unawaited(_confirmAccountDeletion(ctx)),
+                  ),
                   const Padding(
                     padding: EdgeInsets.fromLTRB(20, 4, 20, 0),
                     child: Divider(color: Color(0x44F8F1DE)),
@@ -109,9 +126,23 @@ Future<void> showAppSettings(BuildContext context) {
                   _languageTile(
                     ctx,
                     locale,
+                    LanguagePref.uk,
+                    current,
+                    l10n.languageUkrainian,
+                  ),
+                  _languageTile(
+                    ctx,
+                    locale,
                     LanguagePref.th,
                     current,
                     l10n.languageThai,
+                  ),
+                  _languageTile(
+                    ctx,
+                    locale,
+                    LanguagePref.de,
+                    current,
+                    l10n.languageGerman,
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -122,6 +153,93 @@ Future<void> showAppSettings(BuildContext context) {
       );
     },
   );
+}
+
+Future<void> _confirmAccountDeletion(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => const _DeleteAccountDialog(),
+  );
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  var _working = false;
+  var _failed = false;
+
+  Future<void> _run() async {
+    setState(() {
+      _working = true;
+      _failed = false;
+    });
+    try {
+      await const AccountDeletion().run();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _working = false;
+          _failed = true;
+        });
+      }
+      return;
+    }
+    if (!mounted) return;
+    Navigator.pop(context);
+    await AppRestart.notify();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return PopScope(
+      canPop: !_working,
+      child: AlertDialog(
+        backgroundColor: _wood,
+        title: Text(
+          l10n.deleteAccountTitle,
+          style: const TextStyle(color: _gold),
+        ),
+        content: _working
+            ? Row(
+                children: [
+                  const CircularProgressIndicator(color: _gold),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      l10n.deleteAccountWorking,
+                      style: const TextStyle(color: _ivory),
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                _failed ? l10n.deleteAccountFailed : l10n.deleteAccountBody,
+                style: const TextStyle(color: _ivory, height: 1.35),
+              ),
+        actions: _working
+            ? null
+            : [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l10n.cancel),
+                ),
+                TextButton(
+                  onPressed: _run,
+                  child: Text(
+                    _failed ? l10n.retry : l10n.deleteAccountConfirm,
+                  ),
+                ),
+              ],
+      ),
+    );
+  }
 }
 
 Future<void> showLanguagePicker(BuildContext context) {
@@ -177,9 +295,25 @@ Future<void> showLanguagePicker(BuildContext context) {
             _languageTile(
               ctx,
               controller,
+              LanguagePref.uk,
+              current,
+              l10n.languageUkrainian,
+              popOnSelect: true,
+            ),
+            _languageTile(
+              ctx,
+              controller,
               LanguagePref.th,
               current,
               l10n.languageThai,
+              popOnSelect: true,
+            ),
+            _languageTile(
+              ctx,
+              controller,
+              LanguagePref.de,
+              current,
+              l10n.languageGerman,
               popOnSelect: true,
             ),
             const SizedBox(height: 8),
@@ -342,6 +476,37 @@ class _ReminderSwitchTileState extends State<ReminderSwitchTile> {
       onChanged: _store == null ? null : _setEnabled,
       activeThumbColor: _gold,
       activeTrackColor: _gold.withValues(alpha: 0.38),
+    );
+  }
+}
+
+/// Снова покажет обучение на столе и карточки знакомства с фичами.
+class ReplayTipsTile extends StatelessWidget {
+  const ReplayTipsTile({super.key});
+
+  Future<void> _replay(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final done = AppLocalizations.of(context).replayTipsDone;
+    final tutorial = await TutorialStore.open();
+    await tutorial.reset();
+    final intros = await FeatureIntroStore.open();
+    await intros.reset();
+    navigator.pop();
+    messenger?.showSnackBar(SnackBar(content: Text(done)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ListTile(
+      key: const ValueKey('settings-replay-tips'),
+      leading: const Icon(Icons.lightbulb_rounded, color: _ivory),
+      title: Text(
+        l10n.replayTips,
+        style: const TextStyle(color: _ivory, fontWeight: FontWeight.w700),
+      ),
+      onTap: () => _replay(context),
     );
   }
 }

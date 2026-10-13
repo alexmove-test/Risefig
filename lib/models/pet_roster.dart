@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'garden.dart';
 import 'pet.dart';
 import 'pet_combat.dart';
+import 'plant_cross.dart';
 import 'seed_batch.dart';
 
 /// Боевой прогресс одного питомца. Итоговая сила каждый раз считается заново.
@@ -11,40 +12,20 @@ class PetCombatRecord {
     required this.kind,
     required this.level,
     required this.xp,
-    this.mainItemId,
-    this.accessoryItemId,
   });
 
   final PetKind kind;
   final int level;
   final int xp;
-  final String? mainItemId;
-  final String? accessoryItemId;
 
   static PetCombatRecord fresh(PetKind kind) =>
       PetCombatRecord(kind: kind, level: PetCombatRules.minLevel, xp: 0);
 
-  String? itemIn(GearSlot slot) => switch (slot) {
-    GearSlot.main => mainItemId,
-    GearSlot.accessory => accessoryItemId,
-  };
-
-  PetCombatRecord copyWith({
-    int? level,
-    int? xp,
-    String? mainItemId,
-    String? accessoryItemId,
-    bool clearMain = false,
-    bool clearAccessory = false,
-  }) {
+  PetCombatRecord copyWith({int? level, int? xp}) {
     return PetCombatRecord(
       kind: kind,
       level: level ?? this.level,
       xp: xp ?? this.xp,
-      mainItemId: clearMain ? null : (mainItemId ?? this.mainItemId),
-      accessoryItemId: clearAccessory
-          ? null
-          : (accessoryItemId ?? this.accessoryItemId),
     );
   }
 
@@ -52,66 +33,31 @@ class PetCombatRecord {
     'kind': kind.name,
     'level': level,
     'xp': xp,
-    'main': mainItemId,
-    'accessory': accessoryItemId,
   };
 
+  /// Старые поля `main` и `accessory` игнорируются: сила больше не зависит от вещей.
   static PetCombatRecord? fromJson(Object? raw) {
     if (raw is! Map) return null;
     final kind = _kind(raw['kind']);
     final level = raw['level'];
     final xp = raw['xp'];
-    final main = raw['main'];
-    final accessory = raw['accessory'];
     if (kind == null || level is! int || xp is! int) return null;
-    if (main != null && main is! String) return null;
-    if (accessory != null && accessory is! String) return null;
     final progress = PetLevelProgress.of(level, xp);
-    return PetCombatRecord(
-      kind: kind,
-      level: progress.level,
-      xp: progress.xp,
-      mainItemId: main is String && main.isNotEmpty ? main : null,
-      accessoryItemId: accessory is String && accessory.isNotEmpty
-          ? accessory
-          : null,
-    );
-  }
-}
-
-/// Купленный экземпляр. Надет, только если на него ссылается слот питомца.
-class GearInstance {
-  const GearInstance({required this.id, required this.defId});
-
-  final String id;
-  final String defId;
-
-  Map<String, Object> toJson() => {'id': id, 'def': defId};
-
-  static GearInstance? fromJson(Object? raw) {
-    if (raw is! Map) return null;
-    final id = raw['id'];
-    final defId = raw['def'];
-    if (id is! String || id.isEmpty || defId is! String || defId.isEmpty) {
-      return null;
-    }
-    return GearInstance(id: id, defId: defId);
+    return PetCombatRecord(kind: kind, level: progress.level, xp: progress.xp);
   }
 }
 
 class PetRosterSnapshot {
   const PetRosterSnapshot({
     required this.records,
-    required this.items,
     required this.seq,
     this.defender,
     this.raider,
   });
 
-  static const empty = PetRosterSnapshot(records: [], items: [], seq: 0);
+  static const empty = PetRosterSnapshot(records: [], seq: 0);
 
   final List<PetCombatRecord> records;
-  final List<GearInstance> items;
   final PetKind? defender;
   final PetKind? raider;
   final int seq;
@@ -119,29 +65,6 @@ class PetRosterSnapshot {
   PetCombatRecord? recordOf(PetKind kind) {
     for (final record in records) {
       if (record.kind == kind) return record;
-    }
-    return null;
-  }
-
-  GearInstance? itemOf(String id) {
-    for (final item in items) {
-      if (item.id == id) return item;
-    }
-    return null;
-  }
-
-  GearDef? defOf(String? itemId) {
-    if (itemId == null) return null;
-    final item = itemOf(itemId);
-    if (item == null) return null;
-    return GearCatalog.byId(item.defId);
-  }
-
-  PetKind? wearerOf(String itemId) {
-    for (final record in records) {
-      if (record.mainItemId == itemId || record.accessoryItemId == itemId) {
-        return record.kind;
-      }
     }
     return null;
   }
@@ -180,7 +103,6 @@ class PetRosterSnapshot {
 
   PetRosterSnapshot copyWith({
     List<PetCombatRecord>? records,
-    List<GearInstance>? items,
     int? seq,
     PetKind? defender,
     PetKind? raider,
@@ -189,7 +111,6 @@ class PetRosterSnapshot {
   }) {
     return PetRosterSnapshot(
       records: records ?? this.records,
-      items: items ?? this.items,
       seq: seq ?? this.seq,
       defender: clearDefender ? null : (defender ?? this.defender),
       raider: clearRaider ? null : (raider ?? this.raider),
@@ -201,7 +122,6 @@ class PetRosterSnapshot {
     'defender': defender?.name,
     'raider': raider?.name,
     'records': [for (final record in records) record.toJson()],
-    'items': [for (final item in items) item.toJson()],
   };
 
   String encode() => jsonEncode(toJson());
@@ -219,21 +139,13 @@ class PetRosterSnapshot {
     final seq = raw['seq'];
     if (seq is! int || seq < 0) return null;
     final recordsRaw = raw['records'];
-    final itemsRaw = raw['items'];
-    if (recordsRaw is! List || itemsRaw is! List) return null;
+    if (recordsRaw is! List) return null;
     final records = <PetCombatRecord>[];
     final seen = <PetKind>{};
     for (final item in recordsRaw) {
       final record = PetCombatRecord.fromJson(item);
       if (record == null || !seen.add(record.kind)) return null;
       records.add(record);
-    }
-    final items = <GearInstance>[];
-    final seenItems = <String>{};
-    for (final item in itemsRaw) {
-      final gear = GearInstance.fromJson(item);
-      if (gear == null || !seenItems.add(gear.id)) return null;
-      items.add(gear);
     }
     var defender = _kindOrNull(raw['defender']);
     var raider = _kindOrNull(raw['raider']);
@@ -254,7 +166,6 @@ class PetRosterSnapshot {
     }
     return PetRosterSnapshot(
       records: records,
-      items: items,
       seq: seq,
       defender: defender,
       raider: raider,
@@ -262,7 +173,15 @@ class PetRosterSnapshot {
   }
 }
 
-enum FeedStatus { fed, notOwned, missingPlant, pointless, unavailable, failed }
+enum FeedStatus {
+  fed,
+  notOwned,
+  missingPlant,
+  listed,
+  pointless,
+  unavailable,
+  failed,
+}
 
 class FeedResult {
   const FeedResult({
@@ -355,15 +274,15 @@ FeedPlan planFeed({
   final ready = roster.ensureOwned(owned);
   final record = ready.recordOf(kind);
   if (record == null) return const FeedPlan(status: FeedStatus.notOwned);
-  final main = ready.defOf(record.mainItemId);
-  final accessory = ready.defOf(record.accessoryItemId);
   final preview = previewFeed(
     level: record.level,
     xp: record.xp,
-    plantPower: GardenCatalog.foodFor(plant.species),
+    plantPower: feedXp(
+      species: plant.species,
+      trait: plant.trait,
+      role: PetCombatRules.roleOf(kind),
+    ),
     hunger: hunger,
-    main: main,
-    accessory: accessory,
   );
   if (preview.pointless) {
     return FeedPlan(
@@ -395,288 +314,6 @@ FeedPlan planFeed({
     preview: preview,
     plant: plant,
     hungerMillis: now.millisecondsSinceEpoch,
-  );
-}
-
-enum GearBuyStatus {
-  bought,
-  notOwned,
-  unknown,
-  roleMismatch,
-  levelLocked,
-  insufficient,
-  unavailable,
-  failed,
-}
-
-class GearBuyResult {
-  const GearBuyResult({
-    required this.status,
-    required this.balance,
-    required this.seeds,
-    required this.garden,
-    required this.roster,
-    this.price = 0,
-    this.shortfall = 0,
-    this.item,
-    this.def,
-  });
-
-  final GearBuyStatus status;
-  final int balance;
-  final SeedSnapshot seeds;
-  final GardenSnapshot garden;
-  final PetRosterSnapshot roster;
-  final int price;
-  final int shortfall;
-  final GearInstance? item;
-  final GearDef? def;
-
-  bool get bought => status == GearBuyStatus.bought;
-
-  const GearBuyResult.unavailable({
-    required int balance,
-    required SeedSnapshot seeds,
-    required GardenSnapshot garden,
-    required PetRosterSnapshot roster,
-  }) : this(
-         status: GearBuyStatus.unavailable,
-         balance: balance,
-         seeds: seeds,
-         garden: garden,
-         roster: roster,
-       );
-
-  const GearBuyResult.failed({
-    required int balance,
-    required SeedSnapshot seeds,
-    required GardenSnapshot garden,
-    required PetRosterSnapshot roster,
-  }) : this(
-         status: GearBuyStatus.failed,
-         balance: balance,
-         seeds: seeds,
-         garden: garden,
-         roster: roster,
-       );
-}
-
-class GearBuyPlan {
-  const GearBuyPlan({
-    required this.status,
-    this.balance,
-    this.roster,
-    this.price = 0,
-    this.shortfall = 0,
-    this.item,
-    this.def,
-  });
-
-  final GearBuyStatus status;
-  final int? balance;
-  final PetRosterSnapshot? roster;
-  final int price;
-  final int shortfall;
-  final GearInstance? item;
-  final GearDef? def;
-}
-
-GearBuyPlan planGearBuy({
-  required int balance,
-  required PetRosterSnapshot roster,
-  required List<PetKind> owned,
-  required PetKind kind,
-  required String defId,
-}) {
-  final def = GearCatalog.byId(defId);
-  if (def == null) return const GearBuyPlan(status: GearBuyStatus.unknown);
-  if (!owned.contains(kind)) {
-    return GearBuyPlan(status: GearBuyStatus.notOwned, def: def);
-  }
-  if (PetCombatRules.roleOf(kind) != def.role) {
-    return GearBuyPlan(status: GearBuyStatus.roleMismatch, def: def);
-  }
-  final ready = roster.ensureOwned(owned);
-  final record = ready.recordOf(kind);
-  if (record == null) {
-    return GearBuyPlan(status: GearBuyStatus.notOwned, def: def);
-  }
-  if (record.level < def.minLevel) {
-    return GearBuyPlan(
-      status: GearBuyStatus.levelLocked,
-      def: def,
-      price: def.price,
-    );
-  }
-  if (balance < def.price) {
-    return GearBuyPlan(
-      status: GearBuyStatus.insufficient,
-      def: def,
-      price: def.price,
-      shortfall: def.price - balance,
-    );
-  }
-  final seq = ready.seq + 1;
-  final item = GearInstance(id: 'gear-$seq', defId: def.id);
-  return GearBuyPlan(
-    status: GearBuyStatus.bought,
-    balance: balance - def.price,
-    roster: ready.copyWith(items: [...ready.items, item], seq: seq),
-    price: def.price,
-    item: item,
-    def: def,
-  );
-}
-
-enum EquipStatus {
-  equipped,
-  unequipped,
-  notOwned,
-  missingItem,
-  wornByOther,
-  roleMismatch,
-  slotMismatch,
-  levelLocked,
-  unavailable,
-  failed,
-}
-
-class EquipResult {
-  const EquipResult({
-    required this.status,
-    required this.balance,
-    required this.seeds,
-    required this.garden,
-    required this.roster,
-    this.wornBy,
-  });
-
-  final EquipStatus status;
-  final int balance;
-  final SeedSnapshot seeds;
-  final GardenSnapshot garden;
-  final PetRosterSnapshot roster;
-  final PetKind? wornBy;
-
-  bool get equipped => status == EquipStatus.equipped;
-  bool get unequipped => status == EquipStatus.unequipped;
-
-  const EquipResult.unavailable({
-    required int balance,
-    required SeedSnapshot seeds,
-    required GardenSnapshot garden,
-    required PetRosterSnapshot roster,
-  }) : this(
-         status: EquipStatus.unavailable,
-         balance: balance,
-         seeds: seeds,
-         garden: garden,
-         roster: roster,
-       );
-
-  const EquipResult.failed({
-    required int balance,
-    required SeedSnapshot seeds,
-    required GardenSnapshot garden,
-    required PetRosterSnapshot roster,
-  }) : this(
-         status: EquipStatus.failed,
-         balance: balance,
-         seeds: seeds,
-         garden: garden,
-         roster: roster,
-       );
-}
-
-class EquipPlan {
-  const EquipPlan({required this.status, this.roster, this.wornBy});
-
-  final EquipStatus status;
-  final PetRosterSnapshot? roster;
-  final PetKind? wornBy;
-}
-
-EquipPlan planEquip({
-  required PetRosterSnapshot roster,
-  required List<PetKind> owned,
-  required PetKind kind,
-  required String itemId,
-  required GearSlot slot,
-}) {
-  if (!owned.contains(kind)) {
-    return const EquipPlan(status: EquipStatus.notOwned);
-  }
-  final ready = roster.ensureOwned(owned);
-  final record = ready.recordOf(kind);
-  final item = ready.itemOf(itemId);
-  if (record == null) return const EquipPlan(status: EquipStatus.notOwned);
-  if (item == null) return const EquipPlan(status: EquipStatus.missingItem);
-  final def = GearCatalog.byId(item.defId);
-  if (def == null) return const EquipPlan(status: EquipStatus.missingItem);
-  if (def.role != PetCombatRules.roleOf(kind)) {
-    return const EquipPlan(status: EquipStatus.roleMismatch);
-  }
-  if (def.slot != slot) {
-    return const EquipPlan(status: EquipStatus.slotMismatch);
-  }
-  if (record.level < def.minLevel) {
-    return const EquipPlan(status: EquipStatus.levelLocked);
-  }
-  final wearer = ready.wearerOf(itemId);
-  if (wearer != null && wearer != kind) {
-    return EquipPlan(status: EquipStatus.wornByOther, wornBy: wearer);
-  }
-  if (wearer == kind && record.itemIn(slot) == itemId) {
-    return EquipPlan(status: EquipStatus.equipped, roster: ready);
-  }
-  final updated = switch (slot) {
-    GearSlot.main => record.copyWith(
-      mainItemId: itemId,
-      clearAccessory: record.accessoryItemId == itemId,
-    ),
-    GearSlot.accessory => record.copyWith(
-      accessoryItemId: itemId,
-      clearMain: record.mainItemId == itemId,
-    ),
-  };
-  return EquipPlan(
-    status: EquipStatus.equipped,
-    roster: ready.copyWith(
-      records: [
-        for (final item in ready.records)
-          if (item.kind == kind) updated else item,
-      ],
-    ),
-  );
-}
-
-EquipPlan planUnequip({
-  required PetRosterSnapshot roster,
-  required List<PetKind> owned,
-  required PetKind kind,
-  required GearSlot slot,
-}) {
-  if (!owned.contains(kind)) {
-    return const EquipPlan(status: EquipStatus.notOwned);
-  }
-  final ready = roster.ensureOwned(owned);
-  final record = ready.recordOf(kind);
-  if (record == null) return const EquipPlan(status: EquipStatus.notOwned);
-  if (record.itemIn(slot) == null) {
-    return EquipPlan(status: EquipStatus.unequipped, roster: ready);
-  }
-  final updated = record.copyWith(
-    clearMain: slot == GearSlot.main,
-    clearAccessory: slot == GearSlot.accessory,
-  );
-  return EquipPlan(
-    status: EquipStatus.unequipped,
-    roster: ready.copyWith(
-      records: [
-        for (final item in ready.records)
-          if (item.kind == kind) updated else item,
-      ],
-    ),
   );
 }
 

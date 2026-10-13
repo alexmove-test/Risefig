@@ -8,22 +8,34 @@ import '../l10n/l10n.dart';
 import '../models/game_snapshot.dart';
 import '../models/garden.dart';
 import '../models/house_upgrade.dart';
+import '../models/hub_event.dart';
 import '../models/hub_goal.dart';
 import '../models/levels.dart';
+import '../models/meta_features.dart';
 import '../models/plot_kind.dart';
 import '../models/rank_climb.dart';
 import '../models/seed_catalog.dart';
 import '../models/weekly_quests.dart';
 import '../models/weekly_score.dart';
+import '../models/neighbor_request.dart';
+import '../models/neighbor_social.dart';
 import '../services/analytics_service.dart';
+import '../services/firebase_neighbor_directory.dart';
+import '../services/neighbor_actions.dart';
+import '../services/neighbor_records.dart';
+import '../services/neighbor_request_repository.dart';
+import '../services/raid_help_repository.dart';
+import '../services/social_repository.dart';
+import '../services/ugc_block_store.dart';
 import '../services/courtyard_reward_store.dart';
+import '../services/feature_intro_store.dart';
 import '../services/firebase_leaderboard_repository.dart';
+import '../services/hub_feed.dart';
 import '../services/hub_goals.dart';
 import '../services/leaderboard_service.dart';
 import '../services/local_reminder_service.dart';
 import '../services/pet_store.dart';
 import '../services/fox_adventure_store.dart';
-import '../services/pet_story_store.dart';
 import '../services/player_profile_store.dart';
 import '../services/points_controller.dart';
 import '../services/progress_store.dart';
@@ -36,17 +48,20 @@ import '../widgets/courtyard/courtyard_win_overlay.dart';
 import '../widgets/courtyard/courtyard_world.dart';
 import '../widgets/courtyard/courtyard_world_layout.dart';
 import '../widgets/courtyard/home_upgrade_preview.dart';
+import '../widgets/feature_intro_card.dart';
 import '../widgets/garden/garden_sheets.dart';
 import '../widgets/garden/plant_chip.dart';
 import '../widgets/garden/plant_flight.dart';
 import '../widgets/seeds/house_sheet.dart';
 import '../widgets/seeds/seed_storage_sheet.dart';
 import '../widgets/hub_goal_banner.dart';
+import '../widgets/neighbors/neighbor_copy.dart';
+import '../widgets/neighbors/neighbors_panel.dart';
 import '../widgets/pets/pet_page.dart';
 import '../widgets/points/points_chip.dart';
 import '../widgets/points/points_shop_sheet.dart';
-import '../widgets/pets/pet_story_section.dart';
 import '../widgets/rank_climb_overlay.dart';
+import '../widgets/table_coach_banner.dart';
 import 'game_screen.dart';
 import 'leaderboard_screen.dart';
 
@@ -63,8 +78,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   QuestStore? _quests;
   PetStore? _pets;
   FoxAdventureStore? _foxAdventure;
-  PetStoryStore? _petStories;
   CourtyardRewardStore? _courtyardRewards;
+  FeatureIntroStore? _intros;
   bool _foxSceneOpen = false;
   bool _firstSessionCover = false;
   bool _didAutoOpenFirst = false;
@@ -73,6 +88,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   RankClimb? _rankClimb;
   Timer? _panHintTimer;
   var _panHintDismissed = false;
+  Timer? _ripenTimer;
+  DateTime? _ripenAt;
   List<NeighborYard> _neighbors = NeighborYard.placed(
     others: const [],
     online: false,
@@ -83,6 +100,22 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   var _yardSheet = false;
   final _plantChipKey = GlobalKey();
   ({SeedSpecies species, Offset from, Offset to})? _flight;
+  final _neighborsKey = GlobalKey<NeighborsOverlayState>();
+  late final FirebaseNeighborDirectory _neighborDirectory =
+      FirebaseNeighborDirectory(progress: () => _store);
+  AcquaintanceStore? _acquaintances;
+  NeighborNoticeStore? _notices;
+  NeighborHistoryStore? _history;
+  UgcBlockStore? _neighborBlocks;
+  var _neighborsMounted = false;
+  var _neighborsOpen = false;
+  var _neighborsCovering = false;
+  var _unseenNeighbors = 0;
+  final _neighborRequests = FirebaseNeighborRequestRepository();
+  final _raidHelp = FirebaseRaidHelpRepository();
+  final _social = FirebaseSocialRepository();
+  String? _requestsMe;
+  List<NeighborRequest> _knownRequests = const [];
 
   static const _panHintDuration = Duration(seconds: 6);
 
@@ -123,6 +156,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   void dispose() {
     _points?.removeListener(_onPoints);
     _panHintTimer?.cancel();
+    _ripenTimer?.cancel();
     super.dispose();
   }
 
@@ -203,7 +237,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         if (store.isCompleted(id)) id,
     ]);
     await foxAdventure.attachExistingCompanion(pets);
-    final petStories = await PetStoryStore.open();
+    final acquaintances = await AcquaintanceStore.open();
+    final notices = await NeighborNoticeStore.open();
+    final history = await NeighborHistoryStore.open();
+    final neighborBlocks = await UgcBlockStore.open();
+    final intros = await FeatureIntroStore.open();
+    final unseenNeighbors = unseenNeighborCount(const [], notices.seenIds);
     // #region agent log
     agentDbg(
       location: 'level_select_screen.dart:_load',
@@ -213,6 +252,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     );
     // #endregion
     if (!mounted) return;
+    _intros = intros;
     final points = PointsScope.read(context);
     if (points != null) await points.migrateHouse(store);
     if (!mounted) return;
@@ -225,8 +265,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
         _quests = quests;
         _pets = pets;
         _foxAdventure = foxAdventure;
-        _petStories = petStories;
         _courtyardRewards = courtyardRewards;
+        _acquaintances = acquaintances;
+        _notices = notices;
+        _history = history;
+        _neighborBlocks = neighborBlocks;
+        _unseenNeighbors = unseenNeighbors;
         _cycle = 0;
         _firstSessionCover = true;
       });
@@ -243,8 +287,12 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       _quests = quests;
       _pets = pets;
       _foxAdventure = foxAdventure;
-      _petStories = petStories;
       _courtyardRewards = courtyardRewards;
+      _acquaintances = acquaintances;
+      _notices = notices;
+      _history = history;
+      _neighborBlocks = neighborBlocks;
+      _unseenNeighbors = unseenNeighbors;
       _cycle = Levels.cycleOf(store.lastPlayedLevel);
     });
     unawaited(_loadNeighbors());
@@ -268,11 +316,41 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     setState(() {
       _neighbors = NeighborYard.placed(others: nearby, online: fetch.online);
     });
+    unawaited(_loadNeighborRequests());
+  }
+
+  Future<void> _loadNeighborRequests() async {
+    final me = await _neighborRequests.connect();
+    if (me == null || !mounted) return;
+    try {
+      final list = await _neighborRequests.fetch(me);
+      if (!mounted) return;
+      _onNeighborRequests(me.id, list);
+    } catch (error) {
+      debugPrint('Neighbor requests for the badge failed: $error');
+    }
+  }
+
+  void _onNeighborRequests(String me, List<NeighborRequest> requests) {
+    _requestsMe = me;
+    _knownRequests = requests;
+    _refreshNeighborNotices();
+  }
+
+  int _neighborUnseen(NeighborNoticeStore notices) {
+    final me = _requestsMe;
+    final requests = me == null
+        ? 0
+        : unseenRequestCount(
+            _knownRequests,
+            me,
+            notices.seenIds,
+            blockedIds: _neighborBlocks?.blockedIds ?? const {},
+          );
+    return unseenNeighborCount(const [], notices.seenIds) + requests;
   }
 
   Future<void> _afterHubReady() async {
-    if (!mounted) return;
-    if (_petStories?.hasPendingMoment ?? false) await _openPetStoryMoment();
     if (!mounted) return;
     await LocalReminderService.resync(l10n: AppLocalizations.of(context));
     if (!mounted) return;
@@ -374,10 +452,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     final store = _store;
     if (store == null || !store.isUnlocked(level.id)) return;
     if (_foxSceneOpen) return;
-    if (_petStories?.hasPendingMoment ?? false) {
-      await _openPetStoryMoment();
-      return;
-    }
     if (_winReveal != null || _rankClimb != null) {
       setState(() {
         _winReveal = null;
@@ -453,18 +527,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     return pushed;
   }
 
-  Future<void> _openPetStoryMoment() async {
-    final stories = _petStories;
-    if (stories == null || _foxSceneOpen || !stories.hasPendingMoment) return;
-    _foxSceneOpen = true;
-    try {
-      await showPetStoryMoment(context, stories);
-    } finally {
-      _foxSceneOpen = false;
-      if (mounted) setState(() {});
-    }
-  }
-
   Future<void> _continueGame() async {
     final store = _store;
     if (store == null) return;
@@ -483,6 +545,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   Future<void> _openLeaderboard() async {
     final store = _store;
     if (store == null) return;
+    await _intro(MetaFeature.leaderboard);
+    if (!mounted) return;
 
     await Navigator.of(context).push<void>(
       MaterialPageRoute(builder: (_) => LeaderboardScreen(progress: store)),
@@ -491,30 +555,18 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     setState(() {});
   }
 
-  Future<void> _openPets({bool showStory = false}) async {
+  Future<void> _openPets() async {
     final pets = _pets;
     if (pets == null || _foxSceneOpen) return;
     _foxSceneOpen = true;
-    bool? play;
     try {
       unawaited(AnalyticsService.log('pet_visit'));
-      play = await openPetPage(
-        context,
-        pets: pets,
-        adventure: _foxAdventure,
-        stories: _petStories,
-        showStory: showStory,
-      );
+      await _intro(MetaFeature.pets);
+      if (!mounted) return;
+      await openPetPage(context, pets: pets, adventure: _foxAdventure);
     } finally {
       _foxSceneOpen = false;
       if (mounted) setState(() {});
-    }
-    if ((_foxAdventure?.pending ?? false) &&
-        !(_petStories?.hasPendingMoment ?? false)) {
-      await _foxAdventure!.finishScene();
-    }
-    if (mounted && play == true && _store != null) {
-      await _openLevel(_continueLevel(_store!));
     }
   }
 
@@ -556,11 +608,6 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       _rankClimb = null;
     });
     _ensurePanHintTimer();
-    unawaited(_showPendingMoments());
-  }
-
-  Future<void> _showPendingMoments() async {
-    if (_petStories?.hasPendingMoment ?? false) await _openPetStoryMoment();
   }
 
   HubGoal? _hubGoal({
@@ -575,13 +622,98 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       hasPet: _pets?.hasPet ?? false,
       houseState: points?.houseState ?? HouseUpgrade.firstState,
       pointsBalance: points?.balance ?? 0,
+      featureUnlocks: true,
+      house: false,
     );
+  }
+
+  HubEvent? _hubEvent(DateTime now) {
+    if (_winReveal != null || _rankClimb != null) return null;
+    final points = PointsScope.maybeOf(context);
+    final gardenOpen = _isOpen(MetaFeature.garden);
+    return HubFeed.latest(
+      now: now,
+      requests: _isOpen(MetaFeature.neighbors) ? _knownRequests : const [],
+      me: _requestsMe,
+      seenIds: _notices?.seenIds ?? const {},
+      blockedIds: _neighborBlocks?.blockedIds ?? const {},
+      garden: gardenOpen ? points?.garden : null,
+      hasSeeds: (points?.seedCount ?? 0) > 0,
+    );
+  }
+
+  String? _hubEventText(AppLocalizations l10n, HubEvent event) {
+    return switch (event.kind) {
+      HubEventKind.neighbor => neighborHubLine(
+        l10n,
+        event.request!,
+        _requestsMe ?? '',
+      ),
+      HubEventKind.harvestReady => l10n.hubHarvestReady(
+        l10n.seedName(event.species!),
+      ),
+      HubEventKind.bedFree => l10n.hubBedFree,
+    };
+  }
+
+  VoidCallback _hubEventTap(HubEvent event) {
+    return switch (event.kind) {
+      HubEventKind.neighbor => () => unawaited(_openNeighborsPanel()),
+      HubEventKind.harvestReady ||
+      HubEventKind.bedFree => () => unawaited(_openBed(event.bedIndex!)),
+    };
+  }
+
+  /// Грядка созревает по часам, а не по событию контроллера: будим экран сами.
+  void _armRipening(DateTime now) {
+    final points = PointsScope.maybeOf(context);
+    final next = _isOpen(MetaFeature.garden)
+        ? HubFeed.nextRipening(points?.garden, now)
+        : null;
+    if (next == _ripenAt) return;
+    _ripenTimer?.cancel();
+    _ripenTimer = null;
+    _ripenAt = next;
+    if (next == null) return;
+    final wait = next.difference(now) + const Duration(milliseconds: 200);
+    _ripenTimer = Timer(wait, () {
+      _ripenAt = null;
+      if (mounted) setState(() {});
+    });
+  }
+
+  int get _cleared => MetaFeatures.clearedFrom(_store?.maxUnlocked ?? 1);
+
+  bool _isOpen(MetaFeature feature) => MetaFeatures.isOpen(feature, _cleared);
+
+  /// Фича уже открыта, но игрок её ещё не трогал.
+  bool _isNew(MetaFeature feature) {
+    final intros = _intros;
+    return intros != null && _isOpen(feature) && !intros.isSeen(feature);
+  }
+
+  Future<void> _intro(MetaFeature feature) async {
+    await showFeatureIntroOnce(context, feature, store: _intros);
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _openPointsShop() async {
+    await _intro(MetaFeature.points);
+    if (!mounted) return;
+    await showPointsShop(context);
+  }
+
+  Future<void> _openSettings() async {
+    await showAppSettings(context);
+    if (mounted) setState(() {});
   }
 
   Future<void> _openHouse() async {
     if (_houseOpen || !mounted) return;
     _houseOpen = true;
     try {
+      await _intro(MetaFeature.house);
+      if (!mounted) return;
       await showHouseSheet(
         context,
         onBuy: _buyHouse,
@@ -596,6 +728,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
   }
 
   Future<void> _openSeedStorage() async {
+    await _intro(MetaFeature.seeds);
+    if (!mounted) return;
     final produce = await showSeedStorage(context);
     if (produce && mounted) await _openHouse();
   }
@@ -604,7 +738,9 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     if (_yardSheet || !mounted) return;
     _yardSheet = true;
     try {
-      await showWarehouse(context);
+      await _intro(MetaFeature.warehouse);
+      if (!mounted) return;
+      await showWarehouse(context, showcase: _isOpen(MetaFeature.showcase));
     } finally {
       _yardSheet = false;
     }
@@ -616,6 +752,8 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     if (points == null) return;
     _yardSheet = true;
     try {
+      await _intro(MetaFeature.garden);
+      if (!mounted) return;
       if (points.garden.bedAt(index) == null) {
         final result = await showSeedPicker(context, bedIndex: index);
         if (!mounted || result == null) return;
@@ -645,6 +783,52 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     });
   }
 
+  Future<void> _startSeedFromYard() async {
+    final points = _points ?? PointsScope.read(context);
+    if (points == null) return;
+    final result = await points.startSeedBatch();
+    if (result.started) {
+      AnalyticsService.log('seed_produce', <String, Object>{
+        'house': result.seeds.batch?.houseLevel ?? 0,
+        'cost': result.cost,
+      });
+    }
+  }
+
+  Future<void> _claimSeedFromYard() async {
+    final points = _points ?? PointsScope.read(context);
+    if (points == null) return;
+    final result = await points.claimSeed();
+    if (result.claimed) {
+      AnalyticsService.log('seed_claim', <String, Object>{
+        'power': result.seed?.power ?? 0,
+      });
+    }
+  }
+
+  /// Пустая грядка — посадить. Если все заняты, открыть спелую или растущую.
+  Future<void> _growPlant() async {
+    final points = _points ?? PointsScope.read(context);
+    if (points == null) return;
+    final now = DateTime.now();
+    int? empty;
+    int? ripe;
+    int? growing;
+    for (var i = 0; i < GardenCatalog.bedCount; i++) {
+      final bed = points.garden.bedAt(i);
+      if (bed == null) {
+        empty ??= i;
+      } else if (bed.isReady(now)) {
+        ripe ??= i;
+      } else {
+        growing ??= i;
+      }
+    }
+    final index = empty ?? ripe ?? growing;
+    if (index == null) return;
+    await _openBed(index);
+  }
+
   Future<void> _buyHouse() async {
     if (_buyingHouse) return;
     final points = _points ?? PointsScope.read(context);
@@ -662,6 +846,7 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
       HubGoalKind.petUnlock => _openPets,
       HubGoalKind.questClaim => () => unawaited(_claimHubQuest(goal.quest)),
       HubGoalKind.dailyReward ||
+      HubGoalKind.featureUnlock ||
       HubGoalKind.questRemain ||
       HubGoalKind.plotUnlock ||
       HubGoalKind.plotLook => _continueGame,
@@ -675,6 +860,39 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
     final claimed = await quests.claim(quest.def.id, store);
     if (!claimed || !mounted) return;
     setState(() {});
+  }
+
+  Future<void> _openNeighborsPanel() async {
+    if (_acquaintances == null ||
+        _notices == null ||
+        _history == null ||
+        _neighborBlocks == null) {
+      return;
+    }
+    await _intro(MetaFeature.neighbors);
+    if (!mounted) return;
+    setState(() {
+      _neighborsMounted = true;
+      _neighborsOpen = true;
+      _neighborsCovering = true;
+    });
+  }
+
+  void _closeNeighborsPanel() {
+    setState(() => _neighborsOpen = false);
+  }
+
+  void _onNeighborsObscuring(bool covering) {
+    if (!mounted || _neighborsCovering == covering) return;
+    setState(() => _neighborsCovering = covering);
+  }
+
+  void _refreshNeighborNotices() {
+    final notices = _notices;
+    if (!mounted || notices == null) return;
+    final count = _neighborUnseen(notices);
+    if (count == _unseenNeighbors) return;
+    setState(() => _unseenNeighbors = count);
   }
 
   @override
@@ -719,196 +937,407 @@ class _LevelSelectScreenState extends State<LevelSelectScreen> {
           purchasedState: HouseUpgrade.firstState,
         );
     final stars = store.totalStars;
-    final hubGoal = _hubGoal(store: store, quests: quests);
+    final now = DateTime.now();
+    _armRipening(now);
+    final hubEvent = _hubEvent(now);
+    final hubEventText = hubEvent == null
+        ? null
+        : _hubEventText(l10n, hubEvent);
+    final hubGoal = hubEventText == null
+        ? _hubGoal(store: store, quests: quests)
+        : null;
+    final acquaintances = _acquaintances;
+    final notices = _notices;
+    final history = _history;
+    final neighborBlocks = _neighborBlocks;
+    final houseOpen = _isOpen(MetaFeature.house);
+    final gardenOpen = _isOpen(MetaFeature.garden);
+    final showGardenNews =
+        !_showPanHint && _winReveal == null && _isNew(MetaFeature.garden);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A3D2E),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Semantics(
-            image: true,
-            explicitChildNodes: true,
-            label: l10n.courtyardSemanticKind(PlotKind.house),
-            child: CourtyardWorld(
-              courtyardRewards: _courtyardRewards?.owned ?? const {},
-              pets: _pets?.yardCare() ?? const [],
-              petStories: _petStories,
-              onPetTap: _openPets,
-              onSelectLot: (kind) {
-                if (kind == PlotKind.house) unawaited(_openHouse());
-              },
-              showSeedProduction: true,
-              seedBatch: points?.seedBatch,
-              showGarden: true,
-              garden: points?.garden,
-              petRoster: points?.roster,
-              ownedPetKinds: _pets?.owned ?? const [],
-              onBedTap: (index) => unawaited(_openBed(index)),
-              onWarehouseTap: () => unawaited(_openWarehouse()),
-              from: _winReveal?.estateFrom,
-              to: _winReveal?.estateTo ?? estate,
-              animate: _winReveal != null,
-              neighbors: _neighbors,
-              onPanHint: _panHintPending ? _markPanHintLearned : null,
-            ),
-          ),
-          const Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x99081410),
-                      Color(0x00000000),
-                      Color(0x00000000),
-                      Color(0xB3141A12),
-                    ],
-                    stops: [0, 0.22, 0.52, 1],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PopScope(
+      canPop: !_neighborsCovering,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _neighborsKey.currentState?.handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF1A3D2E),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            ExcludeSemantics(
+              excluding: _neighborsCovering,
+              child: IgnorePointer(
+                ignoring: _neighborsCovering,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                      child: Row(
-                        children: [
-                          const Spacer(),
-                          PointsChipLive(onTap: () => showPointsShop(context)),
-                          const SizedBox(width: 8),
-                          PlantChipLive(
-                            key: _plantChipKey,
-                            onTap: () => unawaited(_openWarehouse()),
-                          ),
-                          const SizedBox(width: 8),
-                          _StarChip(stars: stars),
-                          const SizedBox(width: 8),
-                          _HudIconButton(
-                            tooltip: l10n.settings,
-                            icon: Icons.settings_rounded,
-                            onTap: () => showAppSettings(context),
-                          ),
-                          const SizedBox(width: 8),
-                          _HudIconButton(
-                            tooltip: l10n.leaderboard,
-                            icon: Icons.leaderboard_rounded,
-                            onTap: _openLeaderboard,
-                          ),
-                        ],
+                    Semantics(
+                      image: true,
+                      explicitChildNodes: true,
+                      label: l10n.courtyardSemanticKind(PlotKind.house),
+                      child: CourtyardWorld(
+                        courtyardRewards: _courtyardRewards?.owned ?? const {},
+                        pets: _pets?.yardCare() ?? const [],
+                        onPetTap: _openPets,
+                        onSelectLot: (kind) {
+                          if (kind == PlotKind.house && houseOpen) {
+                            unawaited(_openHouse());
+                          }
+                        },
+                        showGarden: gardenOpen,
+                        garden: points?.garden,
+                        onBedTap: (index) => unawaited(_openBed(index)),
+                        onWarehouseTap: _isOpen(MetaFeature.warehouse)
+                            ? () => unawaited(_openWarehouse())
+                            : null,
+                        from: _winReveal?.estateFrom,
+                        to: _winReveal?.estateTo ?? estate,
+                        animate: _winReveal != null,
+                        neighbors: _neighbors,
+                        onPanHint: _panHintPending ? _markPanHintLearned : null,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                      child: HomeUpgradePreview(
-                        state: shownHome,
-                        balance: points?.balance ?? 0,
-                        busy: _buyingHouse,
-                        onBuy: points == null ? null : _buyHouse,
-                      ),
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: Column(
-                        children: [
-                          if (_showPanHint) ...[
-                            const CourtyardPanHint(),
-                            const SizedBox(height: 10),
-                          ],
-                          if (hubGoal != null) ...[
-                            HubGoalBanner(
-                              goal: hubGoal,
-                              onTap: _hubGoalTap(hubGoal),
+                    const Positioned.fill(
+                      child: IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0x99081410),
+                                Color(0x00000000),
+                                Color(0x00000000),
+                                Color(0xB3141A12),
+                              ],
+                              stops: [0, 0.22, 0.52, 1],
                             ),
-                            const SizedBox(height: 10),
-                          ],
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              key: const ValueKey('seed-storage-button'),
-                              onPressed: points == null
-                                  ? null
-                                  : _openSeedStorage,
-                              icon: const Icon(
-                                Icons.spa_rounded,
-                                color: _goldSoft,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SafeArea(
+                      child: Stack(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  6,
+                                  12,
+                                  0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Align(
+                                        alignment: Alignment.centerRight,
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerRight,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (_isOpen(
+                                                MetaFeature.points,
+                                              )) ...[
+                                                NewFeatureMark(
+                                                  active: _isNew(
+                                                    MetaFeature.points,
+                                                  ),
+                                                  child: PointsChipLive(
+                                                    onTap: () => unawaited(
+                                                      _openPointsShop(),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                              if (_isOpen(
+                                                MetaFeature.warehouse,
+                                              )) ...[
+                                                NewFeatureMark(
+                                                  active: _isNew(
+                                                    MetaFeature.warehouse,
+                                                  ),
+                                                  child: PlantChipLive(
+                                                    key: _plantChipKey,
+                                                    onTap: () => unawaited(
+                                                      _openWarehouse(),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                              ],
+                                              _StarChip(stars: stars),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _HudIconButton(
+                                      tooltip: l10n.settings,
+                                      icon: Icons.settings_rounded,
+                                      onTap: () => unawaited(_openSettings()),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    NewFeatureMark(
+                                      active: _isNew(MetaFeature.leaderboard),
+                                      child: _HudIconButton(
+                                        tooltip: l10n.leaderboard,
+                                        icon: Icons.leaderboard_rounded,
+                                        onTap: _openLeaderboard,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              label: Text(
-                                l10n.seedsButton(points?.seedCount ?? 0),
-                                style: const TextStyle(
-                                  color: _goldSoft,
-                                  fontWeight: FontWeight.w800,
+                              if (houseOpen)
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    8,
+                                    12,
+                                    0,
+                                  ),
+                                  child: NewFeatureMark(
+                                    active: _isNew(MetaFeature.house),
+                                    child: HomeUpgradePreview(
+                                      state: shownHome,
+                                      balance: points?.balance ?? 0,
+                                      busy: _buyingHouse,
+                                      seedBatch: points?.seedBatch,
+                                      seedBusy:
+                                          (points?.seedStartBusy ?? false) ||
+                                          (points?.seedClaimBusy ?? false),
+                                      onBuy: points == null
+                                          ? null
+                                          : _isNew(MetaFeature.house)
+                                          ? () => _intro(MetaFeature.house)
+                                          : _buyHouse,
+                                      onStartSeed: points == null
+                                          ? null
+                                          : _isNew(MetaFeature.seeds)
+                                          ? () => _intro(MetaFeature.seeds)
+                                          : _startSeedFromYard,
+                                      onClaimSeed: points == null
+                                          ? null
+                                          : _isNew(MetaFeature.seeds)
+                                          ? () => _intro(MetaFeature.seeds)
+                                          : _claimSeedFromYard,
+                                      onOpenSeed: points == null
+                                          ? null
+                                          : _isNew(MetaFeature.seeds)
+                                          ? () {
+                                              unawaited(
+                                                _intro(MetaFeature.seeds),
+                                              );
+                                            }
+                                          : () {
+                                              unawaited(_openHouse());
+                                            },
+                                      onGrowPlant: points == null || !gardenOpen
+                                          ? null
+                                          : _isNew(MetaFeature.garden)
+                                          ? () {
+                                              unawaited(
+                                                _intro(MetaFeature.garden),
+                                              );
+                                            }
+                                          : () {
+                                              unawaited(_growPlant());
+                                            },
+                                      seeds:
+                                          points?.seeds.inventory ?? const [],
+                                      garden: points?.garden,
+                                    ),
+                                  ),
+                                ),
+                              const Spacer(),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  12,
+                                ),
+                                child: Column(
+                                  children: [
+                                    if (_showPanHint) ...[
+                                      const CourtyardPanHint(),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    if (showGardenNews) ...[
+                                      TableCoachBanner(
+                                        key: const ValueKey('hub-garden-news'),
+                                        text: l10n.featureNewGarden,
+                                      ),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    if (hubEvent != null &&
+                                        hubEventText != null) ...[
+                                      HubGoalBanner(
+                                        icon: hubEventIcon(hubEvent),
+                                        text: hubEventText,
+                                        onTap: _hubEventTap(hubEvent),
+                                      ),
+                                      const SizedBox(height: 10),
+                                    ] else if (hubGoal != null) ...[
+                                      HubGoalBanner(
+                                        icon: hubGoalIcon(hubGoal),
+                                        text: l10n.hubGoalText(hubGoal),
+                                        onTap: _hubGoalTap(hubGoal),
+                                      ),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    if (_isOpen(MetaFeature.seeds))
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: NewFeatureMark(
+                                          active: _isNew(MetaFeature.seeds),
+                                          child: TextButton.icon(
+                                            key: const ValueKey(
+                                              'seed-storage-button',
+                                            ),
+                                            onPressed: points == null
+                                                ? null
+                                                : _openSeedStorage,
+                                            icon: const Icon(
+                                              Icons.spa_rounded,
+                                              color: _goldSoft,
+                                            ),
+                                            label: Text(
+                                              l10n.seedsButton(
+                                                points?.seedCount ?? 0,
+                                              ),
+                                              style: const TextStyle(
+                                                color: _goldSoft,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(height: 4),
+                                    FilledButton.icon(
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: _woodTop,
+                                        foregroundColor: _goldSoft,
+                                        minimumSize: const Size.fromHeight(48),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          side: BorderSide(
+                                            color: _gold.withValues(
+                                              alpha: 0.75,
+                                            ),
+                                            width: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: _continueGame,
+                                      icon: const Icon(
+                                        Icons.play_arrow_rounded,
+                                      ),
+                                      label: Text(
+                                        l10n.continueGame,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_winReveal == null &&
+                              _rankClimb == null &&
+                              _isOpen(MetaFeature.neighbors))
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: NewFeatureMark(
+                                  active: _isNew(MetaFeature.neighbors),
+                                  onLeadingEdge: true,
+                                  child: NeighborsEntryButton(
+                                    unseen: _unseenNeighbors,
+                                    onPressed: () =>
+                                        unawaited(_openNeighborsPanel()),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _woodTop,
-                              foregroundColor: _goldSoft,
-                              minimumSize: const Size.fromHeight(48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: BorderSide(
-                                  color: _gold.withValues(alpha: 0.75),
-                                  width: 1.4,
-                                ),
-                              ),
-                            ),
-                            onPressed: _continueGame,
-                            icon: const Icon(Icons.play_arrow_rounded),
-                            label: Text(
-                              l10n.continueGame,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
+                    if (_flight != null)
+                      Positioned.fill(
+                        child: PlantFlight(
+                          species: _flight!.species,
+                          from: _flight!.from,
+                          to: _flight!.to,
+                          onDone: () {
+                            if (mounted) setState(() => _flight = null);
+                          },
+                        ),
+                      ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          if (_flight != null)
-            Positioned.fill(
-              child: PlantFlight(
-                species: _flight!.species,
-                from: _flight!.from,
-                to: _flight!.to,
-                onDone: () {
-                  if (mounted) setState(() => _flight = null);
-                },
               ),
             ),
-          if (_winReveal != null && _rankClimb == null)
-            CourtyardWinOverlay(
-              onFinished: _onWinOverlayFinished,
-              score: _winReveal!.score,
-              stars: _winReveal!.stars,
-              isNewBest: _winReveal!.isNewBest,
-              points: _winReveal!.pointsAward.total,
-              houseUpgradeNote: _winReveal!.houseUpgradeNote,
-            ),
-          if (_rankClimb != null)
-            RankClimbOverlay(
-              climb: _rankClimb!,
-              onFinished: _onRankClimbFinished,
-            ),
-        ],
+            if (acquaintances != null &&
+                notices != null &&
+                history != null &&
+                neighborBlocks != null &&
+                _neighborsMounted)
+              Positioned.fill(
+                child: NeighborsOverlay(
+                  key: _neighborsKey,
+                  visible: _neighborsOpen,
+                  directory: _neighborDirectory,
+                  acquaintances: acquaintances,
+                  notices: notices,
+                  history: history,
+                  blocks: neighborBlocks,
+                  gateway: const UnavailableNeighborGateway(),
+                  onClose: _closeNeighborsPanel,
+                  onObscuring: _onNeighborsObscuring,
+                  onNoticesChanged: _refreshNeighborNotices,
+                  requests: _neighborRequests,
+                  raidHelp: _raidHelp,
+                  social: _social,
+                  onRequestsChanged: _onNeighborRequests,
+                ),
+              ),
+            if (_winReveal != null && _rankClimb == null)
+              CourtyardWinOverlay(
+                onFinished: _onWinOverlayFinished,
+                score: _winReveal!.score,
+                stars: _winReveal!.stars,
+                isNewBest: _winReveal!.isNewBest,
+                points: _winReveal!.pointsAward.total,
+                houseUpgradeNote: _isNew(MetaFeature.house)
+                    ? l10n.winPointsHint
+                    : _winReveal!.houseUpgradeNote,
+              ),
+            if (_rankClimb != null)
+              RankClimbOverlay(
+                climb: _rankClimb!,
+                onFinished: _onRankClimbFinished,
+              ),
+          ],
+        ),
       ),
     );
   }

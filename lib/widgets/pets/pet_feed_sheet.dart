@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/l10n.dart';
 import '../../models/garden.dart';
+import '../../models/plant_cross.dart';
 import '../../models/pet.dart';
 import '../../models/pet_combat.dart';
 import '../../models/pet_roster.dart';
@@ -54,32 +55,35 @@ class _PetFeedSheetState extends State<_PetFeedSheet> {
     final l10n = AppLocalizations.of(context);
     final points = PointsScope.of(context);
     final reduced = MediaQuery.disableAnimationsOf(context);
-    final stacks = stackPlants(points.garden.warehouse);
+    final available = points.garden.warehouse
+        .where((plant) => !points.showcaseReservations.containsKey(plant.id))
+        .toList();
+    final stacks = stackPlants(available);
     final record =
         points.roster.recordOf(widget.kind) ??
         PetCombatRecord.fresh(widget.kind);
-    final main = points.roster.defOf(record.mainItemId);
-    final accessory = points.roster.defOf(record.accessoryItemId);
     HarvestedPlant? selected;
     if (_plantId != null) {
-      for (final plant in points.garden.warehouse) {
+      for (final plant in available) {
         if (plant.id == _plantId) {
           selected = plant;
           break;
         }
       }
     }
+    final role = PetCombatRules.roleOf(widget.kind);
     final preview = selected == null
         ? null
         : previewFeed(
             level: record.level,
             xp: record.xp,
-            plantPower: GardenCatalog.foodFor(selected.species),
+            plantPower: feedXp(
+              species: selected.species,
+              trait: selected.trait,
+              role: role,
+            ),
             hunger: widget.hunger,
-            main: main,
-            accessory: accessory,
           );
-    final role = PetCombatRules.roleOf(widget.kind);
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -94,6 +98,14 @@ class _PetFeedSheetState extends State<_PetFeedSheet> {
             ),
           ),
           const SizedBox(height: 8),
+          if (available.length < points.garden.warehouse.length)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                l10n.showcaseFeedLocked,
+                style: const TextStyle(color: _gold),
+              ),
+            ),
           if (stacks.isEmpty)
             Text(
               l10n.petFeedEmpty,
@@ -108,10 +120,12 @@ class _PetFeedSheetState extends State<_PetFeedSheet> {
                 xp: previewFeed(
                   level: record.level,
                   xp: record.xp,
-                  plantPower: GardenCatalog.foodFor(stack.species),
+                  plantPower: feedXp(
+                    species: stack.species,
+                    trait: stack.trait,
+                    role: role,
+                  ),
                   hunger: widget.hunger,
-                  main: main,
-                  accessory: accessory,
                 ).xpGain,
                 onTap: _busy
                     ? null
@@ -153,7 +167,9 @@ class _PetFeedSheetState extends State<_PetFeedSheet> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    final message = result.status == FeedStatus.missingPlant
+    final message = result.status == FeedStatus.listed
+        ? l10n.showcaseFeedLocked
+        : result.status == FeedStatus.missingPlant
         ? l10n.petFeedMissing
         : result.status == FeedStatus.pointless
         ? l10n.petFeedPointless
@@ -220,6 +236,11 @@ class _FeedOption extends StatelessWidget {
                         l10n.plantPower(GardenCatalog.foodFor(stack.species)),
                         style: const TextStyle(color: _gold, fontSize: 12),
                       ),
+                      if (stack.trait != null)
+                        Text(
+                          l10n.plantTraitLabel(stack.trait!),
+                          style: const TextStyle(color: _gold, fontSize: 12),
+                        ),
                       Text(
                         l10n.petFeedXp(xp),
                         style: const TextStyle(color: _ivory, fontSize: 12),

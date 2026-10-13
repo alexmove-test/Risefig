@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/garden.dart';
+import '../models/plant_cross.dart';
 import '../models/house_upgrade.dart';
 import '../models/pet.dart';
-import '../models/pet_combat.dart';
 import '../models/pet_roster.dart';
 import '../models/seed_batch.dart';
 import '../models/seed_catalog.dart';
@@ -95,6 +95,23 @@ class WalletSnapshot {
   );
 }
 
+enum PointsSpendStatus { spent, insufficient, unavailable, failed }
+
+/// Итог списания за покупку, у которой нет своего снимка в кошельке.
+class PointsSpendResult {
+  const PointsSpendResult({
+    required this.status,
+    required this.balance,
+    this.shortfall = 0,
+  });
+
+  final PointsSpendStatus status;
+  final int balance;
+  final int shortfall;
+
+  bool get spent => status == PointsSpendStatus.spent;
+}
+
 /// Кошелёк баллов и купленное состояние дома.
 ///
 /// Начисление и покупка идут через одну очередь. Покупка сначала пишет журнал
@@ -105,6 +122,7 @@ class PointsStore {
 
   final SharedPreferences? _prefs;
   final _serial = _Serial();
+  final _crossRandom = Random();
 
   static const _kBalance = 'points.balance';
   static const _kEarned = 'points.earned';
@@ -116,7 +134,48 @@ class PointsStore {
   static const _kSeedJournal = 'seeds.journal.v1';
   static const _kGardenState = 'garden.state.v1';
   static const _kGardenJournal = 'garden.journal.v1';
+  static const _kPlantAdDay = 'garden.plantAdDay';
   static const _kRosterState = 'pets.roster.v1';
+  static const _kShowcaseReservations = 'plants.showcase.reservations.v1';
+
+  /// Persist before publishing; release only after server-confirmed removal.
+  /// Each entry retains the account that must withdraw the public listing.
+  Map<String, String> get showcaseReservations => {
+    for (final entry
+        in _prefs?.getStringList(_kShowcaseReservations) ?? <String>[])
+      if (entry.indexOf('\t') > 0)
+        entry.substring(entry.indexOf('\t') + 1): entry.substring(
+          0,
+          entry.indexOf('\t'),
+        ),
+  };
+
+  Future<bool> reserveShowcasePlant(String plantId, String ownerId) =>
+      _serial.run(() async {
+        final prefs = _prefs;
+        if (prefs == null || ownerId.isEmpty) return false;
+        await _recover();
+        if (!garden.warehouse.any((plant) => plant.id == plantId)) return false;
+        final next = showcaseReservations;
+        if (next.containsKey(plantId)) return next[plantId] == ownerId;
+        next[plantId] = ownerId;
+        return prefs.setStringList(_kShowcaseReservations, [
+          for (final item in next.entries) '${item.value}\t${item.key}',
+        ]);
+      });
+
+  Future<bool> releaseShowcasePlant(String plantId, String ownerId) =>
+      _serial.run(() async {
+        final prefs = _prefs;
+        if (prefs == null) return false;
+        final next = showcaseReservations;
+        if (!next.containsKey(plantId)) return true;
+        if (next[plantId] != ownerId) return false;
+        next.remove(plantId);
+        return prefs.setStringList(_kShowcaseReservations, [
+          for (final item in next.entries) '${item.value}\t${item.key}',
+        ]);
+      });
 
   static const maxBalance = 9999999;
 
@@ -209,6 +268,55 @@ class PointsStore {
         lifetimeEarned: current.lifetimeEarned + amount,
       );
     });
+    return next.balance;
+  }
+
+  /// Списывает [amount] целиком или ничего, если не хватает.
+  Future<PointsSpendResult> spend(int amount) async {
+    if (!isPersistent || amount <= 0) {
+      return PointsSpendResult(
+        status: PointsSpendStatus.unavailable,
+        balance: balance,
+      );
+    }
+    var result = PointsSpendResult(
+      status: PointsSpendStatus.failed,
+      balance: balance,
+    );
+    try {
+      await _transact((current) {
+        if (current.balance < amount) {
+          result = PointsSpendResult(
+            status: PointsSpendStatus.insufficient,
+            balance: current.balance,
+            shortfall: amount - current.balance,
+          );
+          return current;
+        }
+        final next = current.copyWith(balance: current.balance - amount);
+        result = PointsSpendResult(
+          status: PointsSpendStatus.spent,
+          balance: next.balance,
+        );
+        return next;
+      });
+    } catch (_) {
+      result = PointsSpendResult(
+        status: PointsSpendStatus.failed,
+        balance: balance,
+      );
+    }
+    return result;
+  }
+
+  /// Возвращает списанное, если покупка не состоялась. В заработанное не входит.
+  Future<int> refund(int amount) async {
+    if (!isPersistent || amount <= 0) return balance;
+    final next = await _transact(
+      (current) => current.copyWith(
+        balance: (current.balance + amount).clamp(0, maxBalance),
+      ),
+    );
     return next.balance;
   }
 
@@ -521,6 +629,73 @@ class PointsStore {
     );
   }
 
+  /// Списывает поинты за оставшиеся минуты и делает партию готовой сейчас.
+  Future<SeedSpeedResult> speedUpSeed({DateTime? now}) async {
+    if (!isPersistent) {
+      return SeedSpeedResult.unavailable(balance: balance, seeds: seeds);
+    }
+    try {
+      return await _serial.run(() => _speedUpSeed(now: now));
+    } catch (_) {
+      return SeedSpeedResult.failed(balance: balance, seeds: seeds);
+    }
+  }
+
+  Future<SeedSpeedResult> _speedUpSeed({DateTime? now}) async {
+    await _recover();
+    final wallet = _read();
+    final loaded = _loadSeeds();
+    if (loaded.corrupt || loaded.snapshot == null) {
+      return SeedSpeedResult.failed(balance: wallet.balance, seeds: seeds);
+    }
+    final current = loaded.snapshot!;
+    final batch = current.batch;
+    if (batch == null) {
+      return SeedSpeedResult(
+        status: SeedSpeedStatus.idle,
+        balance: wallet.balance,
+        seeds: current,
+      );
+    }
+    final clock = (now ?? DateTime.now()).toUtc();
+    if (batch.isReady(clock)) {
+      return SeedSpeedResult(
+        status: SeedSpeedStatus.ready,
+        balance: wallet.balance,
+        seeds: current,
+      );
+    }
+    if (clock.isBefore(batch.startedAt)) {
+      return SeedSpeedResult.failed(balance: wallet.balance, seeds: current);
+    }
+    final cost = SeedCatalog.speedUpCost(batch.remaining(clock));
+    if (wallet.balance < cost) {
+      return SeedSpeedResult(
+        status: SeedSpeedStatus.insufficient,
+        balance: wallet.balance,
+        seeds: current,
+        cost: cost,
+        shortfall: cost - wallet.balance,
+      );
+    }
+    final nextSeeds = current.copyWith(batch: batch.copyWith(readyAt: clock));
+    final nextWallet = wallet.copyWith(balance: wallet.balance - cost);
+    try {
+      await _commitSeeds(wallet: nextWallet, seeds: nextSeeds);
+    } catch (_) {
+      await _apply(wallet);
+      await _writeSeeds(current);
+      await _prefs?.remove(_kSeedJournal);
+      rethrow;
+    }
+    return SeedSpeedResult(
+      status: SeedSpeedStatus.finished,
+      balance: nextWallet.balance,
+      seeds: nextSeeds,
+      cost: cost,
+    );
+  }
+
   Future<void> _commitSeeds({
     required WalletSnapshot wallet,
     required SeedSnapshot seeds,
@@ -708,10 +883,14 @@ class PointsStore {
       power: GardenCatalog.foodFor(seed.species),
       houseLevel: seed.houseLevel,
       variant: seed.variant,
+      trait: seed.trait,
       source: seed.source,
       batchId: seed.batchId,
+      lineage: seed.lineage,
       plantedAt: clock,
-      readyAt: clock.add(GardenCatalog.durationFor(seed.species)),
+      readyAt: clock.add(
+        GardenCatalog.durationFor(seed.species, trait: seed.trait),
+      ),
       cost: cost,
       rulesVersion: GardenCatalog.rulesVersion,
     );
@@ -826,10 +1005,12 @@ class PointsStore {
       seedId: planting.seedId,
       source: planting.source,
       batchId: planting.batchId,
+      lineage: planting.lineage,
       plantingId: planting.id,
       plantedAt: planting.plantedAt,
       maturedAt: planting.readyAt,
       harvestedAt: clock,
+      trait: planting.trait,
     );
     final beds = [...currentGarden.beds];
     beds[bedIndex] = null;
@@ -857,6 +1038,276 @@ class PointsStore {
       seeds: currentSeeds,
       garden: nextGarden,
       plant: plant,
+    );
+  }
+
+  /// Локальный календарный день предложения «собрать растение за ролик».
+  static String plantAdDay(DateTime time) {
+    final local = time.toLocal();
+    final year = local.year.toString().padLeft(4, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  /// Один сбор растущей грядки за ролик в местные сутки. Созревшее растение
+  /// этим путём не тратит предложение.
+  bool plantAdOfferAvailable({DateTime? now}) {
+    final prefs = _prefs;
+    if (prefs == null) return false;
+    final clock = now ?? DateTime.now();
+    return prefs.getString(_kPlantAdDay) != plantAdDay(clock);
+  }
+
+  /// Дозревает грядку и сразу кладёт растение на склад, без списания поинтов.
+  Future<HarvestResult> collectPlantForAd({
+    required int bedIndex,
+    DateTime? now,
+  }) async {
+    if (!isPersistent) {
+      return HarvestResult.unavailable(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    try {
+      return await _serial.run(
+        () => _collectPlantForAd(bedIndex: bedIndex, now: now),
+      );
+    } catch (_) {
+      return HarvestResult.failed(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+  }
+
+  Future<HarvestResult> _collectPlantForAd({
+    required int bedIndex,
+    DateTime? now,
+  }) async {
+    await _recover();
+    final wallet = _read();
+    final loadedSeeds = _loadSeeds();
+    final loadedGarden = _loadGarden();
+    if (loadedSeeds.corrupt ||
+        loadedSeeds.snapshot == null ||
+        loadedGarden.corrupt ||
+        loadedGarden.snapshot == null) {
+      return HarvestResult.failed(
+        balance: wallet.balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    final currentSeeds = loadedSeeds.snapshot!;
+    final currentGarden = loadedGarden.snapshot!;
+    if (bedIndex < 0 || bedIndex >= currentGarden.beds.length) {
+      return HarvestResult.failed(
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final planting = currentGarden.bedAt(bedIndex);
+    if (planting == null) {
+      return HarvestResult(
+        status: HarvestStatus.empty,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final clock = (now ?? DateTime.now()).toUtc();
+    if (planting.isReady(clock)) {
+      return _harvestBed(bedIndex: bedIndex, now: clock);
+    }
+    if (clock.isBefore(planting.plantedAt)) {
+      return HarvestResult.failed(
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final prefs = _prefs;
+    if (prefs == null) {
+      return HarvestResult.unavailable(
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final day = plantAdDay(clock);
+    if (prefs.getString(_kPlantAdDay) == day) {
+      return HarvestResult(
+        status: HarvestStatus.adUsed,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final finished = planting.copyWith(readyAt: clock);
+    final seq = currentGarden.seq + 1;
+    final plant = HarvestedPlant(
+      id: 'plant-$seq',
+      species: finished.species,
+      power: GardenCatalog.foodFor(finished.species),
+      houseLevel: finished.houseLevel,
+      variant: finished.variant,
+      seedId: finished.seedId,
+      source: finished.source,
+      batchId: finished.batchId,
+      lineage: finished.lineage,
+      plantingId: finished.id,
+      plantedAt: finished.plantedAt,
+      maturedAt: clock,
+      harvestedAt: clock,
+      trait: finished.trait,
+    );
+    final beds = [...currentGarden.beds];
+    beds[bedIndex] = null;
+    final nextGarden = currentGarden.copyWith(
+      beds: beds,
+      warehouse: [...currentGarden.warehouse, plant],
+      seq: seq,
+    );
+    await prefs.setString(_kPlantAdDay, day);
+    try {
+      await _commitGarden(
+        wallet: wallet,
+        seeds: currentSeeds,
+        garden: nextGarden,
+      );
+    } catch (_) {
+      await prefs.remove(_kPlantAdDay);
+      await _apply(wallet);
+      await _writeSeeds(currentSeeds);
+      await _writeGarden(currentGarden);
+      await prefs.remove(_kGardenJournal);
+      rethrow;
+    }
+    return HarvestResult(
+      status: HarvestStatus.harvested,
+      balance: wallet.balance,
+      seeds: currentSeeds,
+      garden: nextGarden,
+      plant: plant,
+    );
+  }
+
+  /// Списывает поинты за оставшиеся минуты и делает посадку готовой сейчас.
+  Future<PlantSpeedResult> speedUpPlant({
+    required int bedIndex,
+    DateTime? now,
+  }) async {
+    if (!isPersistent) {
+      return PlantSpeedResult.unavailable(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    try {
+      return await _serial.run(
+        () => _speedUpPlant(bedIndex: bedIndex, now: now),
+      );
+    } catch (_) {
+      return PlantSpeedResult.failed(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+  }
+
+  Future<PlantSpeedResult> _speedUpPlant({
+    required int bedIndex,
+    DateTime? now,
+  }) async {
+    await _recover();
+    final wallet = _read();
+    final loadedSeeds = _loadSeeds();
+    final loadedGarden = _loadGarden();
+    if (loadedSeeds.corrupt ||
+        loadedSeeds.snapshot == null ||
+        loadedGarden.corrupt ||
+        loadedGarden.snapshot == null) {
+      return PlantSpeedResult.failed(
+        balance: wallet.balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    final currentSeeds = loadedSeeds.snapshot!;
+    final currentGarden = loadedGarden.snapshot!;
+    if (bedIndex < 0 || bedIndex >= currentGarden.beds.length) {
+      return PlantSpeedResult.failed(
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final planting = currentGarden.bedAt(bedIndex);
+    if (planting == null) {
+      return PlantSpeedResult(
+        status: PlantSpeedStatus.empty,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final clock = (now ?? DateTime.now()).toUtc();
+    if (planting.isReady(clock)) {
+      return PlantSpeedResult(
+        status: PlantSpeedStatus.ready,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    if (clock.isBefore(planting.plantedAt)) {
+      return PlantSpeedResult.failed(
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    final cost = SeedCatalog.speedUpCost(planting.remaining(clock));
+    if (wallet.balance < cost) {
+      return PlantSpeedResult(
+        status: PlantSpeedStatus.insufficient,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+        cost: cost,
+        shortfall: cost - wallet.balance,
+      );
+    }
+    final beds = [...currentGarden.beds];
+    beds[bedIndex] = planting.copyWith(readyAt: clock);
+    final nextGarden = currentGarden.copyWith(beds: beds);
+    final nextWallet = wallet.copyWith(balance: wallet.balance - cost);
+    try {
+      await _commitGarden(
+        wallet: nextWallet,
+        seeds: currentSeeds,
+        garden: nextGarden,
+      );
+    } catch (_) {
+      await _apply(wallet);
+      await _writeSeeds(currentSeeds);
+      await _writeGarden(currentGarden);
+      await _prefs?.remove(_kGardenJournal);
+      rethrow;
+    }
+    return PlantSpeedResult(
+      status: PlantSpeedStatus.finished,
+      balance: nextWallet.balance,
+      seeds: currentSeeds,
+      garden: nextGarden,
+      cost: cost,
     );
   }
 
@@ -981,6 +1432,661 @@ class PointsStore {
     await prefs.setString(_kGardenState, snapshot.encode());
   }
 
+  /// Списывает два растения и один раз бросает жребий. Тот же [opId] не повторяет его.
+  Future<CrossResult> beginCross({
+    required String firstId,
+    required String secondId,
+    required CrossAim aim,
+    required String opId,
+    int Function(int count)? roll,
+    DateTime? now,
+  }) async {
+    if (!isPersistent || opId.isEmpty) {
+      return CrossResult.unavailable(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    try {
+      return await _serial.run(
+        () => _beginCross(
+          firstId: firstId,
+          secondId: secondId,
+          aim: aim,
+          opId: opId,
+          roll: roll,
+          now: now,
+        ),
+      );
+    } catch (_) {
+      return CrossResult.failed(balance: balance, seeds: seeds, garden: garden);
+    }
+  }
+
+  Future<CrossResult> finishCross({
+    required String opId,
+    PlantTrait? trait,
+    SeedSpecies? species,
+    DateTime? now,
+  }) async {
+    if (!isPersistent || opId.isEmpty) {
+      return CrossResult.unavailable(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    try {
+      return await _serial.run(
+        () =>
+            _finishCross(opId: opId, trait: trait, species: species, now: now),
+      );
+    } catch (_) {
+      return CrossResult.failed(balance: balance, seeds: seeds, garden: garden);
+    }
+  }
+
+  Future<CrossResult> _beginCross({
+    required String firstId,
+    required String secondId,
+    required CrossAim aim,
+    required String opId,
+    int Function(int count)? roll,
+    DateTime? now,
+  }) async {
+    await _recover();
+    final wallet = _read();
+    final loadedSeeds = _loadSeeds();
+    final loadedGarden = _loadGarden();
+    if (loadedSeeds.corrupt || loadedGarden.corrupt) {
+      return CrossResult.failed(
+        balance: wallet.balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    final currentSeeds = loadedSeeds.snapshot ?? SeedSnapshot.empty;
+    final currentGarden = loadedGarden.snapshot ?? GardenSnapshot.empty;
+    CrossResult keep(CrossStatus status, {SeedInstance? seed}) => CrossResult(
+      status: status,
+      balance: wallet.balance,
+      seeds: currentSeeds,
+      garden: currentGarden,
+      seed: seed,
+    );
+    final pending = currentGarden.pending;
+    if (pending != null) {
+      if (pending.id != opId) return keep(CrossStatus.waiting);
+      return keep(
+        pending.choosesTrait ? CrossStatus.chooseTrait : CrossStatus.chooseSeed,
+      );
+    }
+    if (currentGarden.lastCrossId == opId) {
+      return keep(
+        CrossStatus.granted,
+        seed: _seedFromCross(currentSeeds, opId),
+      );
+    }
+    if (firstId.isEmpty || secondId.isEmpty) return keep(CrossStatus.needTwo);
+    if (firstId == secondId) return keep(CrossStatus.samePlant);
+    final reserved = showcaseReservations;
+    if (reserved.containsKey(firstId) || reserved.containsKey(secondId)) {
+      return keep(CrossStatus.listed);
+    }
+    HarvestedPlant? first;
+    HarvestedPlant? second;
+    for (final plant in currentGarden.warehouse) {
+      if (plant.id == firstId) first = plant;
+      if (plant.id == secondId) second = plant;
+    }
+    if (first == null || second == null) return keep(CrossStatus.missing);
+    int draw(int count) {
+      if (count <= 1) return 0;
+      final next = roll?.call(count) ?? _crossRandom.nextInt(count);
+      if (next < 0) return 0;
+      if (next >= count) return count - 1;
+      return next;
+    }
+
+    final resolution = resolveCross(
+      first: first.species,
+      second: second.species,
+      aim: aim,
+      draw: draw,
+    );
+    final houseLevel = first.houseLevel > second.houseLevel
+        ? first.houseLevel
+        : second.houseLevel;
+    final clock = (now ?? DateTime.now()).toUtc();
+    final remaining = [
+      for (final plant in currentGarden.warehouse)
+        if (plant.id != first.id && plant.id != second.id) plant,
+    ];
+    if (resolution.success && aim == CrossAim.combat) {
+      final nextPending = CrossPending(
+        id: opId,
+        aim: CrossAim.combat,
+        band: resolution.band,
+        resultClass: resolution.resultClass,
+        houseLevel: houseLevel,
+        species: resolution.species,
+      );
+      final nextGarden = currentGarden.copyWith(
+        warehouse: remaining,
+        seq: currentGarden.seq + 1,
+        pending: nextPending,
+      );
+      await _commitGarden(
+        wallet: wallet,
+        seeds: currentSeeds,
+        garden: nextGarden,
+      );
+      return CrossResult(
+        status: CrossStatus.chooseTrait,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: nextGarden,
+      );
+    }
+    if (resolution.success && aim == CrossAim.seeds) {
+      final nextPending = CrossPending(
+        id: opId,
+        aim: CrossAim.seeds,
+        band: resolution.band,
+        resultClass: resolution.resultClass,
+        houseLevel: houseLevel,
+        choices: resolution.choices,
+      );
+      final nextGarden = currentGarden.copyWith(
+        warehouse: remaining,
+        seq: currentGarden.seq + 1,
+        pending: nextPending,
+      );
+      await _commitGarden(
+        wallet: wallet,
+        seeds: currentSeeds,
+        garden: nextGarden,
+      );
+      return CrossResult(
+        status: CrossStatus.chooseSeed,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: nextGarden,
+      );
+    }
+    final species = resolution.species;
+    if (species == null) return keep(CrossStatus.failed);
+    return _grantCrossSeed(
+      wallet: wallet,
+      seeds: currentSeeds,
+      garden: currentGarden,
+      warehouse: remaining,
+      opId: opId,
+      species: species,
+      trait: resolution.trait,
+      houseLevel: houseLevel,
+      now: clock,
+      band: resolution.band,
+    );
+  }
+
+  Future<CrossResult> _finishCross({
+    required String opId,
+    PlantTrait? trait,
+    SeedSpecies? species,
+    DateTime? now,
+  }) async {
+    await _recover();
+    final wallet = _read();
+    final loadedSeeds = _loadSeeds();
+    final loadedGarden = _loadGarden();
+    if (loadedSeeds.corrupt || loadedGarden.corrupt) {
+      return CrossResult.failed(
+        balance: wallet.balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    final currentSeeds = loadedSeeds.snapshot ?? SeedSnapshot.empty;
+    final currentGarden = loadedGarden.snapshot ?? GardenSnapshot.empty;
+    if (currentGarden.lastCrossId == opId) {
+      return CrossResult(
+        status: CrossStatus.granted,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+        seed: _seedFromCross(currentSeeds, opId),
+      );
+    }
+    final pending = currentGarden.pending;
+    if (pending == null || pending.id != opId) {
+      return CrossResult.failed(
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    if (pending.choosesTrait) {
+      if (trait != PlantTrait.attack && trait != PlantTrait.defense) {
+        return CrossResult(
+          status: CrossStatus.chooseTrait,
+          balance: wallet.balance,
+          seeds: currentSeeds,
+          garden: currentGarden,
+        );
+      }
+      final chosen = pending.species;
+      if (chosen == null) {
+        return CrossResult.failed(
+          balance: wallet.balance,
+          seeds: currentSeeds,
+          garden: currentGarden,
+        );
+      }
+      return _grantCrossSeed(
+        wallet: wallet,
+        seeds: currentSeeds,
+        garden: currentGarden,
+        warehouse: currentGarden.warehouse,
+        opId: opId,
+        species: chosen,
+        trait: trait,
+        houseLevel: pending.houseLevel,
+        now: (now ?? DateTime.now()).toUtc(),
+        clearPending: true,
+        band: pending.band,
+      );
+    }
+    if (species == null || !pending.choices.contains(species)) {
+      return CrossResult(
+        status: CrossStatus.chooseSeed,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    return _grantCrossSeed(
+      wallet: wallet,
+      seeds: currentSeeds,
+      garden: currentGarden,
+      warehouse: currentGarden.warehouse,
+      opId: opId,
+      species: species,
+      trait: null,
+      houseLevel: pending.houseLevel,
+      now: (now ?? DateTime.now()).toUtc(),
+      clearPending: true,
+      band: pending.band,
+    );
+  }
+
+  Future<CrossResult> _grantCrossSeed({
+    required WalletSnapshot wallet,
+    required SeedSnapshot seeds,
+    required GardenSnapshot garden,
+    required List<HarvestedPlant> warehouse,
+    required String opId,
+    required SeedSpecies species,
+    required PlantTrait? trait,
+    required int houseLevel,
+    required DateTime now,
+    bool clearPending = false,
+    CrossBand? band,
+  }) async {
+    final existing = _seedFromCross(seeds, opId);
+    if (existing != null) {
+      final settled = garden.copyWith(clearPending: true, lastCrossId: opId);
+      if (garden.pending != null || garden.lastCrossId != opId) {
+        await _commitGarden(wallet: wallet, seeds: seeds, garden: settled);
+      }
+      return CrossResult(
+        status: CrossStatus.granted,
+        balance: wallet.balance,
+        seeds: seeds,
+        garden: garden.lastCrossId == opId ? garden : settled,
+        seed: existing,
+        band: band,
+      );
+    }
+    var seq = seeds.seq + 1;
+    var id = 'seed-$seq';
+    while (seeds.inventory.any((seed) => seed.id == id)) {
+      seq += 1;
+      id = 'seed-$seq';
+    }
+    final seed = SeedInstance(
+      id: id,
+      species: species,
+      power: SeedCatalog.foodFor(species),
+      houseLevel: houseLevel,
+      createdAt: now,
+      source: SeedSource.cross,
+      batchId: opId,
+      trait: trait,
+    );
+    final nextSeeds = seeds.copyWith(
+      inventory: [...seeds.inventory, seed],
+      seq: seq,
+    );
+    final nextGarden = garden.copyWith(
+      warehouse: warehouse,
+      seq: garden.seq + 1,
+      clearPending: clearPending || garden.pending != null,
+      lastCrossId: opId,
+    );
+    await _commitGarden(wallet: wallet, seeds: nextSeeds, garden: nextGarden);
+    return CrossResult(
+      status: CrossStatus.granted,
+      balance: wallet.balance,
+      seeds: nextSeeds,
+      garden: nextGarden,
+      seed: seed,
+      band: band,
+    );
+  }
+
+  SeedInstance? _seedFromCross(SeedSnapshot seeds, String opId) {
+    for (final seed in seeds.inventory) {
+      if (seed.batchId == opId && seed.source == SeedSource.cross) return seed;
+    }
+    return null;
+  }
+
+  /// Скрещивание с соседом: списывает одно своё растение вида [give] и кладёт
+  /// семя [receive]. Тот же [opId] второй раз ничего не списывает.
+  Future<CrossResult> claimNeighborCross({
+    required String opId,
+    required SeedSpecies give,
+    required SeedSpecies receive,
+    String? preferPlantId,
+    CrossLineage? lineage,
+    DateTime? now,
+  }) async {
+    if (!isPersistent || opId.isEmpty) {
+      return CrossResult.unavailable(
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    try {
+      return await _serial.run(
+        () => _claimNeighborCross(
+          opId: opId,
+          give: give,
+          receive: receive,
+          preferPlantId: preferPlantId,
+          lineage: lineage,
+          now: now,
+        ),
+      );
+    } catch (_) {
+      return CrossResult.failed(balance: balance, seeds: seeds, garden: garden);
+    }
+  }
+
+  Future<CrossResult> _claimNeighborCross({
+    required String opId,
+    required SeedSpecies give,
+    required SeedSpecies receive,
+    String? preferPlantId,
+    CrossLineage? lineage,
+    DateTime? now,
+  }) async {
+    await _recover();
+    final wallet = _read();
+    final loadedSeeds = _loadSeeds();
+    final loadedGarden = _loadGarden();
+    if (loadedSeeds.corrupt || loadedGarden.corrupt) {
+      return CrossResult.failed(
+        balance: wallet.balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    final currentSeeds = loadedSeeds.snapshot ?? SeedSnapshot.empty;
+    final currentGarden = loadedGarden.snapshot ?? GardenSnapshot.empty;
+    final existing = _seedFromCross(currentSeeds, opId);
+    final alreadyGrowing = currentGarden.beds.any(
+      (plant) => plant?.batchId == opId && plant?.source == SeedSource.cross,
+    );
+    final alreadyHarvested = currentGarden.warehouse.any(
+      (plant) => plant.batchId == opId && plant.source == SeedSource.cross,
+    );
+    if (existing != null ||
+        alreadyGrowing ||
+        alreadyHarvested ||
+        currentGarden.claimedNeighborCrosses.contains(opId)) {
+      final settled = currentGarden.copyWith(
+        claimedNeighborCrosses: {...currentGarden.claimedNeighborCrosses, opId},
+      );
+      if (!currentGarden.claimedNeighborCrosses.contains(opId)) {
+        await _commitGarden(
+          wallet: wallet,
+          seeds: currentSeeds,
+          garden: settled,
+        );
+      }
+      return CrossResult(
+        status: CrossStatus.granted,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: settled,
+        seed: existing,
+      );
+    }
+    final reserved = showcaseReservations;
+    HarvestedPlant? plant;
+    for (final candidate in currentGarden.warehouse) {
+      if (candidate.species != give || reserved.containsKey(candidate.id)) {
+        continue;
+      }
+      if (plant == null || candidate.id == preferPlantId) plant = candidate;
+    }
+    if (plant == null) {
+      return CrossResult(
+        status: CrossStatus.missing,
+        balance: wallet.balance,
+        seeds: currentSeeds,
+        garden: currentGarden,
+      );
+    }
+    var seq = currentSeeds.seq + 1;
+    var id = 'seed-$seq';
+    while (currentSeeds.inventory.any((seed) => seed.id == id)) {
+      seq += 1;
+      id = 'seed-$seq';
+    }
+    final seed = SeedInstance(
+      id: id,
+      species: receive,
+      power: SeedCatalog.foodFor(receive),
+      houseLevel: plant.houseLevel,
+      createdAt: (now ?? DateTime.now()).toUtc(),
+      source: SeedSource.cross,
+      batchId: opId,
+      lineage: lineage == null
+          ? null
+          : CrossLineage(
+              partnerId: lineage.partnerId,
+              partnerName: lineage.partnerName,
+              parentSpecies: lineage.parentSpecies,
+              ownPlantId: plant.id,
+            ),
+    );
+    final nextSeeds = currentSeeds.copyWith(
+      inventory: [...currentSeeds.inventory, seed],
+      seq: seq,
+    );
+    final nextGarden = currentGarden.copyWith(
+      warehouse: [
+        for (final item in currentGarden.warehouse)
+          if (item.id != plant.id) item,
+      ],
+      seq: currentGarden.seq + 1,
+      claimedNeighborCrosses: {...currentGarden.claimedNeighborCrosses, opId},
+    );
+    await _commitGarden(wallet: wallet, seeds: nextSeeds, garden: nextGarden);
+    return CrossResult(
+      status: CrossStatus.granted,
+      balance: wallet.balance,
+      seeds: nextSeeds,
+      garden: nextGarden,
+      seed: seed,
+    );
+  }
+
+  /// Растения, которые может забрать набег. Выставленные на витрину — под стеклом.
+  List<HarvestedPlant> get raidablePlants {
+    final reserved = showcaseReservations;
+    return [
+      for (final plant in garden.warehouse)
+        if (!reserved.containsKey(plant.id)) plant,
+    ];
+  }
+
+  /// Списывает со склада потерю набега [opId]. Сначала ищет растения по id,
+  /// затем — любое того же вида. Повтор с тем же [opId] ничего не списывает.
+  Future<RaidSettleResult> settleRaidLoss({
+    required String opId,
+    String? destroyId,
+    SeedSpecies? destroySpecies,
+    String? stealId,
+    SeedSpecies? stealSpecies,
+  }) => _settleRaid(opId, (current, reserved) {
+    final gone = <String>{};
+    void take(String? id, SeedSpecies? species) {
+      if (species == null) return;
+      HarvestedPlant? found;
+      for (final plant in current.warehouse) {
+        if (gone.contains(plant.id) || reserved.containsKey(plant.id)) {
+          continue;
+        }
+        if (plant.id == id && plant.species == species) {
+          found = plant;
+          break;
+        }
+        if (found == null && plant.species == species) found = plant;
+      }
+      if (found != null) gone.add(found.id);
+    }
+
+    take(destroyId, destroySpecies);
+    take(stealId, stealSpecies);
+    return (
+      garden: current.copyWith(
+        warehouse: [
+          for (final plant in current.warehouse)
+            if (!gone.contains(plant.id)) plant,
+        ],
+        seq: current.seq + 1,
+        settledRaids: {...current.settledRaids, opId},
+      ),
+      plant: null,
+    );
+  });
+
+  /// Кладёт на склад налётчика растение из набега [opId]. Повтор безопасен.
+  Future<RaidSettleResult> takeRaidLoot({
+    required String opId,
+    required SeedSpecies species,
+    PlantTrait? trait,
+    DateTime? now,
+  }) => _settleRaid(opId, (current, _) {
+    final clock = (now ?? DateTime.now()).toUtc();
+    var seq = current.seq + 1;
+    while (current.warehouse.any((plant) => plant.id == 'plant-$seq')) {
+      seq += 1;
+    }
+    final plant = HarvestedPlant(
+      id: 'plant-$seq',
+      species: species,
+      power: GardenCatalog.foodFor(species),
+      houseLevel: 1,
+      seedId: opId,
+      source: SeedSource.raid,
+      batchId: opId,
+      plantingId: opId,
+      plantedAt: clock,
+      maturedAt: clock,
+      harvestedAt: clock,
+      trait: trait,
+    );
+    return (
+      garden: current.copyWith(
+        warehouse: [...current.warehouse, plant],
+        seq: seq,
+        settledRaids: {...current.settledRaids, opId},
+      ),
+      plant: plant,
+    );
+  });
+
+  Future<RaidSettleResult> _settleRaid(
+    String opId,
+    ({GardenSnapshot garden, HarvestedPlant? plant}) Function(
+      GardenSnapshot current,
+      Map<String, String> reserved,
+    )
+    change,
+  ) async {
+    if (!isPersistent || opId.isEmpty) {
+      return RaidSettleResult(
+        status: RaidSettleStatus.unavailable,
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+    try {
+      return await _serial.run(() async {
+        await _recover();
+        final wallet = _read();
+        final loadedSeeds = _loadSeeds();
+        final loadedGarden = _loadGarden();
+        if (loadedSeeds.corrupt || loadedGarden.corrupt) {
+          return RaidSettleResult(
+            status: RaidSettleStatus.failed,
+            balance: wallet.balance,
+            seeds: seeds,
+            garden: garden,
+          );
+        }
+        final currentSeeds = loadedSeeds.snapshot ?? SeedSnapshot.empty;
+        final currentGarden = loadedGarden.snapshot ?? GardenSnapshot.empty;
+        if (currentGarden.settledRaids.contains(opId)) {
+          return RaidSettleResult(
+            status: RaidSettleStatus.settled,
+            balance: wallet.balance,
+            seeds: currentSeeds,
+            garden: currentGarden,
+          );
+        }
+        final next = change(currentGarden, showcaseReservations);
+        await _commitGarden(
+          wallet: wallet,
+          seeds: currentSeeds,
+          garden: next.garden,
+        );
+        return RaidSettleResult(
+          status: RaidSettleStatus.settled,
+          balance: wallet.balance,
+          seeds: currentSeeds,
+          garden: next.garden,
+          plant: next.plant,
+        );
+      });
+    } catch (_) {
+      return RaidSettleResult(
+        status: RaidSettleStatus.failed,
+        balance: balance,
+        seeds: seeds,
+        garden: garden,
+      );
+    }
+  }
+
   /// Добавляет записи новым питомцам. Уже полученный опыт и вещи не сбрасывает.
   Future<void> migrateRoster() async {
     if (!isPersistent) return;
@@ -1071,6 +2177,9 @@ class PointsStore {
       preview: plan.preview,
       plant: plan.plant,
     );
+    if (showcaseReservations.containsKey(plantId)) {
+      return rejected(FeedStatus.listed);
+    }
     if (!plan.fed || plan.garden == null || plan.roster == null) {
       return rejected(plan.status);
     }
@@ -1108,258 +2217,6 @@ class PointsStore {
       roster: plan.roster!,
       preview: plan.preview,
       plant: plan.plant,
-    );
-  }
-
-  Future<GearBuyResult> buyGear({
-    required PetKind kind,
-    required String defId,
-  }) async {
-    if (!isPersistent) {
-      return GearBuyResult.unavailable(
-        balance: balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-    try {
-      return await _serial.run(() => _buyGear(kind: kind, defId: defId));
-    } catch (_) {
-      return GearBuyResult.failed(
-        balance: balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-  }
-
-  Future<GearBuyResult> _buyGear({
-    required PetKind kind,
-    required String defId,
-  }) async {
-    await _recover();
-    final wallet = _read();
-    final loadedSeeds = _loadSeeds();
-    final loadedGarden = _loadGarden();
-    final loadedRoster = _loadRoster();
-    if (loadedSeeds.corrupt ||
-        loadedSeeds.snapshot == null ||
-        loadedGarden.corrupt ||
-        loadedGarden.snapshot == null ||
-        loadedRoster.corrupt) {
-      return GearBuyResult.failed(
-        balance: wallet.balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-    final currentSeeds = loadedSeeds.snapshot!;
-    final currentGarden = loadedGarden.snapshot!;
-    final currentRoster = loadedRoster.snapshot ?? PetRosterSnapshot.empty;
-    final plan = planGearBuy(
-      balance: wallet.balance,
-      roster: currentRoster,
-      owned: PetStore.readOwned(_prefs),
-      kind: kind,
-      defId: defId,
-    );
-    GearBuyResult rejected() => GearBuyResult(
-      status: plan.status,
-      balance: wallet.balance,
-      seeds: currentSeeds,
-      garden: currentGarden,
-      roster: currentRoster,
-      price: plan.price,
-      shortfall: plan.shortfall,
-      def: plan.def,
-    );
-    if (plan.status != GearBuyStatus.bought ||
-        plan.roster == null ||
-        plan.balance == null) {
-      return rejected();
-    }
-    final nextWallet = wallet.copyWith(balance: plan.balance!);
-    try {
-      await _commitGarden(
-        wallet: nextWallet,
-        seeds: currentSeeds,
-        garden: currentGarden,
-        roster: plan.roster,
-      );
-    } catch (_) {
-      await _apply(wallet);
-      await _writeSeeds(currentSeeds);
-      await _writeGarden(currentGarden);
-      await _writeRoster(currentRoster);
-      await _prefs?.remove(_kGardenJournal);
-      rethrow;
-    }
-    return GearBuyResult(
-      status: GearBuyStatus.bought,
-      balance: nextWallet.balance,
-      seeds: currentSeeds,
-      garden: currentGarden,
-      roster: plan.roster!,
-      price: plan.price,
-      item: plan.item,
-      def: plan.def,
-    );
-  }
-
-  Future<EquipResult> equipGear({
-    required PetKind kind,
-    required String itemId,
-    required GearSlot slot,
-  }) async {
-    if (!isPersistent) {
-      return EquipResult.unavailable(
-        balance: balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-    try {
-      return await _serial.run(
-        () => _equipGear(kind: kind, itemId: itemId, slot: slot),
-      );
-    } catch (_) {
-      return EquipResult.failed(
-        balance: balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-  }
-
-  Future<EquipResult> _equipGear({
-    required PetKind kind,
-    required String itemId,
-    required GearSlot slot,
-  }) async {
-    final plan = planEquip(
-      roster: await _rosterForEdit(),
-      owned: PetStore.readOwned(_prefs),
-      kind: kind,
-      itemId: itemId,
-      slot: slot,
-    );
-    return _commitEquip(plan, success: EquipStatus.equipped);
-  }
-
-  Future<EquipResult> unequipGear({
-    required PetKind kind,
-    required GearSlot slot,
-  }) async {
-    if (!isPersistent) {
-      return EquipResult.unavailable(
-        balance: balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-    try {
-      return await _serial.run(() => _unequipGear(kind: kind, slot: slot));
-    } catch (_) {
-      return EquipResult.failed(
-        balance: balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-  }
-
-  Future<EquipResult> _unequipGear({
-    required PetKind kind,
-    required GearSlot slot,
-  }) async {
-    final plan = planUnequip(
-      roster: await _rosterForEdit(),
-      owned: PetStore.readOwned(_prefs),
-      kind: kind,
-      slot: slot,
-    );
-    return _commitEquip(plan, success: EquipStatus.unequipped);
-  }
-
-  Future<PetRosterSnapshot> _rosterForEdit() async {
-    await _recover();
-    final loaded = _loadRoster();
-    if (loaded.corrupt) return PetRosterSnapshot.empty;
-    return loaded.snapshot ?? PetRosterSnapshot.empty;
-  }
-
-  Future<EquipResult> _commitEquip(
-    EquipPlan plan, {
-    required EquipStatus success,
-  }) async {
-    await _recover();
-    final wallet = _read();
-    final loadedSeeds = _loadSeeds();
-    final loadedGarden = _loadGarden();
-    final loadedRoster = _loadRoster();
-    if (loadedSeeds.corrupt ||
-        loadedSeeds.snapshot == null ||
-        loadedGarden.corrupt ||
-        loadedGarden.snapshot == null ||
-        loadedRoster.corrupt) {
-      return EquipResult.failed(
-        balance: wallet.balance,
-        seeds: seeds,
-        garden: garden,
-        roster: roster,
-      );
-    }
-    final currentSeeds = loadedSeeds.snapshot!;
-    final currentGarden = loadedGarden.snapshot!;
-    final currentRoster = loadedRoster.snapshot ?? PetRosterSnapshot.empty;
-    if (plan.roster == null ||
-        (plan.status != success && plan.status != EquipStatus.equipped)) {
-      return EquipResult(
-        status: plan.status,
-        balance: wallet.balance,
-        seeds: currentSeeds,
-        garden: currentGarden,
-        roster: currentRoster,
-        wornBy: plan.wornBy,
-      );
-    }
-    if (identical(plan.roster, currentRoster)) {
-      return EquipResult(
-        status: plan.status,
-        balance: wallet.balance,
-        seeds: currentSeeds,
-        garden: currentGarden,
-        roster: currentRoster,
-      );
-    }
-    try {
-      await _commitGarden(
-        wallet: wallet,
-        seeds: currentSeeds,
-        garden: currentGarden,
-        roster: plan.roster,
-      );
-    } catch (_) {
-      await _apply(wallet);
-      await _writeSeeds(currentSeeds);
-      await _writeGarden(currentGarden);
-      await _writeRoster(currentRoster);
-      await _prefs?.remove(_kGardenJournal);
-      rethrow;
-    }
-    return EquipResult(
-      status: plan.status,
-      balance: wallet.balance,
-      seeds: currentSeeds,
-      garden: currentGarden,
-      roster: plan.roster!,
     );
   }
 
@@ -1461,8 +2318,9 @@ class PointsStore {
 
   ({PetRosterSnapshot? snapshot, bool corrupt}) _loadRoster() {
     final prefs = _prefs;
-    if (prefs == null)
+    if (prefs == null) {
       return (snapshot: PetRosterSnapshot.empty, corrupt: false);
+    }
     final raw = prefs.getString(_kRosterState);
     if (raw == null || raw.isEmpty) return (snapshot: null, corrupt: false);
     final decoded = PetRosterSnapshot.decode(raw);

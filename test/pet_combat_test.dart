@@ -28,7 +28,6 @@ void main() {
     expect(PetCombatRules.roleOf(PetKind.dog), PetRole.defender);
     expect(PetCombatRules.roleOf(PetKind.hamster), PetRole.defender);
     expect(PetKind.values, hasLength(5));
-    expect(GearCatalog.all, hasLength(12));
   });
 
   test('xp and base strength match every level', () {
@@ -69,77 +68,67 @@ void main() {
     expect(capped.gain(50).xp, 0);
   });
 
-  test('equipment adds to base strength and buying does not change level', () {
-    const base = PetStrength(base: 10, main: 0, accessory: 0);
-    final withSash = base.replacing(slot: GearSlot.main, bonus: 3);
-    expect(withSash.total, 13);
-    final withBoth = withSash.replacing(slot: GearSlot.accessory, bonus: 3);
-    expect(withBoth.total, 16);
-    final replaced = withBoth.replacing(slot: GearSlot.main, bonus: 7);
-    expect(replaced.total, 20);
-    expect(replaced.base, 10);
+  test('strength follows level from feeding and has no gear bonus', () {
+    expect(PetStrength.of(level: 1).total, 10);
+    expect(PetStrength.of(level: 4).total, 25);
+    expect(PetStrength.of(level: 20).total, PetCombatRules.baseStrength(20));
   });
 
-  test('migration gives level 1 and a later open keeps xp and gear', () async {
-    SharedPreferences.setMockInitialValues({
-      'points.balance': 40,
-      'points.earned': 40,
-      'points.houseMigrated': true,
-      'points.houseState': 3,
-      'pet.owned': 'fox,dog',
-      'pet.kind': 'fox',
-      'pet.fox.hungerAt': t0.millisecondsSinceEpoch,
-      'pet.stories.v1': '{"fox":{"chapter":1}}',
-    });
-    final store = await PointsStore.open();
-    expect(store.roster.records.map((record) => record.kind), [
-      PetKind.fox,
-      PetKind.dog,
-    ]);
-    final fox = store.roster.recordOf(PetKind.fox)!;
-    expect(fox.level, 1);
-    expect(fox.xp, 0);
-    expect(fox.mainItemId, isNull);
-    expect(PetCombatRules.roleOf(PetKind.fox), PetRole.attacker);
-    expect(PetCombatRules.roleOf(PetKind.dog), PetRole.defender);
-    expect(
-      (await SharedPreferences.getInstance()).getString('pet.stories.v1'),
-      '{"fox":{"chapter":1}}',
-    );
+  test(
+    'migration gives level 1 and a later open keeps xp without gear',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'points.balance': 40,
+        'points.earned': 40,
+        'points.houseMigrated': true,
+        'points.houseState': 3,
+        'pet.owned': 'fox,dog',
+        'pet.kind': 'fox',
+        'pet.fox.hungerAt': t0.millisecondsSinceEpoch,
+        'pet.stories.v1': '{"fox":{"chapter":1}}',
+      });
+      final store = await PointsStore.open();
+      expect(store.roster.records.map((record) => record.kind), [
+        PetKind.fox,
+        PetKind.dog,
+      ]);
+      final fox = store.roster.recordOf(PetKind.fox)!;
+      expect(fox.level, 1);
+      expect(fox.xp, 0);
+      expect(PetCombatRules.roleOf(PetKind.fox), PetRole.attacker);
+      expect(PetCombatRules.roleOf(PetKind.dog), PetRole.defender);
+      expect(
+        (await SharedPreferences.getInstance()).getString('pet.stories.v1'),
+        '{"fox":{"chapter":1}}',
+      );
 
-    final kept = PetRosterSnapshot(
-      records: [
-        const PetCombatRecord(
-          kind: PetKind.fox,
-          level: 4,
-          xp: 15,
-          mainItemId: 'gear-1',
-        ),
-        PetCombatRecord.fresh(PetKind.dog),
-      ],
-      items: const [GearInstance(id: 'gear-1', defId: 'attacker_main_1')],
-      defender: PetKind.dog,
-      seq: 3,
-    );
-    await (await SharedPreferences.getInstance()).setString(
-      'pets.roster.v1',
-      kept.encode(),
-    );
-    final again = await PointsStore.open();
-    expect(again.roster.recordOf(PetKind.fox)!.level, 4);
-    expect(again.roster.recordOf(PetKind.fox)!.xp, 15);
-    expect(again.roster.recordOf(PetKind.fox)!.mainItemId, 'gear-1');
-    expect(again.roster.items, hasLength(1));
-    expect(
-      again.roster.records.where((record) => record.kind == PetKind.fox).length,
-      1,
-    );
-    expect(again.roster.defender, PetKind.dog);
-    expect(
-      (await SharedPreferences.getInstance()).getString('pet.stories.v1'),
-      '{"fox":{"chapter":1}}',
-    );
-  });
+      const kept = '''
+{"seq":3,"defender":"dog","records":[{"kind":"fox","level":4,"xp":15,"main":"gear-1","accessory":"gear-2"},{"kind":"dog","level":1,"xp":0}],"items":[{"id":"gear-1","def":"attacker_main_1"}]}
+''';
+      await (await SharedPreferences.getInstance()).setString(
+        'pets.roster.v1',
+        kept,
+      );
+      final again = await PointsStore.open();
+      expect(again.roster.recordOf(PetKind.fox)!.level, 4);
+      expect(again.roster.recordOf(PetKind.fox)!.xp, 15);
+      expect(again.roster.toJson().containsKey('items'), isFalse);
+      final savedFox = again.roster.recordOf(PetKind.fox)!.toJson();
+      expect(savedFox.containsKey('main'), isFalse);
+      expect(savedFox.containsKey('accessory'), isFalse);
+      expect(
+        again.roster.records
+            .where((record) => record.kind == PetKind.fox)
+            .length,
+        1,
+      );
+      expect(again.roster.defender, PetKind.dog);
+      expect(
+        (await SharedPreferences.getInstance()).getString('pet.stories.v1'),
+        '{"fox":{"chapter":1}}',
+      );
+    },
+  );
 
   test(
     'feeding spends one plant, keeps points, and can level more than once',
@@ -229,7 +218,6 @@ void main() {
       'garden.state.v1': _garden([plant]).encode(),
       'pets.roster.v1': const PetRosterSnapshot(
         records: [PetCombatRecord(kind: PetKind.cat, level: 1, xp: 0)],
-        items: [],
         seq: 1,
       ).encode(),
       'garden.journal.v1': jsonEncode({
@@ -238,7 +226,6 @@ void main() {
         'garden': _garden(const []).copyWith(seq: 5).toJson(),
         'roster': const PetRosterSnapshot(
           records: [PetCombatRecord(kind: PetKind.cat, level: 2, xp: 12)],
-          items: [],
           seq: 2,
         ).toJson(),
         'hunger': {'pet.cat.hungerAt': hungerAt},
@@ -263,7 +250,6 @@ void main() {
       'garden.state.v1': _garden([plant]).encode(),
       'pets.roster.v1': const PetRosterSnapshot(
         records: [PetCombatRecord(kind: PetKind.hamster, level: 20, xp: 0)],
-        items: [],
         seq: 1,
       ).encode(),
     });
@@ -289,123 +275,6 @@ void main() {
     expect(store.garden.warehouse, isEmpty);
     expect(store.roster.recordOf(PetKind.hamster)!.level, 20);
     expect(store.roster.recordOf(PetKind.hamster)!.xp, 0);
-  });
-
-  test('gear purchase, locks, and a single wearer', () async {
-    SharedPreferences.setMockInitialValues({
-      ..._wallet(1000),
-      'pet.owned': 'cat,fox,dog',
-    });
-    final store = await PointsStore.open();
-    final poor = await store.buyGear(
-      kind: PetKind.cat,
-      defId: 'attacker_main_3',
-    );
-    expect(poor.status, GearBuyStatus.levelLocked);
-    expect(store.balance, 1000);
-    expect(store.roster.items, isEmpty);
-
-    SharedPreferences.setMockInitialValues({
-      ..._wallet(50),
-      'pet.owned': 'cat',
-    });
-    final broke = await (await PointsStore.open()).buyGear(
-      kind: PetKind.cat,
-      defId: 'attacker_main_1',
-    );
-    expect(broke.status, GearBuyStatus.insufficient);
-    expect(broke.shortfall, 50);
-    expect((await PointsStore.open()).balance, 50);
-
-    SharedPreferences.setMockInitialValues({
-      ..._wallet(800),
-      'pet.owned': 'cat,fox,dog',
-    });
-    final rich = await PointsStore.open();
-    final wrongRole = await rich.buyGear(
-      kind: PetKind.cat,
-      defId: 'defender_main_1',
-    );
-    expect(wrongRole.status, GearBuyStatus.roleMismatch);
-    expect(rich.balance, 800);
-
-    final bought = await rich.buyGear(
-      kind: PetKind.cat,
-      defId: 'attacker_main_1',
-    );
-    expect(bought.bought, isTrue);
-    expect(rich.balance, 700);
-    expect(rich.roster.recordOf(PetKind.cat)!.level, 1);
-    expect(rich.garden.plantCount, 0);
-    final item = bought.item!;
-    final wrongSlot = await rich.equipGear(
-      kind: PetKind.cat,
-      itemId: item.id,
-      slot: GearSlot.accessory,
-    );
-    expect(wrongSlot.status, EquipStatus.slotMismatch);
-    expect(rich.roster.recordOf(PetKind.cat)!.accessoryItemId, isNull);
-
-    final equipped = await rich.equipGear(
-      kind: PetKind.cat,
-      itemId: item.id,
-      slot: GearSlot.main,
-    );
-    expect(equipped.equipped, isTrue);
-    expect(rich.balance, 700);
-    expect(
-      PetStrength.of(
-        level: 1,
-        main: rich.roster.defOf(rich.roster.recordOf(PetKind.cat)!.mainItemId),
-      ).total,
-      13,
-    );
-
-    final stolen = await rich.equipGear(
-      kind: PetKind.fox,
-      itemId: item.id,
-      slot: GearSlot.main,
-    );
-    expect(stolen.status, EquipStatus.wornByOther);
-    expect(stolen.wornBy, PetKind.cat);
-    expect(rich.roster.recordOf(PetKind.fox)!.mainItemId, isNull);
-
-    await rich.unequipGear(kind: PetKind.cat, slot: GearSlot.main);
-    final moved = await rich.equipGear(
-      kind: PetKind.fox,
-      itemId: item.id,
-      slot: GearSlot.main,
-    );
-    expect(moved.equipped, isTrue);
-    expect(rich.roster.recordOf(PetKind.cat)!.mainItemId, isNull);
-    expect(rich.roster.recordOf(PetKind.fox)!.mainItemId, item.id);
-
-    final better = await rich.buyGear(
-      kind: PetKind.fox,
-      defId: 'attacker_main_2',
-    );
-    expect(better.status, GearBuyStatus.levelLocked);
-
-    final collar = await rich.buyGear(
-      kind: PetKind.fox,
-      defId: 'attacker_accessory_1',
-    );
-    expect(collar.bought, isTrue);
-    await rich.equipGear(
-      kind: PetKind.fox,
-      itemId: collar.item!.id,
-      slot: GearSlot.accessory,
-    );
-    expect(
-      PetStrength.of(
-        level: 1,
-        main: rich.roster.defOf(item.id),
-        accessory: rich.roster.defOf(collar.item!.id),
-      ).total,
-      16,
-    );
-    expect(rich.garden.plantCount, 0);
-    expect((await PointsStore.open()).balance, rich.balance);
   });
 
   test('the garden guard survives restart and hiding from the yard', () async {
@@ -446,7 +315,6 @@ void main() {
       'pet.cat.restAt': t0.millisecondsSinceEpoch,
       'pets.roster.v1': const PetRosterSnapshot(
         records: [PetCombatRecord(kind: PetKind.cat, level: 3, xp: 4)],
-        items: [],
         seq: 1,
       ).encode(),
     });

@@ -54,4 +54,35 @@ void main() {
       isFalse,
     );
   });
+
+  test('analytics waits for UMP consent where the form is required', () {
+    expect(
+      AdBootstrap.allowAnalytics(
+        canRequestAds: false,
+        status: ConsentStatus.required,
+      ),
+      isFalse,
+    );
+    expect(
+      AdBootstrap.allowAnalytics(
+        canRequestAds: true,
+        status: ConsentStatus.required,
+      ),
+      isTrue,
+    );
+    expect(
+      AdBootstrap.allowAnalytics(
+        canRequestAds: false,
+        status: ConsentStatus.notRequired,
+      ),
+      isTrue,
+    );
+    expect(
+      AdBootstrap.allowAnalytics(
+        canRequestAds: false,
+        status: ConsentStatus.unknown,
+      ),
+      isFalse,
+    );
+  });
 }

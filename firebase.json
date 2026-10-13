@@ -1,6 +1,1 @@
-{
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  }
-}
+{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"flutter":{"platforms":{"android":{"default":{"projectId":"mahjong-rise","appId":"1:872111737653:android:1276c370bf0d05bf131a7c","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"mahjong-rise","configurations":{"android":"1:872111737653:android:1276c370bf0d05bf131a7c","windows":"1:872111737653:web:e9bba7067f93402a131a7c"}}}}}}
